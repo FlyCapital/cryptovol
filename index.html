@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CryptoVol — Crypto Volatility Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg:      #f5f6f8;
+  --surface: #ffffff;
+  --surface2:#f0f2f5;
+  --border:  rgba(0,0,0,0.07);
+  --border2: rgba(0,0,0,0.12);
+  --text:    #111827;
+  --text2:   #6b7280;
+  --text3:   #b0b8c4;
+  --blue:    #378ADD;
+  --red:     #D85A30;
+  --green:   #1D9E75;
+  --purple:  #7F77DD;
+  --amber:   #888780;
+  --sans:    'Inter', sans-serif;
+  --mono:    'IBM Plex Mono', monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+nav {
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(10px);
+  border-bottom: 0.5px solid var(--border2);
+  position: sticky; top:0; z-index:100;
+}
+.nav-inner {
+  max-width: 1100px; margin:0 auto; padding:0 24px;
+  display:flex; align-items:center; justify-content:space-between; height:52px;
+}
+.logo { font-family:var(--sans); font-size:17px; font-weight:800; letter-spacing:-0.3px; color:var(--text); }
+.logo span { color:var(--blue); }
+.nav-links { display:flex; align-items:center; gap:20px; }
+.nav-link { color:var(--text2); text-decoration:none; font-size:12px; letter-spacing:0.04em; transition:color 0.15s; }
+.nav-link:hover { color:var(--text); }
+.nav-cta { background:var(--blue); color:#fff; border:none; padding:6px 16px; border-radius:4px; font-family:var(--mono); font-size:12px; cursor:pointer; text-decoration:none; letter-spacing:0.03em; transition:opacity 0.15s; }
+.nav-cta:hover { opacity:0.85; }
+
+.wrap { max-width:1100px; margin:0 auto; padding:0 24px; }
+
+.hero { padding:48px 0 32px; border-bottom:0.5px solid var(--border2); }
+.live-tag { display:inline-flex; align-items:center; gap:6px; background:rgba(55,138,221,0.08); border:1px solid rgba(55,138,221,0.2); color:var(--blue); font-size:11px; letter-spacing:0.08em; padding:3px 10px; border-radius:2px; margin-bottom:16px; }
+.live-dot { width:6px;height:6px;background:var(--blue);border-radius:50%;animation:blink 2s infinite; }
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.25}}
+.hero h1 { font-family:var(--sans); font-size:clamp(28px,4vw,44px); font-weight:800; letter-spacing:-1px; line-height:1.1; color:var(--text); margin-bottom:12px; }
+.hero h1 em { font-style:normal; color:var(--blue); }
+.hero-sub { color:var(--text2); font-size:13px; max-width:500px; line-height:1.75; margin-bottom:28px; }
+.hero-pills { display:flex; gap:24px; flex-wrap:wrap; }
+.pill { display:flex; flex-direction:column; gap:2px; }
+.pill-label { font-size:10px; letter-spacing:0.1em; color:var(--text3); text-transform:uppercase; }
+.pill-value { font-size:13px; color:var(--text2); }
+.pill-value strong { color:var(--text); font-weight:500; }
+
+.controls-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:14px 0; border-bottom:0.5px solid var(--border); }
+.ctrl-label { font-size:10px; letter-spacing:0.1em; color:var(--text3); }
+.btn-group { display:flex; }
+.ctrl-btn { background:transparent; border:0.5px solid var(--border2); color:var(--text2); font-family:var(--mono); font-size:12px; padding:4px 12px; cursor:pointer; transition:all 0.12s; border-right:none; }
+.btn-group .ctrl-btn:first-child { border-radius:3px 0 0 3px; }
+.btn-group .ctrl-btn:last-child  { border-radius:0 3px 3px 0; border-right:0.5px solid var(--border2); }
+.ctrl-btn:hover { background:var(--surface2); color:var(--text); }
+.ctrl-btn.active { background:rgba(55,138,221,0.1); border-color:rgba(55,138,221,0.3); color:var(--blue); }
+.ctrl-sep { width:1px; height:18px; background:var(--border2); }
+.ts { font-size:11px; color:var(--text3); margin-left:auto; }
+
+.metric-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--border); border:0.5px solid var(--border2); border-radius:8px; overflow:hidden; margin:18px 0; }
+.metric { background:var(--surface); padding:14px 18px; transition:background 0.12s; }
+.metric:hover { background:var(--surface2); }
+.m-lbl { font-size:10px; letter-spacing:0.09em; color:var(--text3); text-transform:uppercase; margin-bottom:4px; }
+.m-val { font-size:24px; font-family:var(--sans); font-weight:700; color:var(--text); letter-spacing:-0.5px; }
+.m-d   { font-size:11px; margin-top:2px; }
+.up  { color:var(--red); }
+.dn  { color:var(--green); }
+.neu { color:var(--text3); }
+
+.panel { background:var(--surface); border:0.5px solid var(--border2); border-radius:8px; overflow:hidden; margin-bottom:14px; }
+.panel-hd { display:flex; align-items:center; justify-content:space-between; padding:12px 18px; border-bottom:0.5px solid var(--border); flex-wrap:wrap; gap:8px; }
+.panel-title { font-family:var(--sans); font-size:13px; font-weight:700; color:var(--text); }
+.panel-sub   { font-size:11px; color:var(--text3); margin-top:1px; }
+.legend { display:flex; gap:14px; flex-wrap:wrap; }
+.leg { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text2); }
+.leg-bar  { width:18px; height:2px; border-radius:1px; }
+.leg-dash { width:18px; height:0; border-top:2px dashed; }
+.panel-body { padding:14px 18px 18px; }
+
+.exp-row { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:12px; }
+.exp-btn { background:transparent; border:0.5px solid var(--border2); color:var(--text2); font-family:var(--mono); font-size:11px; padding:3px 10px; border-radius:3px; cursor:pointer; transition:all 0.12s; }
+.exp-btn:hover { background:var(--surface2); color:var(--text); }
+.exp-btn.active { background:rgba(55,138,221,0.08); border-color:rgba(55,138,221,0.25); color:var(--blue); }
+.smile-note { font-size:11px; color:var(--text3); margin-top:10px; padding-top:10px; border-top:0.5px solid var(--border); }
+
+.pricing-wrap { margin:20px 0 48px; }
+.pricing-cta { background:var(--surface); border:0.5px solid var(--border2); border-radius:8px; padding:36px; display:grid; grid-template-columns:1fr auto; align-items:center; gap:28px; margin-bottom:12px; }
+.cta-tag { font-size:10px; letter-spacing:0.1em; color:var(--blue); text-transform:uppercase; margin-bottom:6px; }
+.cta-h   { font-family:var(--sans); font-size:20px; font-weight:700; color:var(--text); margin-bottom:8px; letter-spacing:-0.2px; }
+.cta-p   { color:var(--text2); font-size:13px; line-height:1.7; max-width:460px; }
+.cta-acts { display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+.btn-pri { background:var(--blue); color:#fff; border:none; padding:10px 24px; border-radius:4px; font-family:var(--mono); font-size:13px; cursor:pointer; text-decoration:none; white-space:nowrap; transition:opacity 0.15s; display:inline-block; }
+.btn-pri:hover { opacity:0.85; }
+.btn-sec { background:transparent; color:var(--text2); border:0.5px solid var(--border2); padding:9px 24px; border-radius:4px; font-family:var(--mono); font-size:13px; cursor:pointer; text-decoration:none; white-space:nowrap; display:inline-block; text-align:center; transition:all 0.15s; }
+.btn-sec:hover { color:var(--text); background:var(--surface2); }
+
+.tiers { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.tier  { background:var(--surface); border:0.5px solid var(--border2); border-radius:8px; padding:20px; }
+.tier.hot { border-color:rgba(55,138,221,0.3); background:rgba(55,138,221,0.03); }
+.tier-badge { display:inline-block; background:rgba(55,138,221,0.1); color:var(--blue); font-size:10px; letter-spacing:0.07em; padding:2px 8px; border-radius:2px; margin-bottom:8px; }
+.tier-name  { font-family:var(--sans); font-size:14px; font-weight:700; color:var(--text); margin-bottom:4px; }
+.tier-price { font-family:var(--sans); font-size:22px; font-weight:700; color:var(--blue); margin:6px 0; }
+.tier-price span { font-size:12px; color:var(--text3); font-family:var(--mono); font-weight:400; }
+.tier-feats { list-style:none; margin-top:10px; display:flex; flex-direction:column; gap:5px; }
+.tier-feats li { font-size:12px; color:var(--text2); display:flex; gap:7px; }
+.tier-feats li::before { content:'—'; color:var(--blue); flex-shrink:0; }
+
+footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.ft-logo { font-family:var(--sans); font-size:14px; font-weight:700; color:var(--text2); }
+.ft-logo span { color:var(--blue); }
+.ft-note { font-size:11px; color:var(--text3); }
+
+@media(max-width:680px){
+  .pricing-cta{grid-template-columns:1fr;}
+  .cta-acts{align-items:flex-start;flex-direction:row;flex-wrap:wrap;}
+  .tiers{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo">crypto<span>vol</span></div>
+    <div class="nav-links">
+      <a href="#pricing" class="nav-link">PRICING</a>
+      <a href="https://rapidapi.com" target="_blank" class="nav-link">API DOCS</a>
+      <a href="https://rapidapi.com" target="_blank" class="nav-cta">GET API KEY</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="live-tag"><div class="live-dot"></div>LIVE · 3 SESSIONS DAILY</div>
+    <h1>Crypto volatility<br><em>intelligently measured</em></h1>
+    <p class="hero-sub">Institutional-grade implied volatility indices, vol surfaces and option Greeks for BTC, ETH, SOL, XRP, AVAX and TRX — captured across Asia, London and US sessions.</p>
+    <div class="hero-pills">
+      <div class="pill"><span class="pill-label">Coverage</span><span class="pill-value"><strong>6</strong> assets</span></div>
+      <div class="pill"><span class="pill-label">Sessions</span><span class="pill-value"><strong>Asia · London · US</strong></span></div>
+      <div class="pill"><span class="pill-label">History</span><span class="pill-value"><strong>18</strong> months</span></div>
+      <div class="pill"><span class="pill-label">Methodology</span><span class="pill-value"><strong>SVI</strong> vol surface</span></div>
+    </div>
+  </section>
+
+  <div class="controls-bar">
+    <span class="ctrl-label">ASSET</span>
+    <div class="btn-group" id="ccy-grp">
+      <button class="ctrl-btn active" onclick="setCcy('BTC')">BTC</button>
+      <button class="ctrl-btn" onclick="setCcy('ETH')">ETH</button>
+      <button class="ctrl-btn" onclick="setCcy('SOL')">SOL</button>
+      <button class="ctrl-btn" onclick="setCcy('XRP')">XRP</button>
+      <button class="ctrl-btn" onclick="setCcy('AVAX')">AVAX</button>
+      <button class="ctrl-btn" onclick="setCcy('TRX')">TRX</button>
+    </div>
+    <div class="ctrl-sep"></div>
+    <span class="ctrl-label">SESSION</span>
+    <div class="btn-group" id="sess-grp">
+      <button class="ctrl-btn active" onclick="setSess('all')">ALL</button>
+      <button class="ctrl-btn" onclick="setSess('asia')">ASIA</button>
+      <button class="ctrl-btn" onclick="setSess('london')">LONDON</button>
+      <button class="ctrl-btn" onclick="setSess('us')">US</button>
+    </div>
+    <span class="ts" id="ts"></span>
+  </div>
+
+  <div class="metric-grid" id="metrics"></div>
+
+  <div class="panel">
+    <div class="panel-hd">
+      <div><div class="panel-title">CryptoVIX — Implied vs Realized Volatility</div><div class="panel-sub">Annualized implied vol index across key tenors</div></div>
+      <div class="legend">
+        <div class="leg"><div class="leg-bar" style="background:#378ADD"></div>7D implied</div>
+        <div class="leg"><div class="leg-bar" style="background:#D85A30"></div>30D implied</div>
+        <div class="leg"><div class="leg-dash" style="border-color:#888780"></div>realized</div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div style="position:relative;width:100%;height:270px;"><canvas id="vixChart" role="img" aria-label="CryptoVIX implied and realized volatility over time"></canvas></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hd">
+      <div><div class="panel-title">Vol Term Structure</div><div class="panel-sub">Latest snapshot across tenors by session</div></div>
+    </div>
+    <div class="panel-body">
+      <div style="position:relative;width:100%;height:190px;"><canvas id="termChart" role="img" aria-label="Volatility term structure by session"></canvas></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hd">
+      <div><div class="panel-title">Vol Smile by Expiry</div><div class="panel-sub">Implied vol across delta strikes · put wing → ATM → call wing</div></div>
+    </div>
+    <div class="panel-body">
+      <div class="exp-row" id="exp-row">
+        <button class="exp-btn active" onclick="setSmile('all')">All expiries</button>
+        <button class="exp-btn" onclick="setSmile('7D')">7D</button>
+        <button class="exp-btn" onclick="setSmile('14D')">14D</button>
+        <button class="exp-btn" onclick="setSmile('30D')">30D</button>
+        <button class="exp-btn" onclick="setSmile('60D')">60D</button>
+        <button class="exp-btn" onclick="setSmile('90D')">90D</button>
+      </div>
+      <div style="position:relative;width:100%;height:230px;"><canvas id="smileChart" role="img" aria-label="Volatility smile by expiry date"></canvas></div>
+      <div class="smile-note">Shorter expiries show steeper skew · elevated put wing reflects persistent downside demand · data captured at each session open</div>
+    </div>
+  </div>
+
+  <section class="pricing-wrap" id="pricing">
+    <div class="pricing-cta">
+      <div>
+        <div class="cta-tag">API ACCESS</div>
+        <div class="cta-h">Integrate crypto vol data into your workflow</div>
+        <p class="cta-p">Full vol surface, option Greeks, CryptoVIX indices and raw snapshots available via REST API. Historical data back to 2023. Available on RapidAPI.</p>
+      </div>
+      <div class="cta-acts">
+        <a href="https://rapidapi.com" target="_blank" class="btn-pri">Get API Key →</a>
+        <a href="https://rapidapi.com" target="_blank" class="btn-sec">View Docs</a>
+      </div>
+    </div>
+    <div class="tiers">
+      <div class="tier">
+        <div class="tier-name">Free</div>
+        <div class="tier-price">$0 <span>/month</span></div>
+        <ul class="tier-feats">
+          <li>CryptoVIX index (BTC only)</li>
+          <li>Latest snapshot only</li>
+          <li>100 API calls / day</li>
+          <li>Community support</li>
+        </ul>
+      </div>
+      <div class="tier hot">
+        <div class="tier-badge">MOST POPULAR</div>
+        <div class="tier-name">Pro</div>
+        <div class="tier-price">$299 <span>/month</span></div>
+        <ul class="tier-feats">
+          <li>All 6 assets</li>
+          <li>Vol surface + term structure</li>
+          <li>All 3 sessions</li>
+          <li>18 months history</li>
+          <li>10,000 calls / day</li>
+        </ul>
+      </div>
+      <div class="tier">
+        <div class="tier-name">Institutional</div>
+        <div class="tier-price">Custom</div>
+        <ul class="tier-feats">
+          <li>Full option Greeks chain</li>
+          <li>Raw tick snapshots</li>
+          <li>Bulk data export</li>
+          <li>SLA + priority support</li>
+          <li>Custom integrations</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="ft-logo">crypto<span>vol</span></div>
+    <div class="ft-note">Data for informational purposes only. Not financial advice. © 2025 CryptoVol.</div>
+  </footer>
+
+</div>
+
+<script>
+const BASE  = {BTC:65,ETH:72,SOL:88,XRP:58,AVAX:92,TRX:55};
+const SOFF  = {all:0,asia:-4,london:3,us:6};
+const SCOL  = {'7D':'#D85A30','14D':'#378ADD','30D':'#1D9E75','60D':'#7F77DD','90D':'#888780'};
+const DLBL  = ['10Δp','15Δp','25Δp','35Δp','ATM','35Δc','25Δc','15Δc','10Δc'];
+const TENORS= ['7D','14D','21D','30D','60D','90D'];
+const SCOL3 = {asia:'#1D9E75',london:'#378ADD',us:'#D85A30'};
+
+let ccy='BTC', sess='all', smileMode='all';
+let vixI=null, termI=null, smileI=null;
+
+function rng(seed){
+  let h=0; for(let c of String(seed)){h=(Math.imul(31,h)+c.charCodeAt(0))|0;}
+  return()=>{h^=h<<13;h^=h>>17;h^=h<<5;return(h>>>0)/4294967296;};
+}
+function series(base,noise,n,key){
+  const r=rng(key+ccy+sess);const a=[];let v=base;
+  for(let i=0;i<n;i++){v+=(r()-0.48)*noise;v=Math.max(base*0.4,Math.min(base*1.9,v));a.push(+v.toFixed(1));}
+  return a;
+}
+function smile(atm,sk,cv,wg,key){
+  const r=rng(key+ccy+sess);
+  return DLBL.map((_,i)=>{
+    const x=(i-4)/4;
+    return +(atm+(x<0?-sk*x:sk*0.35*x)+cv*x*x+(i===0||i===8?wg:0)+(r()-0.5)*1.2).toFixed(1);
+  });
+}
+function dates(n){
+  const d=new Date('2024-07-01'),a=[];
+  for(let i=0;i<n;i++){a.push(d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}));d.setDate(d.getDate()+1);}
+  return a;
+}
+
+const GC='rgba(0,0,0,0.05)', TC='#b0b8c4';
+const BASE_OPTS={
+  responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,
+    backgroundColor:'rgba(255,255,255,0.97)',borderColor:'rgba(0,0,0,0.1)',borderWidth:1,
+    titleColor:'#6b7280',bodyColor:'#111827',padding:10,
+  }},
+  scales:{
+    x:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxTicksLimit:8,autoSkip:true},grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'}},
+    y:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},callback:v=>v.toFixed(0)+'%'},grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'}},
+  }
+};
+
+function renderMetrics(){
+  const b=BASE[ccy]+SOFF[sess];const r=rng('m'+ccy+sess);
+  const iv7=(b+r()*8-4).toFixed(1),iv30=(b-5+r()*4-2).toFixed(1);
+  const rv=(b-9+r()*6-3).toFixed(1),prem=(iv7-rv).toFixed(1);
+  const d7=((r()-0.45)*5).toFixed(1),d30=((r()-0.45)*3).toFixed(1);
+  const skew=(r()*8+2).toFixed(1),ivr=Math.round(r()*100);
+  document.getElementById('metrics').innerHTML=`
+    <div class="metric"><div class="m-lbl">7D CryptoVIX</div><div class="m-val">${iv7}%</div><div class="m-d ${parseFloat(d7)>=0?'up':'dn'}">${parseFloat(d7)>=0?'▲':'▼'} ${Math.abs(d7)}% 24h</div></div>
+    <div class="metric"><div class="m-lbl">30D CryptoVIX</div><div class="m-val">${iv30}%</div><div class="m-d ${parseFloat(d30)>=0?'up':'dn'}">${parseFloat(d30)>=0?'▲':'▼'} ${Math.abs(d30)}% 24h</div></div>
+    <div class="metric"><div class="m-lbl">Realized vol (30D)</div><div class="m-val">${rv}%</div><div class="m-d neu">rolling</div></div>
+    <div class="metric"><div class="m-lbl">Vol premium</div><div class="m-val">${prem}%</div><div class="m-d neu">IV − RV</div></div>
+    <div class="metric"><div class="m-lbl">Put skew (25Δ)</div><div class="m-val">${skew}%</div><div class="m-d neu">latest</div></div>
+    <div class="metric"><div class="m-lbl">IV rank (1Y)</div><div class="m-val">${ivr}</div><div class="m-d neu">percentile</div></div>
+  `;
+}
+
+function renderVix(){
+  const b=BASE[ccy]+SOFF[sess];const n=150;const d=dates(n);
+  if(vixI)vixI.destroy();
+  vixI=new Chart(document.getElementById('vixChart'),{type:'line',data:{labels:d,datasets:[
+    {label:'7D implied', data:series(b,6,n,'iv7'),  borderColor:'#378ADD',borderWidth:1.5,pointRadius:0,tension:0.3,fill:false},
+    {label:'30D implied',data:series(b-5,4,n,'iv30'),borderColor:'#D85A30',borderWidth:1.5,pointRadius:0,tension:0.3,fill:false},
+    {label:'Realized',   data:series(b-9,5,n,'rv'),  borderColor:'#888780',borderWidth:1.5,borderDash:[5,4],pointRadius:0,tension:0.3,fill:false},
+  ]},options:{...BASE_OPTS}});
+}
+
+function renderTerm(){
+  const b=BASE[ccy]+SOFF[sess];let datasets;
+  if(sess==='all'){
+    datasets=[
+      {label:'Asia',  data:TENORS.map((_,i)=>+(b-4+i*0.9+(rng('ta'+ccy)()*3-1.5)).toFixed(1)),borderColor:SCOL3.asia,  borderWidth:1.5,pointRadius:4,pointBackgroundColor:SCOL3.asia,  tension:0.25,fill:false},
+      {label:'London',data:TENORS.map((_,i)=>+(b+  i*0.55+(rng('tl'+ccy)()*3-1.5)).toFixed(1)),borderColor:SCOL3.london,borderWidth:1.5,pointRadius:4,pointBackgroundColor:SCOL3.london,tension:0.25,fill:false},
+      {label:'US',    data:TENORS.map((_,i)=>+(b+5+i*0.3+ (rng('tu'+ccy)()*3-1.5)).toFixed(1)),borderColor:SCOL3.us,   borderWidth:1.5,pointRadius:4,pointBackgroundColor:SCOL3.us,   tension:0.25,fill:false},
+    ];
+  } else {
+    const off={asia:-4,london:0,us:5}[sess],col=SCOL3[sess];
+    datasets=[{label:sess,data:TENORS.map((_,i)=>+(b+off+i*0.6+(rng('ts'+ccy+sess)()*3-1.5)).toFixed(1)),borderColor:col,borderWidth:2,pointRadius:5,pointBackgroundColor:col,tension:0.25,fill:false}];
+  }
+  if(termI)termI.destroy();
+  termI=new Chart(document.getElementById('termChart'),{type:'line',data:{labels:TENORS,datasets},options:{
+    ...BASE_OPTS,
+    plugins:{...BASE_OPTS.plugins,legend:{display:sess==='all',position:'top',labels:{color:'#6b7280',font:{family:'IBM Plex Mono',size:11},boxWidth:12,boxHeight:2,padding:14}}}
+  }});
+}
+
+function renderSmile(){
+  const b=BASE[ccy]+SOFF[sess];
+  const P={'7D':{s:10,c:8,w:5},'14D':{s:8,c:6.5,w:4},'30D':{s:6,c:5,w:3},'60D':{s:4,c:3.5,w:2},'90D':{s:2.5,c:2.5,w:1.5}};
+  const exps=smileMode==='all'?Object.keys(P):[smileMode];
+  const datasets=exps.map(e=>({
+    label:e,data:smile(b,P[e].s,P[e].c,P[e].w,e),
+    borderColor:SCOL[e],borderWidth:smileMode==='all'?1.5:2,
+    pointRadius:smileMode==='all'?2:4,pointBackgroundColor:SCOL[e],
+    tension:0.35,fill:false,
+  }));
+  if(smileI)smileI.destroy();
+  smileI=new Chart(document.getElementById('smileChart'),{type:'line',data:{labels:DLBL,datasets},options:{
+    ...BASE_OPTS,
+    plugins:{...BASE_OPTS.plugins,legend:{display:true,position:'top',labels:{color:'#6b7280',font:{family:'IBM Plex Mono',size:11},boxWidth:12,boxHeight:2,padding:14}}},
+    scales:{
+      x:{...BASE_OPTS.scales.x,ticks:{...BASE_OPTS.scales.x.ticks,maxRotation:0}},
+      y:{...BASE_OPTS.scales.y,title:{display:true,text:'Implied vol (%)',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+    }
+  }});
+}
+
+function setCcy(c){ccy=c;document.querySelectorAll('#ccy-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===c));update();}
+function setSess(s){sess=s;document.querySelectorAll('#sess-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===s.toUpperCase()));update();}
+function setSmile(m){smileMode=m;document.querySelectorAll('#exp-row .exp-btn').forEach(b=>b.classList.toggle('active',b.textContent.trim()===(m==='all'?'All expiries':m)));renderSmile();}
+function update(){renderMetrics();renderVix();renderTerm();renderSmile();}
+
+document.getElementById('ts').textContent='Updated '+new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+' UTC';
+update();
+</script>
+</body>
+</html>
