@@ -148,6 +148,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
   <div class="nav-inner">
     <div class="logo">crypto<span>vol</span></div>
     <div class="nav-links">
+      <a href="methodology.html" class="nav-link">METHODOLOGY</a>
       <a href="#pricing" class="nav-link">PRICING</a>
       <a href="https://rapidapi.com" target="_blank" class="nav-link">API DOCS</a>
       <a href="https://rapidapi.com" target="_blank" class="nav-cta">GET API KEY</a>
@@ -160,12 +161,11 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
   <section class="hero">
     <div class="live-tag"><div class="live-dot"></div>LIVE · 3 SESSIONS DAILY</div>
     <h1>Crypto volatility<br><em>intelligently measured</em></h1>
-    <p class="hero-sub">Institutional-grade implied volatility indices, vol surfaces and option Greeks for BTC, ETH, SOL, XRP, AVAX and TRX — captured across Asia, London and US sessions.</p>
+    <p class="hero-sub">Institutional-grade implied volatility indices and vol surfaces for BTC, ETH and SOL — captured across Asia, London and US sessions.</p>
     <div class="hero-pills">
       <div class="pill"><span class="pill-label">Coverage</span><span class="pill-value"><strong>6</strong> assets</span></div>
       <div class="pill"><span class="pill-label">Sessions</span><span class="pill-value"><strong>Asia · London · US</strong></span></div>
-      <div class="pill"><span class="pill-label">History</span><span class="pill-value"><strong>18</strong> months</span></div>
-      <div class="pill"><span class="pill-label">Methodology</span><span class="pill-value"><strong>SVI</strong> vol surface</span></div>
+
     </div>
   </section>
 
@@ -175,7 +175,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
       <button class="ctrl-btn active" onclick="setCcy('BTC')">BTC</button>
       <button class="ctrl-btn" onclick="setCcy('ETH')">ETH</button>
       <button class="ctrl-btn" onclick="setCcy('SOL')">SOL</button>
-      <button class="ctrl-btn" onclick="setCcy('XRP')">XRP</button>
+      <button class="ctrl-btn" onclick="setCcy('XRP')" style="display:none">XRP</button>
       <button class="ctrl-btn" onclick="setCcy('AVAX')" style="display:none">AVAX</button>
       <button class="ctrl-btn" onclick="setCcy('TRX')" style="display:none">TRX</button>
     </div>
@@ -211,7 +211,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
       <div><div class="panel-title">Vol Smile by Expiry</div><div class="panel-sub">Implied vol across delta strikes · put wing → ATM → call wing</div></div>
     </div>
     <div class="panel-body">
-      <div style="position:relative;width:100%;height:190px;"><canvas id="smileChart" role="img" aria-label="Volatility smile by expiry date"></canvas></div>
+      <div style="position:relative;width:100%;height:360px;"><canvas id="smileChart" role="img" aria-label="Volatility smile by expiry date"></canvas></div>
     </div>
   </div>
 
@@ -221,7 +221,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
     </div>
     <div class="panel-body">
       <div class="exp-row" id="exp-row" style="display:none"></div>
-      <div style="position:relative;width:100%;height:360px;"><canvas id="termChart" role="img" aria-label="Volatility term structure by session"></canvas></div>
+      <div style="position:relative;width:100%;height:190px;"><canvas id="termChart" role="img" aria-label="Volatility term structure by session"></canvas></div>
       <div class="smile-note">Shorter expiries show steeper skew · elevated put wing reflects persistent downside demand · data captured at each session open</div>
     </div>
   </div>
@@ -249,27 +249,28 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
           <li>Community support</li>
         </ul>
       </div>
+      <div class="tier">
+        <div class="tier-name">Basic</div>
+        <div class="tier-price">$99 <span>/month</span></div>
+        <ul class="tier-feats">
+          <li>CryptoVIX — BTC, ETH, SOL</li>
+          <li>7D + 30D tenors</li>
+          <li>Latest snapshot only</li>
+          <li>1,000 API calls / day</li>
+          <li>Email support</li>
+        </ul>
+      </div>
       <div class="tier hot">
         <div class="tier-badge">MOST POPULAR</div>
         <div class="tier-name">Pro</div>
         <div class="tier-price">$299 <span>/month</span></div>
         <ul class="tier-feats">
-          <li>All 6 assets</li>
-          <li>Vol surface + term structure</li>
+          <li>CryptoVIX — all assets</li>
+          <li>Full vol surface + SABR params</li>
           <li>All 3 sessions</li>
           <li>18 months history</li>
-          <li>10,000 calls / day</li>
-        </ul>
-      </div>
-      <div class="tier">
-        <div class="tier-name">Institutional</div>
-        <div class="tier-price">Custom</div>
-        <ul class="tier-feats">
-          <li>Full option Greeks chain</li>
-          <li>Raw tick snapshots</li>
-          <li>Bulk data export</li>
-          <li>SLA + priority support</li>
-          <li>Custom integrations</li>
+          <li>10,000 API calls / day</li>
+          <li>Priority support</li>
         </ul>
       </div>
     </div>
@@ -355,10 +356,8 @@ async function renderMetrics() {
   }
 
   document.getElementById('metrics').innerHTML=`
-    <div class="metric"><div class="m-lbl">7D CryptoVIX</div><div class="m-val">${latest7!=null?latest7.toFixed(1)+'%':'—'}</div><div class="m-d ${d7>=0?'up':'dn'}">${d7!=null?(parseFloat(d7)>=0?'▲':'▼')+' '+Math.abs(d7)+'% 1D':''}</div></div>
-    <div class="metric"><div class="m-lbl">30D CryptoVIX</div><div class="m-val">${latest30!=null?latest30.toFixed(1)+'%':'—'}</div><div class="m-d ${d30>=0?'up':'dn'}">${d30!=null?(parseFloat(d30)>=0?'▲':'▼')+' '+Math.abs(d30)+'% 1D':''}</div></div>
-    <div class="metric"><div class="m-lbl">Vol premium</div><div class="m-val">${prem !== '—' ? prem+'%' : '—'}</div><div class="m-d neu">7D − 30D</div></div>
-    <div class="metric"><div class="m-lbl">IV rank (1Y)</div><div class="m-val">${ivrank}</div><div class="m-d neu">percentile</div></div>
+    <div class="metric"><div class="m-lbl">7D</div><div class="m-val">${latest7!=null?latest7.toFixed(1)+'%':'—'}</div><div class="m-d ${d7>=0?'up':'dn'}">${d7!=null?(parseFloat(d7)>=0?'▲':'▼')+' '+Math.abs(d7)+'% 1D':''}</div></div>
+    <div class="metric"><div class="m-lbl">30D</div><div class="m-val">${latest30!=null?latest30.toFixed(1)+'%':'—'}</div><div class="m-d ${d30>=0?'up':'dn'}">${d30!=null?(parseFloat(d30)>=0?'▲':'▼')+' '+Math.abs(d30)+'% 1D':''}</div></div>
   `;
 }
 
@@ -382,21 +381,18 @@ async function renderVix() {
   vixI=new Chart(document.getElementById('vixChart'),{type:'line',data:{
     labels: allLabels,
     datasets:[
-      {label:'7D implied', data:allLabels.map(l=>map7[l]??null),  borderColor:'#378ADD',borderWidth:1.5,pointRadius:0,tension:0.3,fill:false,spanGaps:true},
-      {label:'30D implied',data:allLabels.map(l=>map30[l]??null), borderColor:'#D85A30',borderWidth:1.5,pointRadius:0,tension:0.3,fill:false,spanGaps:true},
+      {label:'7D', data:allLabels.map(l=>map7[l]??null),  borderColor:'#378ADD',borderWidth:1.5,pointRadius:0,tension:0.3,fill:false,spanGaps:true},
+      {label:'30D',data:allLabels.map(l=>map30[l]??null), borderColor:'#D85A30',borderWidth:1.5,pointRadius:0,tension:0.3,fill:false,spanGaps:true},
     ]
   },options:{...BASE_OPTS}});
 }
 
 // ── Fetch vol surface from API ──
 async function fetchSurface(c) {
-  const key = 'surface_' + c;
-  if (realData[key]) return realData[key];
   try {
     const res = await fetch(`${API}/v1/surface?ccy=${c}`);
     const json = await res.json();
-    realData[key] = json.expiries || [];
-    return realData[key];
+    return json.expiries || [];
   } catch(e) { return []; }
 }
 
@@ -405,7 +401,7 @@ async function renderTerm(){
   const expiries = await fetchSurface(ccy);
   if (!expiries.length) return;
 
-  const labels = [], vals = [];
+  const termLabels = [], termVals = [];
   for (const exp of expiries) {
     if (!exp.strikes || !exp.mkt_vol || !exp.forward) continue;
     const fwd = exp.forward;
@@ -413,16 +409,16 @@ async function renderTerm(){
     exp.strikes.forEach((s,i) => { const d=Math.abs(s-fwd); if(d<bestDist){bestDist=d;bestIdx=i;} });
     const atmVol = exp.mkt_vol[bestIdx];
     if (atmVol == null) continue;
-    labels.push(exp.expiry);   // real expiry date as x-axis
-    vals.push(+atmVol.toFixed(2));
+    termLabels.push(exp.expiry);
+    termVals.push(+atmVol.toFixed(2));
   }
 
   if(termI)termI.destroy();
-  termI=new Chart(document.getElementById('smileChart'),{type:'line',data:{
-    labels,
+  termI=new Chart(document.getElementById('termChart'),{type:'line',data:{
+    labels: termLabels,
     datasets:[{
       label:'ATM vol',
-      data: vals,
+      data: termVals,
       borderColor:'#378ADD',
       borderWidth:1.5,
       pointRadius:0,
@@ -433,19 +429,14 @@ async function renderTerm(){
     responsive:true, maintainAspectRatio:false,
     plugins:{
       legend:{display:false},
-      tooltip:{mode:'nearest',intersect:false,
+      tooltip:{mode:'index',intersect:false,
         backgroundColor:'rgba(255,255,255,0.97)',borderColor:'rgba(0,0,0,0.1)',borderWidth:1,
         titleColor:'#6b7280',bodyColor:'#111827',padding:10,
-        callbacks:{
-          title: items => items[0].label,
-          label: ctx=>`ATM vol: ${ctx.parsed.y.toFixed(1)}%`
-        }
+        callbacks:{label: ctx=>`ATM vol: ${ctx.parsed.y.toFixed(1)}%`}
       }
     },
     scales:{
-      x:{type:'time',
-         time:{unit:'day', tooltipFormat:'yyyy-MM-dd', displayFormats:{day:'yyyy-MM-dd'}},
-         ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxRotation:30,autoSkip:true,maxTicksLimit:6,source:'labels'},
+      x:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxRotation:30,autoSkip:true,maxTicksLimit:8},
          grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'}},
       y:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},callback:v=>v.toFixed(0)+'%'},
          grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'},
@@ -467,48 +458,96 @@ function buildExpiryButtons(expiries) {
   });
 }
 
-// ── Smile (linear interpolation of market quotes) ──
+// ── SABR vol — exact port of QLib m_sabr_sigma (lognormal) ──
+function sabrVol(F, K, T, alpha, beta, rho, nu) {
+  if (!alpha || alpha <= 0 || !F || !K || T <= 0) return null;
+  beta = (beta != null) ? beta : 1;
+
+  function x_z(z, rho) {
+    if (Math.abs(z) < 1e-6) {
+      return 1 - rho*z/2 + (2-3*rho*rho)*z*z/24;
+    }
+    const num = Math.sqrt(1 - 2*rho*z + z*z) + z - rho;
+    const den = 1 - rho;
+    if (num/den <= 0) return null;
+    return Math.log(num/den);
+  }
+
+  let result;
+  if (Math.abs(F - K) < 1e-10) {
+    // ATM
+    const f_term = Math.pow(F, 1-beta);
+    const B = 1 + (((1-beta)**2/24)*alpha*alpha/Math.pow(F,2-2*beta)
+              + 0.25*alpha*beta*rho*nu/Math.pow(F,1-beta)
+              + (2-3*rho*rho)/24*nu*nu) * T;
+    result = alpha / f_term * B;
+  } else {
+    const log_fk = Math.log(F/K);
+    const fk_avg = Math.pow(F*K, (1-beta)/2);
+    const A = alpha / (fk_avg * (1 + Math.pow(1-beta,2)/24*log_fk*log_fk + Math.pow(1-beta,4)/1920*Math.pow(log_fk,4)));
+    const B = 1 + (Math.pow(1-beta,2)/24*alpha*alpha/(fk_avg*fk_avg)
+              + 0.25*alpha*beta*rho*nu/fk_avg
+              + (2-3*rho*rho)/24*nu*nu) * T;
+    const z = nu/alpha * fk_avg * log_fk;
+    const x = x_z(z, rho);
+    if (x === null || Math.abs(x) < 1e-10) return null;
+    result = A * z/x * B;
+  }
+  return (isFinite(result) && result > 0 && result < 20) ? result : null;
+}
+
+// ── Smile (SABR smooth curves, click legend to toggle) ──
 async function renderSmile(){
   const allExpiries = await fetchSurface(ccy);
   if (!allExpiries.length) return;
 
-  // Filter: only expiries >= 7 days
   const expiries = allExpiries.filter(e => e.tenor_days >= 7);
-
-  // Build dynamic expiry buttons
-  buildExpiryButtons(expiries);
-  document.querySelectorAll('#exp-row .exp-btn').forEach(b => {
-    b.classList.toggle('active',
-      smileMode === 'all' ? b.textContent === 'All expiries' : b.textContent === smileMode
-    );
-  });
-
   if (!expiries.length) return;
 
   const colors = ['#D85A30','#378ADD','#1D9E75','#7F77DD','#888780','#E8A838','#C84B8F','#4BA0C8'];
 
-  let selectedExpiries = smileMode === 'all'
-    ? expiries.slice(0, 5)
-    : expiries.filter(e => e.expiry === smileMode).slice(0, 1);
+  const chartDatasets = expiries.map((exp, idx) => {
+    const sabr = exp.sabr;
+    const useSabr = sabr && sabr.alpha && sabr.nu && sabr.nu > 0.01
+      && !['XRP','AVAX','TRX'].includes(ccy);
 
-  if (!selectedExpiries.length) selectedExpiries = [expiries[0]];
-
-  const chartDatasets = selectedExpiries.map((exp, idx) => {
-    const pts = exp.strikes.map((s, i) => ({ x: s, y: +exp.mkt_vol[i].toFixed(2) }));
-    return {
-      label: exp.expiry + ' (' + exp.tenor_days + 'D)',
-      data: pts,
-      borderColor: colors[idx % colors.length],
-      backgroundColor: colors[idx % colors.length],
-      borderWidth: 1.5,
-      pointRadius: 0,
-      tension: 0,   // linear interpolation between market points
-      fill: false,
-    };
+    if (useSabr) {
+      const {alpha, beta=1, rho, nu} = sabr;
+      const F = exp.forward;
+      const T = exp.tenor_days / 365;
+      const sMin = Math.min(...exp.strikes);
+      const sMax = Math.max(...exp.strikes);
+      const nPts = 200;
+      const pts = [];
+      for (let i = 0; i < nPts; i++) {
+        const K = sMin + (sMax - sMin) * i / (nPts - 1);
+        const v = sabrVol(F, K, T, alpha, beta, rho, nu);
+        if (v !== null) pts.push({ x: Math.round(K*10)/10, y: Math.round(v*10000)/100 });
+      }
+      return {
+        label: exp.expiry + ' (' + exp.tenor_days + 'D)',
+        data: pts,
+        borderColor: colors[idx % colors.length],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0,
+        fill: false,
+      };
+    } else {
+      return {
+        label: exp.expiry + ' (' + exp.tenor_days + 'D)',
+        data: exp.strikes.map((s,i) => ({ x: s, y: +exp.mkt_vol[i].toFixed(2) })),
+        borderColor: colors[idx % colors.length],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0,
+        fill: false,
+      };
+    }
   });
 
   if(smileI)smileI.destroy();
-  smileI=new Chart(document.getElementById('termChart'),{type:'line',data:{datasets:chartDatasets},options:{
+  smileI=new Chart(document.getElementById('smileChart'),{type:'line',data:{datasets:chartDatasets},options:{
     responsive:true, maintainAspectRatio:false,
     parsing: false,
     plugins:{
@@ -517,12 +556,16 @@ async function renderSmile(){
         mode:'nearest',intersect:false,
         backgroundColor:'rgba(255,255,255,0.97)',borderColor:'rgba(0,0,0,0.1)',borderWidth:1,
         titleColor:'#6b7280',bodyColor:'#111827',padding:10,
-        callbacks:{label: ctx=>`Strike ${ctx.parsed.x.toLocaleString()}: ${ctx.parsed.y.toFixed(1)}%`}
+        callbacks:{label: ctx=>{
+          const x = ctx.parsed.x;
+          const xStr = x >= 1000 ? x.toLocaleString() : x.toFixed(3).replace(/\.?0+$/,'');
+          return `Strike ${xStr}: ${ctx.parsed.y.toFixed(1)}%`;
+        }}
       }
     },
     scales:{
       x:{type:'linear',
-         ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxTicksLimit:8,callback:v=>v.toLocaleString()},
+         ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxTicksLimit:8,callback:v=> v>=1000 ? v.toLocaleString() : v},
          grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'},
          title:{display:true,text:'Strike',color:TC,font:{family:'IBM Plex Mono',size:10}}},
       y:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},callback:v=>v.toFixed(0)+'%'},
@@ -532,7 +575,7 @@ async function renderSmile(){
   }});
 }
 
-function setCcy(c){ccy=c;document.querySelectorAll('#ccy-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===c));update();}
+function setCcy(c){ccy=c;delete realData['surface_'+c];document.querySelectorAll('#ccy-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===c));update();}
 function setSess(s){sess=s;document.querySelectorAll('#sess-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===s.toUpperCase()));update();}
 function setSmile(m){}
 
