@@ -432,34 +432,9 @@ async function renderTerm(){
   }});
 }
 
-// ── SABR lognormal vol (Hagan approximation) ──
-function sabrVol(F, K, T, alpha, beta, rho, nu) {
-  if (Math.abs(F - K) < 1e-10) {
-    // ATM formula
-    const atm = alpha / Math.pow(F, 1 - beta);
-    const corr = 1
-      + ((Math.pow(1-beta,2)/24) * Math.pow(alpha,2) / Math.pow(F, 2*(1-beta))
-      +  (rho*beta*nu*alpha) / (4*Math.pow(F, 1-beta))
-      +  ((2-3*rho*rho)/24) * nu*nu) * T;
-    return atm * corr;
-  }
-  const FK  = Math.pow(F*K, (1-beta)/2);
-  const lnFK = Math.log(F/K);
-  const z   = nu/alpha * FK * lnFK;
-  const chi = Math.log((Math.sqrt(1 - 2*rho*z + z*z) + z - rho) / (1 - rho));
-  const zchi = Math.abs(chi) < 1e-10 ? 1 : z/chi;
-  const A = alpha / (FK * (1 + Math.pow(1-beta,2)/24 * lnFK*lnFK + Math.pow(1-beta,4)/1920 * Math.pow(lnFK,4)));
-  const B = 1
-    + ((Math.pow(1-beta,2)/24) * Math.pow(alpha,2) / Math.pow(FK, 2*(1-beta))
-    +  (rho*beta*nu*alpha) / (4*Math.pow(FK, 1-beta))
-    +  ((2-3*rho*rho)/24) * nu*nu) * T;
-  return A * zchi * B;
-}
-
 // ── Build expiry buttons dynamically ──
 function buildExpiryButtons(expiries) {
   const row = document.getElementById('exp-row');
-  // Keep "All expiries" button, remove the rest
   while (row.children.length > 1) row.removeChild(row.lastChild);
   expiries.forEach(exp => {
     const btn = document.createElement('button');
@@ -470,17 +445,16 @@ function buildExpiryButtons(expiries) {
   });
 }
 
-// ── Smile (SABR interpolated) ──
+// ── Smile (linear interpolation of market quotes) ──
 async function renderSmile(){
   const allExpiries = await fetchSurface(ccy);
   if (!allExpiries.length) return;
 
   // Filter: only expiries >= 7 days
-  const expiries = allExpiries.filter(e => e.tenor_days >= 7 && e.sabr);
+  const expiries = allExpiries.filter(e => e.tenor_days >= 7);
 
-  // Build dynamic buttons
+  // Build dynamic expiry buttons
   buildExpiryButtons(expiries);
-  // Sync active button
   document.querySelectorAll('#exp-row .exp-btn').forEach(b => {
     b.classList.toggle('active',
       smileMode === 'all' ? b.textContent === 'All expiries' : b.textContent === smileMode
@@ -497,65 +471,18 @@ async function renderSmile(){
 
   if (!selectedExpiries.length) selectedExpiries = [expiries[0]];
 
-  // For each expiry, generate SABR smile over its own strike range
-  const datasets = selectedExpiries.map((exp, idx) => {
-    const sabr = exp.sabr;
-    const alpha = sabr.alpha, beta = sabr.beta ?? 1, rho = sabr.rho, nu = sabr.nu;
-    const F = exp.forward;
-    const T = exp.tenor_days / 365;
-
-    // Strike grid: from min to max strike of this expiry, 60 points
-    const sMin = Math.min(...exp.strikes);
-    const sMax = Math.max(...exp.strikes);
-    const nPts = 120;
-    const step = (sMax - sMin) / (nPts - 1);
-
-    const pts = [];
-    for (let i = 0; i < nPts; i++) {
-      const K = sMin + i * step;
-      const vol = sabrVol(F, K, T, alpha, beta, rho, nu) * 100;
-      if (isFinite(vol) && vol > 0 && vol < 500) {
-        pts.push({ x: +K.toFixed(0), y: +vol.toFixed(2) });
-      }
-    }
-
-    // Also add market dots as a separate dataset
+  const chartDatasets = selectedExpiries.map((exp, idx) => {
+    const pts = exp.strikes.map((s, i) => ({ x: s, y: +exp.mkt_vol[i].toFixed(2) }));
     return {
-      sabrPts: pts,
-      mktPts: exp.strikes.map((s,i) => ({ x: s, y: +exp.mkt_vol[i].toFixed(2) })),
       label: exp.expiry + ' (' + exp.tenor_days + 'D)',
-      color: colors[idx % colors.length],
-    };
-  });
-
-  const chartDatasets = [];
-  datasets.forEach(d => {
-    // SABR line
-    chartDatasets.push({
-      label: d.label,
-      data: d.sabrPts,
-      borderColor: d.color,
+      data: pts,
+      borderColor: colors[idx % colors.length],
+      backgroundColor: colors[idx % colors.length],
       borderWidth: 1.5,
-      pointRadius: 0,
-      tension: 0,
+      pointRadius: smileMode === 'all' ? 2 : 4,
+      tension: 0,   // linear interpolation between market points
       fill: false,
-      showLine: true,
-      type: 'scatter',
-    });
-    // Market dots — only for single expiry mode
-    if (smileMode !== 'all') {
-      chartDatasets.push({
-        label: 'Market quotes',
-        data: d.mktPts,
-        borderColor: d.color,
-        backgroundColor: d.color,
-        borderWidth: 0,
-        pointRadius: 4,
-        fill: false,
-        showLine: false,
-        tension: 0,
-      });
-    }
+    };
   });
 
   if(smileI)smileI.destroy();
@@ -563,30 +490,21 @@ async function renderSmile(){
     responsive:true, maintainAspectRatio:false,
     parsing: false,
     plugins:{
-      legend:{
-        display:true, position:'top',
-        labels:{
-          color:'#6b7280', font:{family:'IBM Plex Mono',size:11},
-          boxWidth:12, boxHeight:2, padding:14,
-          filter: item => item.text !== '',
-        }
-      },
+      legend:{display:true,position:'top',labels:{color:'#6b7280',font:{family:'IBM Plex Mono',size:11},boxWidth:12,boxHeight:2,padding:14}},
       tooltip:{
-        mode:'nearest', intersect:false,
-        backgroundColor:'rgba(255,255,255,0.97)', borderColor:'rgba(0,0,0,0.1)', borderWidth:1,
-        titleColor:'#6b7280', bodyColor:'#111827', padding:10,
-        callbacks:{
-          label: ctx => ctx.parsed.y ? `Strike ${ctx.parsed.x.toLocaleString()}: ${ctx.parsed.y.toFixed(1)}%` : null
-        }
+        mode:'nearest',intersect:false,
+        backgroundColor:'rgba(255,255,255,0.97)',borderColor:'rgba(0,0,0,0.1)',borderWidth:1,
+        titleColor:'#6b7280',bodyColor:'#111827',padding:10,
+        callbacks:{label: ctx=>`Strike ${ctx.parsed.x.toLocaleString()}: ${ctx.parsed.y.toFixed(1)}%`}
       }
     },
     scales:{
       x:{type:'linear',
          ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxTicksLimit:8,callback:v=>v.toLocaleString()},
-         grid:{color:GC}, border:{color:'rgba(0,0,0,0.08)'},
+         grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'},
          title:{display:true,text:'Strike',color:TC,font:{family:'IBM Plex Mono',size:10}}},
       y:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},callback:v=>v.toFixed(0)+'%'},
-         grid:{color:GC}, border:{color:'rgba(0,0,0,0.08)'},
+         grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'},
          title:{display:true,text:'Implied vol (%)',color:TC,font:{family:'IBM Plex Mono',size:10}}},
     }
   }});
