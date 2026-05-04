@@ -208,7 +208,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
 
   <div class="panel">
     <div class="panel-hd">
-      <div><div class="panel-title">Vol Term Structure</div><div class="panel-sub">Latest snapshot across tenors by session</div></div>
+      <div><div class="panel-title">Vol Smile by Expiry</div><div class="panel-sub">Implied vol across delta strikes · put wing → ATM → call wing</div></div>
     </div>
     <div class="panel-body">
       <div style="position:relative;width:100%;height:190px;"><canvas id="termChart" role="img" aria-label="Volatility term structure by session"></canvas></div>
@@ -217,13 +217,11 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
 
   <div class="panel">
     <div class="panel-hd">
-      <div><div class="panel-title">Vol Smile by Expiry</div><div class="panel-sub">Implied vol across delta strikes · put wing → ATM → call wing</div></div>
+      <div><div class="panel-title">Vol Term Structure</div><div class="panel-sub">Latest snapshot across tenors by session</div></div>
     </div>
     <div class="panel-body">
-      <div class="exp-row" id="exp-row">
-        <button class="exp-btn active" onclick="setSmile('all')">All expiries</button>
-      </div>
-      <div style="position:relative;width:100%;height:230px;"><canvas id="smileChart" role="img" aria-label="Volatility smile by expiry date"></canvas></div>
+      <div class="exp-row" id="exp-row" style="display:none"></div>
+      <div style="position:relative;width:100%;height:360px;"><canvas id="smileChart" role="img" aria-label="Volatility smile by expiry date"></canvas></div>
       <div class="smile-note">Shorter expiries show steeper skew · elevated put wing reflects persistent downside demand · data captured at each session open</div>
     </div>
   </div>
@@ -536,7 +534,7 @@ async function renderSmile(){
 
 function setCcy(c){ccy=c;document.querySelectorAll('#ccy-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===c));update();}
 function setSess(s){sess=s;document.querySelectorAll('#sess-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===s.toUpperCase()));update();}
-function setSmile(m){smileMode=m;renderSmile();}
+function setSmile(m){}
 
 async function update(){
   await renderMetrics();
