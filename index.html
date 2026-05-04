@@ -553,14 +553,15 @@ async function renderSmile(){
         pointRadius: 4,
         fill: false,
         showLine: false,
-        type: 'scatter',
+        tension: 0,
       });
     }
   });
 
   if(smileI)smileI.destroy();
-  smileI=new Chart(document.getElementById('smileChart'),{type:'scatter',data:{datasets:chartDatasets},options:{
+  smileI=new Chart(document.getElementById('smileChart'),{type:'line',data:{datasets:chartDatasets},options:{
     responsive:true, maintainAspectRatio:false,
+    parsing: false,
     plugins:{
       legend:{
         display:true, position:'top',
