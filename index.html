@@ -419,14 +419,12 @@ async function renderTerm(){
     vals.push(+atmVol.toFixed(2));
   }
 
-  // Use {x: date, y: vol} for true time spacing
-  const timePts = labels.map((lbl, i) => ({ x: lbl, y: vals[i] }));
-
   if(termI)termI.destroy();
   termI=new Chart(document.getElementById('termChart'),{type:'line',data:{
+    labels,
     datasets:[{
       label:'ATM vol',
-      data: timePts,
+      data: vals,
       borderColor:'#378ADD',
       borderWidth:1.5,
       pointRadius:0,
@@ -435,7 +433,6 @@ async function renderTerm(){
     }]
   },options:{
     responsive:true, maintainAspectRatio:false,
-    parsing:false,
     plugins:{
       legend:{display:false},
       tooltip:{mode:'nearest',intersect:false,
@@ -449,8 +446,8 @@ async function renderTerm(){
     },
     scales:{
       x:{type:'time',
-         time:{unit:'day', tooltipFormat:'yyyy-MM-dd', displayFormats:{day:'yyyy-MM-dd', month:'yyyy-MM-dd'}},
-         ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxRotation:30,autoSkip:true,maxTicksLimit:8},
+         time:{unit:'day', tooltipFormat:'yyyy-MM-dd', displayFormats:{day:'yyyy-MM-dd'}},
+         ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxRotation:30,autoSkip:true,maxTicksLimit:6,source:'labels'},
          grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'}},
       y:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},callback:v=>v.toFixed(0)+'%'},
          grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'},
