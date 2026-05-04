@@ -507,7 +507,7 @@ async function renderSmile(){
     // Strike grid: from min to max strike of this expiry, 60 points
     const sMin = Math.min(...exp.strikes);
     const sMax = Math.max(...exp.strikes);
-    const nPts = 60;
+    const nPts = 120;
     const step = (sMax - sMin) / (nPts - 1);
 
     const pts = [];
@@ -545,7 +545,7 @@ async function renderSmile(){
     // Market dots — only for single expiry mode
     if (smileMode !== 'all') {
       chartDatasets.push({
-        label: '',
+        label: 'Market quotes',
         data: d.mktPts,
         borderColor: d.color,
         backgroundColor: d.color,
@@ -567,7 +567,7 @@ async function renderSmile(){
         labels:{
           color:'#6b7280', font:{family:'IBM Plex Mono',size:11},
           boxWidth:12, boxHeight:2, padding:14,
-          filter: item => item.text !== '',  // hide market dot legend entries
+          filter: item => item.text !== '',
         }
       },
       tooltip:{
