@@ -211,7 +211,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
       <div><div class="panel-title">Vol Smile by Expiry</div><div class="panel-sub">Implied vol across delta strikes · put wing → ATM → call wing</div></div>
     </div>
     <div class="panel-body">
-      <div style="position:relative;width:100%;height:190px;"><canvas id="termChart" role="img" aria-label="Volatility term structure by session"></canvas></div>
+      <div style="position:relative;width:100%;height:190px;"><canvas id="smileChart" role="img" aria-label="Volatility smile by expiry date"></canvas></div>
     </div>
   </div>
 
@@ -221,7 +221,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
     </div>
     <div class="panel-body">
       <div class="exp-row" id="exp-row" style="display:none"></div>
-      <div style="position:relative;width:100%;height:360px;"><canvas id="smileChart" role="img" aria-label="Volatility smile by expiry date"></canvas></div>
+      <div style="position:relative;width:100%;height:360px;"><canvas id="termChart" role="img" aria-label="Volatility term structure by session"></canvas></div>
       <div class="smile-note">Shorter expiries show steeper skew · elevated put wing reflects persistent downside demand · data captured at each session open</div>
     </div>
   </div>
@@ -418,7 +418,7 @@ async function renderTerm(){
   }
 
   if(termI)termI.destroy();
-  termI=new Chart(document.getElementById('termChart'),{type:'line',data:{
+  termI=new Chart(document.getElementById('smileChart'),{type:'line',data:{
     labels,
     datasets:[{
       label:'ATM vol',
@@ -508,7 +508,7 @@ async function renderSmile(){
   });
 
   if(smileI)smileI.destroy();
-  smileI=new Chart(document.getElementById('smileChart'),{type:'line',data:{datasets:chartDatasets},options:{
+  smileI=new Chart(document.getElementById('termChart'),{type:'line',data:{datasets:chartDatasets},options:{
     responsive:true, maintainAspectRatio:false,
     parsing: false,
     plugins:{
