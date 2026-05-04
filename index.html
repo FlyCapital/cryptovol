@@ -221,11 +221,11 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
     <div class="panel-body">
       <div class="exp-row" id="exp-row">
         <button class="exp-btn active" onclick="setSmile('all')">All expiries</button>
-        <button class="exp-btn" onclick="setSmile('7D')">7D</button>
-        <button class="exp-btn" onclick="setSmile('14D')">14D</button>
-        <button class="exp-btn" onclick="setSmile('30D')">30D</button>
-        <button class="exp-btn" onclick="setSmile('60D')">60D</button>
-        <button class="exp-btn" onclick="setSmile('90D')">90D</button>
+        <button class="exp-btn" onclick="setSmile('7D')">~7D</button>
+        <button class="exp-btn" onclick="setSmile('14D')">~14D</button>
+        <button class="exp-btn" onclick="setSmile('30D')">~30D</button>
+        <button class="exp-btn" onclick="setSmile('60D')">~60D</button>
+        <button class="exp-btn" onclick="setSmile('90D')">~90D</button>
       </div>
       <div style="position:relative;width:100%;height:230px;"><canvas id="smileChart" role="img" aria-label="Volatility smile by expiry date"></canvas></div>
       <div class="smile-note">Shorter expiries show steeper skew · elevated put wing reflects persistent downside demand · data captured at each session open</div>
@@ -394,52 +394,133 @@ async function renderVix() {
   },options:{...BASE_OPTS}});
 }
 
-// ── Term structure (still dummy — no multi-tenor API yet) ──
-async function renderTerm(){
-  const data7  = await fetchVix(ccy,'7D');
-  const data30 = await fetchVix(ccy,'30D');
-  const latest7  = data7.length  ? data7[data7.length-1].vi  : BASE[ccy];
-  const latest30 = data30.length ? data30[data30.length-1].vi : BASE[ccy]-5;
+// ── Fetch vol surface from API ──
+async function fetchSurface(c) {
+  const key = 'surface_' + c;
+  if (realData[key]) return realData[key];
+  try {
+    const res = await fetch(`${API}/v1/surface?ccy=${c}`);
+    const json = await res.json();
+    realData[key] = json.expiries || [];
+    return realData[key];
+  } catch(e) { return []; }
+}
 
-  // interpolate dummy tenors between 7D and 30D, extrapolate to 90D
-  const termVals = TENORS.map(t=>{
-    const d=parseInt(t);
-    if(d<=7)  return latest7;
-    if(d>=30) return latest30 + (d-30)*0.05;
-    return latest7 + (latest30-latest7)*((d-7)/23);
-  });
+// ── Term structure (real data — ATM vol by real expiry date) ──
+async function renderTerm(){
+  const expiries = await fetchSurface(ccy);
+  if (!expiries.length) return;
+
+  const labels = [], vals = [];
+  for (const exp of expiries) {
+    if (!exp.strikes || !exp.mkt_vol || !exp.forward) continue;
+    const fwd = exp.forward;
+    let bestIdx = 0, bestDist = Infinity;
+    exp.strikes.forEach((s,i) => { const d=Math.abs(s-fwd); if(d<bestDist){bestDist=d;bestIdx=i;} });
+    const atmVol = exp.mkt_vol[bestIdx];
+    if (atmVol == null) continue;
+    labels.push(exp.expiry);   // real expiry date as x-axis
+    vals.push(+atmVol.toFixed(2));
+  }
 
   if(termI)termI.destroy();
   termI=new Chart(document.getElementById('termChart'),{type:'line',data:{
-    labels:TENORS,
-    datasets:[{label:ccy,data:termVals,borderColor:'#378ADD',borderWidth:2,pointRadius:4,pointBackgroundColor:'#378ADD',tension:0.25,fill:false}]
+    labels,
+    datasets:[{label:'ATM vol',data:vals,borderColor:'#378ADD',borderWidth:2,pointRadius:5,pointBackgroundColor:'#378ADD',tension:0.25,fill:false}]
   },options:{
     ...BASE_OPTS,
-    plugins:{...BASE_OPTS.plugins,legend:{display:false}}
+    plugins:{...BASE_OPTS.plugins,legend:{display:false}},
+    scales:{
+      x:{...BASE_OPTS.scales.x,ticks:{...BASE_OPTS.scales.x.ticks,maxRotation:30,autoSkip:false}},
+      y:{...BASE_OPTS.scales.y,title:{display:true,text:'ATM vol (%)',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+    }
   }});
 }
 
-// ── Smile (dummy) ──
+// ── Smile (real data — only real strikes, per expiry) ──
 async function renderSmile(){
-  const data7 = await fetchVix(ccy,'7D');
-  const atm = data7.length ? data7[data7.length-1].vi : BASE[ccy];
-  const P={'7D':{s:10,c:8,w:5},'14D':{s:8,c:6.5,w:4},'30D':{s:6,c:5,w:3},'60D':{s:4,c:3.5,w:2},'90D':{s:2.5,c:2.5,w:1.5}};
-  const exps=smileMode==='all'?Object.keys(P):[smileMode];
-  const datasets=exps.map(e=>({
-    label:e,data:smile(atm,P[e].s,P[e].c,P[e].w,e),
-    borderColor:SCOL[e],borderWidth:smileMode==='all'?1.5:2,
-    pointRadius:smileMode==='all'?2:4,pointBackgroundColor:SCOL[e],
-    tension:0.35,fill:false,
-  }));
-  if(smileI)smileI.destroy();
-  smileI=new Chart(document.getElementById('smileChart'),{type:'line',data:{labels:DLBL,datasets},options:{
-    ...BASE_OPTS,
-    plugins:{...BASE_OPTS.plugins,legend:{display:true,position:'top',labels:{color:'#6b7280',font:{family:'IBM Plex Mono',size:11},boxWidth:12,boxHeight:2,padding:14}}},
-    scales:{
-      x:{...BASE_OPTS.scales.x,ticks:{...BASE_OPTS.scales.x.ticks,maxRotation:0}},
-      y:{...BASE_OPTS.scales.y,title:{display:true,text:'Implied vol (%)',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+  const expiries = await fetchSurface(ccy);
+  if (!expiries.length) return;
+
+  const colors = ['#D85A30','#378ADD','#1D9E75','#7F77DD','#888780','#E8A838','#C84B8F','#4BA0C8'];
+
+  let selectedExpiries = [];
+  if (smileMode === 'all') {
+    selectedExpiries = expiries.slice(0, 5);
+  } else {
+    const targetDays = parseInt(smileMode);
+    let best = expiries[0], bestDist = Infinity;
+    for (const exp of expiries) {
+      const d = Math.abs(exp.tenor_days - targetDays);
+      if (d < bestDist) { bestDist = d; best = exp; }
     }
-  }});
+    selectedExpiries = [best];
+  }
+
+  if (smileMode !== 'all') {
+    // Single expiry: x-axis = real strikes, y = mkt_vol
+    const exp = selectedExpiries[0];
+    const labels = exp.strikes.map(s => s.toLocaleString());
+    const data   = exp.mkt_vol.map(v => +v.toFixed(2));
+
+    if(smileI)smileI.destroy();
+    smileI=new Chart(document.getElementById('smileChart'),{type:'line',data:{
+      labels,
+      datasets:[{
+        label: exp.expiry + ' (' + exp.tenor_days + 'D)',
+        data,
+        borderColor: colors[0],
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: colors[0],
+        tension: 0.3,
+        fill: false,
+      }]
+    },options:{
+      ...BASE_OPTS,
+      plugins:{...BASE_OPTS.plugins,legend:{display:true,position:'top',labels:{color:'#6b7280',font:{family:'IBM Plex Mono',size:11},boxWidth:12,boxHeight:2,padding:14}}},
+      scales:{
+        x:{...BASE_OPTS.scales.x,ticks:{...BASE_OPTS.scales.x.ticks,maxRotation:30,autoSkip:true,maxTicksLimit:10},
+           title:{display:true,text:'Strike',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+        y:{...BASE_OPTS.scales.y,title:{display:true,text:'Implied vol (%)',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+      }
+    }});
+
+  } else {
+    // All expiries: absolute strike x-axis, null for strikes not in a given expiry
+    // Build union of all strikes across selected expiries
+    const allStrikes = [...new Set(selectedExpiries.flatMap(e => e.strikes))].sort((a,b)=>a-b);
+
+    const datasets = selectedExpiries.map((exp, idx) => {
+      const strikeToVol = {};
+      exp.strikes.forEach((s,i) => { strikeToVol[s] = +exp.mkt_vol[i].toFixed(2); });
+      return {
+        label: exp.expiry + ' (' + exp.tenor_days + 'D)',
+        data: allStrikes.map(s => strikeToVol[s] ?? null),
+        borderColor: colors[idx % colors.length],
+        borderWidth: 1.5,
+        pointRadius: 2,
+        pointBackgroundColor: colors[idx % colors.length],
+        tension: 0.3,
+        fill: false,
+        spanGaps: false,  // don't connect across nulls
+      };
+    });
+
+    if(smileI)smileI.destroy();
+    smileI=new Chart(document.getElementById('smileChart'),{type:'line',data:{
+      labels: allStrikes.map(s => s.toLocaleString()),
+      datasets
+    },options:{
+      ...BASE_OPTS,
+      plugins:{...BASE_OPTS.plugins,legend:{display:true,position:'top',labels:{color:'#6b7280',font:{family:'IBM Plex Mono',size:11},boxWidth:12,boxHeight:2,padding:14}}},
+      scales:{
+        x:{...BASE_OPTS.scales.x,ticks:{...BASE_OPTS.scales.x.ticks,maxRotation:30,autoSkip:true,maxTicksLimit:10},
+           title:{display:true,text:'Strike',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+        y:{...BASE_OPTS.scales.y,title:{display:true,text:'Implied vol (%)',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+      }
+    }});
+  }
 }
 
 function setCcy(c){ccy=c;document.querySelectorAll('#ccy-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===c));update();}
