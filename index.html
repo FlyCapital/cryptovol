@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -175,8 +176,8 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
       <button class="ctrl-btn" onclick="setCcy('ETH')">ETH</button>
       <button class="ctrl-btn" onclick="setCcy('SOL')">SOL</button>
       <button class="ctrl-btn" onclick="setCcy('XRP')">XRP</button>
-      <button class="ctrl-btn" onclick="setCcy('AVAX')">AVAX</button>
-      <button class="ctrl-btn" onclick="setCcy('TRX')">TRX</button>
+      <button class="ctrl-btn" onclick="setCcy('AVAX')" style="display:none">AVAX</button>
+      <button class="ctrl-btn" onclick="setCcy('TRX')" style="display:none">TRX</button>
     </div>
     <div class="ctrl-sep"></div>
     <span class="ctrl-label">SESSION</span>
@@ -418,16 +419,42 @@ async function renderTerm(){
     vals.push(+atmVol.toFixed(2));
   }
 
+  // Use {x: date, y: vol} for true time spacing
+  const timePts = labels.map((lbl, i) => ({ x: lbl, y: vals[i] }));
+
   if(termI)termI.destroy();
   termI=new Chart(document.getElementById('termChart'),{type:'line',data:{
-    labels,
-    datasets:[{label:'ATM vol',data:vals,borderColor:'#378ADD',borderWidth:2,pointRadius:5,pointBackgroundColor:'#378ADD',tension:0.25,fill:false}]
+    datasets:[{
+      label:'ATM vol',
+      data: timePts,
+      borderColor:'#378ADD',
+      borderWidth:1.5,
+      pointRadius:0,
+      tension:0,
+      fill:false,
+    }]
   },options:{
-    ...BASE_OPTS,
-    plugins:{...BASE_OPTS.plugins,legend:{display:false}},
+    responsive:true, maintainAspectRatio:false,
+    parsing:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{mode:'nearest',intersect:false,
+        backgroundColor:'rgba(255,255,255,0.97)',borderColor:'rgba(0,0,0,0.1)',borderWidth:1,
+        titleColor:'#6b7280',bodyColor:'#111827',padding:10,
+        callbacks:{
+          title: items => items[0].label,
+          label: ctx=>`ATM vol: ${ctx.parsed.y.toFixed(1)}%`
+        }
+      }
+    },
     scales:{
-      x:{...BASE_OPTS.scales.x,ticks:{...BASE_OPTS.scales.x.ticks,maxRotation:30,autoSkip:false}},
-      y:{...BASE_OPTS.scales.y,title:{display:true,text:'ATM vol (%)',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+      x:{type:'time',
+         time:{unit:'day', tooltipFormat:'yyyy-MM-dd', displayFormats:{day:'yyyy-MM-dd', month:'yyyy-MM-dd'}},
+         ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxRotation:30,autoSkip:true,maxTicksLimit:8},
+         grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'}},
+      y:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},callback:v=>v.toFixed(0)+'%'},
+         grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'},
+         title:{display:true,text:'ATM vol (%)',color:TC,font:{family:'IBM Plex Mono',size:10}}},
     }
   }});
 }
@@ -479,7 +506,7 @@ async function renderSmile(){
       borderColor: colors[idx % colors.length],
       backgroundColor: colors[idx % colors.length],
       borderWidth: 1.5,
-      pointRadius: smileMode === 'all' ? 2 : 4,
+      pointRadius: 0,
       tension: 0,   // linear interpolation between market points
       fill: false,
     };
