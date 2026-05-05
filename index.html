@@ -88,8 +88,8 @@ nav {
 .m-lbl { font-size:10px; letter-spacing:0.09em; color:var(--text3); text-transform:uppercase; margin-bottom:4px; }
 .m-val { font-size:24px; font-family:var(--sans); font-weight:700; color:var(--text); letter-spacing:-0.5px; }
 .m-d   { font-size:11px; margin-top:2px; }
-.up  { color:var(--red); }
-.dn  { color:var(--green); }
+.up  { color:var(--green); }
+.dn  { color:var(--red); }
 .neu { color:var(--text3); }
 
 .panel { background:var(--surface); border:0.5px solid var(--border2); border-radius:8px; overflow:hidden; margin-bottom:14px; }
@@ -140,6 +140,12 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
   .cta-acts{align-items:flex-start;flex-direction:row;flex-wrap:wrap;}
   .tiers{grid-template-columns:1fr;}
 }
+
+.chart-loading {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:12px; color:var(--text3); letter-spacing:0.05em;
+  background:var(--surface); z-index:10;
+}
 </style>
 </head>
 <body>
@@ -163,7 +169,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
     <h1>Crypto volatility<br><em>intelligently measured</em></h1>
     <p class="hero-sub">Institutional-grade implied volatility indices and vol surfaces for BTC, ETH and SOL — captured across Asia, London and US sessions.</p>
     <div class="hero-pills">
-      <div class="pill"><span class="pill-label">Coverage</span><span class="pill-value"><strong>6</strong> assets</span></div>
+      <div class="pill"><span class="pill-label">Coverage</span><span class="pill-value"><strong>3</strong> assets</span></div>
       <div class="pill"><span class="pill-label">Sessions</span><span class="pill-value"><strong>Asia · London · US</strong></span></div>
 
     </div>
@@ -190,17 +196,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
       <div><div class="panel-title">CryptoVIX — Implied Volatility Index</div><div class="panel-sub">Annualized implied vol index · click legend to toggle</div></div>
     </div>
     <div class="panel-body">
-      <div style="position:relative;width:100%;height:270px;"><canvas id="vixChart" role="img" aria-label="CryptoVIX implied and realized volatility over time"></canvas></div>
-    </div>
-  </div>
-
-  <div style="display:flex;align-items:center;gap:10px;padding:6px 0 6px;">
-    <span class="ctrl-label">SESSION</span>
-    <div class="btn-group" id="sess-grp">
-      <button class="ctrl-btn active" onclick="setSess('all')">ALL</button>
-      <button class="ctrl-btn" onclick="setSess('asia')">ASIA</button>
-      <button class="ctrl-btn" onclick="setSess('london')">LONDON</button>
-      <button class="ctrl-btn" onclick="setSess('us')">US</button>
+      <div style="position:relative;width:100%;height:270px;"><div class="chart-loading" id="vixLoading">LOADING DATA...</div><canvas id="vixChart" role="img" aria-label="CryptoVIX implied and realized volatility over time"></canvas></div>
     </div>
   </div>
 
@@ -209,7 +205,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
       <div><div class="panel-title">Vol Smile by Expiry</div><div class="panel-sub">Implied vol across delta strikes · put wing → ATM → call wing</div></div>
     </div>
     <div class="panel-body">
-      <div style="position:relative;width:100%;height:360px;"><canvas id="smileChart" role="img" aria-label="Volatility smile by expiry date"></canvas></div>
+      <div style="position:relative;width:100%;height:360px;"><div class="chart-loading" id="smileLoading">LOADING DATA...</div><canvas id="smileChart" role="img" aria-label="Volatility smile by expiry date"></canvas></div>
     </div>
   </div>
 
@@ -219,7 +215,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
     </div>
     <div class="panel-body">
       <div class="exp-row" id="exp-row" style="display:none"></div>
-      <div style="position:relative;width:100%;height:190px;"><canvas id="termChart" role="img" aria-label="Volatility term structure by session"></canvas></div>
+      <div style="position:relative;width:100%;height:190px;"><div class="chart-loading" id="termLoading">LOADING DATA...</div><canvas id="termChart" role="img" aria-label="Volatility term structure by session"></canvas></div>
       <div class="smile-note">Shorter expiries show steeper skew · elevated put wing reflects persistent downside demand · data captured at each session open</div>
     </div>
   </div>
@@ -237,7 +233,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
       </div>
     </div>
     <div class="panel-body">
-      <div style="position:relative;width:100%;height:300px;"><canvas id="sessionSmileChart" role="img" aria-label="Vol smile by session for selected expiry"></canvas></div>
+      <div style="position:relative;width:100%;height:300px;"><div class="chart-loading" id="sessionSmileLoading">LOADING DATA...</div><canvas id="sessionSmileChart" role="img" aria-label="Vol smile by session for selected expiry"></canvas></div>
     </div>
   </div>
 
@@ -371,8 +367,8 @@ async function renderMetrics() {
   }
 
   document.getElementById('metrics').innerHTML=`
-    <div class="metric"><div class="m-lbl">7D</div><div class="m-val">${latest7!=null?latest7.toFixed(1)+'%':'—'}</div><div class="m-d ${d7>=0?'up':'dn'}">${d7!=null?(parseFloat(d7)>=0?'▲':'▼')+' '+Math.abs(d7)+'% 1D':''}</div></div>
-    <div class="metric"><div class="m-lbl">30D</div><div class="m-val">${latest30!=null?latest30.toFixed(1)+'%':'—'}</div><div class="m-d ${d30>=0?'up':'dn'}">${d30!=null?(parseFloat(d30)>=0?'▲':'▼')+' '+Math.abs(d30)+'% 1D':''}</div></div>
+    <div class="metric"><div class="m-lbl">7D</div><div class="m-val">${latest7!=null?latest7.toFixed(1)+'%':'—'}</div><div class="m-d ${parseFloat(d7)>=0?'up':'dn'}">${d7!=null?(parseFloat(d7)>=0?'▲':'▼')+' '+Math.abs(d7)+'% 1D':''}</div></div>
+    <div class="metric"><div class="m-lbl">30D</div><div class="m-val">${latest30!=null?latest30.toFixed(1)+'%':'—'}</div><div class="m-d ${parseFloat(d30)>=0?'up':'dn'}">${d30!=null?(parseFloat(d30)>=0?'▲':'▼')+' '+Math.abs(d30)+'% 1D':''}</div></div>
   `;
 }
 
@@ -393,6 +389,7 @@ async function renderVix() {
   const map30 = Object.fromEntries(data30.map(d=>[d.time.slice(0,10),d.vi]));
 
   if(vixI)vixI.destroy();
+  document.getElementById('vixLoading').style.display='none';
   vixI=new Chart(document.getElementById('vixChart'),{type:'line',data:{
     labels: allLabels,
     datasets:[
@@ -475,6 +472,7 @@ async function renderTerm(){
   });
 
   if(termI)termI.destroy();
+  document.getElementById('termLoading').style.display='none';
   termI=new Chart(document.getElementById('termChart'),{type:'line',data:{
     labels: allExpiries,
     datasets,
@@ -558,7 +556,7 @@ async function renderSmile(){
   const allExpiries = await fetchSurface(ccy);
   if (!allExpiries.length) return;
 
-  const expiries = allExpiries.filter(e => e.tenor_days >= 7);
+  const expiries = allExpiries.filter(e => e.tenor_days >= 5);
   if (!expiries.length) return;
 
   const colors = ['#E8845A','#1F6FBF','#1D9E75','#7F77DD','#888780','#E8A838','#C84B8F','#4BA0C8'];
@@ -604,6 +602,7 @@ async function renderSmile(){
   });
 
   if(smileI)smileI.destroy();
+  document.getElementById('smileLoading').style.display='none';
   smileI=new Chart(document.getElementById('smileChart'),{type:'line',data:{datasets:chartDatasets},options:{
     responsive:true, maintainAspectRatio:false,
     parsing: false,
@@ -692,7 +691,7 @@ async function renderSessionSmile() {
 
   // Populate expiry dropdown from US session (most complete)
   const usExpiries = results.find(r => r.key === 'us')?.expiries || [];
-  const validExpiries = usExpiries.filter(e => e.tenor_days >= 7);
+  const validExpiries = usExpiries.filter(e => e.tenor_days >= 5);
 
   const select = document.getElementById('expiry-select');
   if (select.options.length <= 1 || select.options[0].value === '') {
@@ -737,6 +736,7 @@ async function renderSessionSmile() {
   }).filter(Boolean);
 
   if (sessionSmileI) sessionSmileI.destroy();
+  document.getElementById('sessionSmileLoading').style.display='none';
   sessionSmileI = new Chart(document.getElementById('sessionSmileChart'), {
     type: 'line',
     data: { datasets: chartDatasets },
@@ -773,7 +773,7 @@ async function renderSessionSmile() {
   });
 }
 
-function setCcy(c){ccy=c;delete realData['surface_'+c];document.querySelectorAll('#ccy-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===c));update();}
+function setCcy(c){ccy=c;delete realData['surface_'+c];['vixLoading','smileLoading','termLoading','sessionSmileLoading'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='flex';});document.querySelectorAll('#ccy-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===c));update();}
 function setSess(s){sess=s;document.querySelectorAll('#sess-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===s.toUpperCase()));update();}
 function setSmile(m){}
 
@@ -782,9 +782,12 @@ async function update(){
   await renderVix();
   await renderTerm();
   await renderSmile();
+  sessionSmileExpiry = null;
+  document.getElementById('expiry-select').innerHTML = '<option value="">Loading...</option>';
+  await renderSessionSmile();
 }
 
-document.getElementById('ts').textContent='Updated '+new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+' UTC';
+document.getElementById('ts').textContent='Updated '+new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+' EST';
 update();
 </script>
 
