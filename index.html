@@ -21,8 +21,8 @@
   --text:    #111827;
   --text2:   #6b7280;
   --text3:   #b0b8c4;
-  --blue:    #378ADD;
-  --red:     #D85A30;
+  --blue:    #1F6FBF;
+  --red:     #E8845A;
   --green:   #1D9E75;
   --purple:  #7F77DD;
   --amber:   #888780;
@@ -179,14 +179,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
       <button class="ctrl-btn" onclick="setCcy('AVAX')" style="display:none">AVAX</button>
       <button class="ctrl-btn" onclick="setCcy('TRX')" style="display:none">TRX</button>
     </div>
-    <div class="ctrl-sep"></div>
-    <span class="ctrl-label">SESSION</span>
-    <div class="btn-group" id="sess-grp">
-      <button class="ctrl-btn active" onclick="setSess('all')">ALL</button>
-      <button class="ctrl-btn" onclick="setSess('asia')">ASIA</button>
-      <button class="ctrl-btn" onclick="setSess('london')">LONDON</button>
-      <button class="ctrl-btn" onclick="setSess('us')">US</button>
-    </div>
+
     <span class="ts" id="ts"></span>
   </div>
 
@@ -194,15 +187,20 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
 
   <div class="panel">
     <div class="panel-hd">
-      <div><div class="panel-title">CryptoVIX — Implied vs Realized Volatility</div><div class="panel-sub">Annualized implied vol index across key tenors</div></div>
-      <div class="legend">
-        <div class="leg"><div class="leg-bar" style="background:#378ADD"></div>7D implied</div>
-        <div class="leg"><div class="leg-bar" style="background:#D85A30"></div>30D implied</div>
-        <div class="leg"><div class="leg-dash" style="border-color:#888780"></div>realized</div>
-      </div>
+      <div><div class="panel-title">CryptoVIX — Implied Volatility Index</div><div class="panel-sub">Annualized implied vol index · click legend to toggle</div></div>
     </div>
     <div class="panel-body">
       <div style="position:relative;width:100%;height:270px;"><canvas id="vixChart" role="img" aria-label="CryptoVIX implied and realized volatility over time"></canvas></div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:10px;padding:6px 0 6px;">
+    <span class="ctrl-label">SESSION</span>
+    <div class="btn-group" id="sess-grp">
+      <button class="ctrl-btn active" onclick="setSess('all')">ALL</button>
+      <button class="ctrl-btn" onclick="setSess('asia')">ASIA</button>
+      <button class="ctrl-btn" onclick="setSess('london')">LONDON</button>
+      <button class="ctrl-btn" onclick="setSess('us')">US</button>
     </div>
   </div>
 
@@ -223,6 +221,23 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
       <div class="exp-row" id="exp-row" style="display:none"></div>
       <div style="position:relative;width:100%;height:190px;"><canvas id="termChart" role="img" aria-label="Volatility term structure by session"></canvas></div>
       <div class="smile-note">Shorter expiries show steeper skew · elevated put wing reflects persistent downside demand · data captured at each session open</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hd">
+      <div>
+        <div class="panel-title">Session Smile Comparison</div>
+        <div class="panel-sub">Vol smile for a single expiry across Asia, London and US sessions</div>
+      </div>
+      <div>
+        <select id="expiry-select" style="font-family:var(--mono);font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;">
+          <option value="">Loading expiries...</option>
+        </select>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div style="position:relative;width:100%;height:300px;"><canvas id="sessionSmileChart" role="img" aria-label="Vol smile by session for selected expiry"></canvas></div>
     </div>
   </div>
 
@@ -285,10 +300,10 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
 
 <script>
 const API = 'https://cryptovol-api-nbakzshi6q-uc.a.run.app';
-const SCOL  = {'7D':'#D85A30','14D':'#378ADD','30D':'#1D9E75','60D':'#7F77DD','90D':'#888780'};
+const SCOL  = {'7D':'#E8845A','14D':'#1F6FBF','30D':'#1D9E75','60D':'#7F77DD','90D':'#888780'};
 const DLBL  = ['10Δp','15Δp','25Δp','35Δp','ATM','35Δc','25Δc','15Δc','10Δc'];
 const TENORS= ['7D','14D','21D','30D','60D','90D'];
-const SCOL3 = {asia:'#1D9E75',london:'#378ADD',us:'#D85A30'};
+const SCOL3 = {asia:'#1D9E75',london:'#1F6FBF',us:'#E8845A'};
 const BASE  = {BTC:65,ETH:72,SOL:88,XRP:58,AVAX:92,TRX:55};
 
 let ccy='BTC', sess='all', smileMode='all';
@@ -381,58 +396,100 @@ async function renderVix() {
   vixI=new Chart(document.getElementById('vixChart'),{type:'line',data:{
     labels: allLabels,
     datasets:[
-      {label:'7D', data:allLabels.map(l=>map7[l]??null),  borderColor:'#378ADD',borderWidth:1.5,pointRadius:0,tension:0.3,fill:false,spanGaps:true},
-      {label:'30D',data:allLabels.map(l=>map30[l]??null), borderColor:'#D85A30',borderWidth:1.5,pointRadius:0,tension:0.3,fill:false,spanGaps:true},
+      {label:'30D',data:allLabels.map(l=>map30[l]??null), borderColor:'#1F6FBF',borderWidth:1.5,pointRadius:0,tension:0.3,fill:false,spanGaps:true},
+      {label:'7D', data:allLabels.map(l=>map7[l]??null),  borderColor:'#E8845A',borderWidth:1.5,pointRadius:0,tension:0.3,fill:false,spanGaps:true},
     ]
-  },options:{...BASE_OPTS}});
+  },options:{
+    ...BASE_OPTS,
+    plugins:{
+      ...BASE_OPTS.plugins,
+      legend:{
+        display:true, position:'top',
+        labels:{color:'#6b7280',font:{family:'IBM Plex Mono',size:11},boxWidth:20,boxHeight:2,padding:14},
+        onClick: legendHighlightClick,
+      }
+    }
+  }});
 }
 
 // ── Fetch vol surface from API ──
 async function fetchSurface(c) {
   try {
-    const res = await fetch(`${API}/v1/surface?ccy=${c}`);
+    const sessionParam = sess === 'all' ? '' : `&session=${sess}`;
+    const res = await fetch(`${API}/v1/surface?ccy=${c}${sessionParam}`);
     const json = await res.json();
     return json.expiries || [];
   } catch(e) { return []; }
 }
 
-// ── Term structure (real data — ATM vol by real expiry date) ──
+// ── Term structure — 3 sessions, click legend to toggle ──
 async function renderTerm(){
-  const expiries = await fetchSurface(ccy);
-  if (!expiries.length) return;
+  const sessions = [
+    { key: 'asia',   label: 'Asia',   color: '#1D9E75' },
+    { key: 'london', label: 'London', color: '#1F6FBF' },
+    { key: 'us',     label: 'US',     color: '#E8845A' },
+  ];
 
-  const termLabels = [], termVals = [];
-  for (const exp of expiries) {
-    if (!exp.strikes || !exp.mkt_vol || !exp.forward) continue;
-    const fwd = exp.forward;
-    let bestIdx = 0, bestDist = Infinity;
-    exp.strikes.forEach((s,i) => { const d=Math.abs(s-fwd); if(d<bestDist){bestDist=d;bestIdx=i;} });
-    const atmVol = exp.mkt_vol[bestIdx];
-    if (atmVol == null) continue;
-    termLabels.push(exp.expiry);
-    termVals.push(+atmVol.toFixed(2));
+  // Fetch all 3 sessions in parallel
+  const results = await Promise.all(
+    sessions.map(s =>
+      fetch(`${API}/v1/surface?ccy=${ccy}&session=${s.key}`)
+        .then(r => r.json())
+        .then(j => ({ ...s, expiries: j.expiries || [], datetime: j.datetime }))
+        .catch(() => ({ ...s, expiries: [], datetime: null }))
+    )
+  );
+
+  // Build ATM vol per session
+  function getAtmPts(expiries) {
+    const pts = [];
+    for (const exp of expiries) {
+      if (!exp.strikes || !exp.mkt_vol || !exp.forward) continue;
+      const fwd = exp.forward;
+      let bestIdx = 0, bestDist = Infinity;
+      exp.strikes.forEach((s,i) => { const d=Math.abs(s-fwd); if(d<bestDist){bestDist=d;bestIdx=i;} });
+      const atmVol = exp.mkt_vol[bestIdx];
+      if (atmVol == null) continue;
+      pts.push({ expiry: exp.expiry, vol: +atmVol.toFixed(2) });
+    }
+    return pts;
   }
+
+  // Union of all expiry dates
+  const allExpiries = [...new Set(results.flatMap(r => getAtmPts(r.expiries).map(p => p.expiry)))].sort();
+
+  const datasets = results.map(r => {
+    const pts = getAtmPts(r.expiries);
+    const volMap = Object.fromEntries(pts.map(p => [p.expiry, p.vol]));
+    const timeStr = r.datetime ? r.datetime.slice(0,16) : '';
+    return {
+      label: `${r.label} · ${timeStr || 'n/a'}`,
+      data: allExpiries.map(e => volMap[e] ?? null),
+      borderColor: r.color,
+      borderWidth: 1.5,
+      pointRadius: 0,
+      tension: 0,
+      fill: false,
+      spanGaps: false,
+    };
+  });
 
   if(termI)termI.destroy();
   termI=new Chart(document.getElementById('termChart'),{type:'line',data:{
-    labels: termLabels,
-    datasets:[{
-      label:'ATM vol',
-      data: termVals,
-      borderColor:'#378ADD',
-      borderWidth:1.5,
-      pointRadius:0,
-      tension:0,
-      fill:false,
-    }]
+    labels: allExpiries,
+    datasets,
   },options:{
     responsive:true, maintainAspectRatio:false,
     plugins:{
-      legend:{display:false},
+      legend:{
+        display:true, position:'top',
+        labels:{color:'#6b7280',font:{family:'IBM Plex Mono',size:11},boxWidth:20,boxHeight:2,padding:12},
+        onClick: legendHighlightClick
+      },
       tooltip:{mode:'index',intersect:false,
         backgroundColor:'rgba(255,255,255,0.97)',borderColor:'rgba(0,0,0,0.1)',borderWidth:1,
         titleColor:'#6b7280',bodyColor:'#111827',padding:10,
-        callbacks:{label: ctx=>`ATM vol: ${ctx.parsed.y.toFixed(1)}%`}
+        callbacks:{label: ctx=> ctx.parsed.y != null ? `${ctx.dataset.label.split(' ·')[0]}: ${ctx.parsed.y.toFixed(1)}%` : null}
       }
     },
     scales:{
@@ -504,7 +561,7 @@ async function renderSmile(){
   const expiries = allExpiries.filter(e => e.tenor_days >= 7);
   if (!expiries.length) return;
 
-  const colors = ['#D85A30','#378ADD','#1D9E75','#7F77DD','#888780','#E8A838','#C84B8F','#4BA0C8'];
+  const colors = ['#E8845A','#1F6FBF','#1D9E75','#7F77DD','#888780','#E8A838','#C84B8F','#4BA0C8'];
 
   const chartDatasets = expiries.map((exp, idx) => {
     const sabr = exp.sabr;
@@ -551,7 +608,7 @@ async function renderSmile(){
     responsive:true, maintainAspectRatio:false,
     parsing: false,
     plugins:{
-      legend:{display:true,position:'top',labels:{color:'#6b7280',font:{family:'IBM Plex Mono',size:11},boxWidth:12,boxHeight:2,padding:14}},
+      legend:{display:true,position:'top',labels:{color:'#6b7280',font:{family:'IBM Plex Mono',size:11},boxWidth:12,boxHeight:2,padding:14},onClick:legendHighlightClick},
       tooltip:{
         mode:'nearest',intersect:false,
         backgroundColor:'rgba(255,255,255,0.97)',borderColor:'rgba(0,0,0,0.1)',borderWidth:1,
@@ -573,6 +630,147 @@ async function renderSmile(){
          title:{display:true,text:'Implied vol (%)',color:TC,font:{family:'IBM Plex Mono',size:10}}},
     }
   }});
+}
+
+
+function legendHighlightClick(e, legendItem, legend) {
+  const chart = legend.chart;
+  const clickedIdx = legendItem.datasetIndex;
+
+  // Check if we're already in highlight mode (any dataset is faded)
+  const isFaded = chart.data.datasets.some((ds, i) =>
+    i !== clickedIdx && ds._origColor && ds.borderColor === ds._origColor + '33'
+  );
+
+  if (isFaded) {
+    // Restore all to original
+    chart.data.datasets.forEach((ds, i) => {
+      if (ds._origColor) ds.borderColor = ds._origColor;
+      if (ds._origWidth) ds.borderWidth = ds._origWidth;
+      chart.getDatasetMeta(i).hidden = false;
+    });
+  } else {
+    // Highlight clicked, fade others
+    chart.data.datasets.forEach((ds, i) => {
+      if (!ds._origColor) ds._origColor = ds.borderColor;
+      if (!ds._origWidth) ds._origWidth = ds.borderWidth;
+      if (i === clickedIdx) {
+        ds.borderColor = ds._origColor;
+        ds.borderWidth = ds._origWidth;
+        chart.getDatasetMeta(i).hidden = false;
+      } else {
+        ds.borderColor = ds._origColor + '33';
+        ds.borderWidth = 0.8;
+        chart.getDatasetMeta(i).hidden = false;
+      }
+    });
+  }
+  chart.update();
+}
+
+
+let sessionSmileI = null;
+let sessionSmileExpiry = null;
+
+// ── Session Smile Comparison ──
+async function renderSessionSmile() {
+  const sessions = [
+    { key: 'asia',   label: 'Asia',   color: '#1D9E75' },
+    { key: 'london', label: 'London', color: '#1F6FBF' },
+    { key: 'us',     label: 'US',     color: '#E8845A' },
+  ];
+
+  // Fetch all 3 sessions in parallel
+  const results = await Promise.all(
+    sessions.map(s =>
+      fetch(`${API}/v1/surface?ccy=${ccy}&session=${s.key}`)
+        .then(r => r.json())
+        .then(j => ({ ...s, expiries: j.expiries || [], datetime: j.datetime }))
+        .catch(() => ({ ...s, expiries: [], datetime: null }))
+    )
+  );
+
+  // Populate expiry dropdown from US session (most complete)
+  const usExpiries = results.find(r => r.key === 'us')?.expiries || [];
+  const validExpiries = usExpiries.filter(e => e.tenor_days >= 7);
+
+  const select = document.getElementById('expiry-select');
+  if (select.options.length <= 1 || select.options[0].value === '') {
+    select.innerHTML = validExpiries.map(e =>
+      `<option value="${e.expiry}">${e.expiry} (${e.tenor_days}D)</option>`
+    ).join('');
+    select.onchange = () => { sessionSmileExpiry = select.value; renderSessionSmile(); };
+    if (!sessionSmileExpiry && validExpiries.length > 0) {
+      sessionSmileExpiry = validExpiries[0].expiry;
+    }
+  }
+
+  if (!sessionSmileExpiry) return;
+
+  const useSabr = ['BTC','ETH','SOL'].includes(ccy);
+
+  const chartDatasets = results.map(r => {
+    const exp = r.expiries.find(e => e.expiry === sessionSmileExpiry);
+    if (!exp) return null;
+
+    const timeStr = r.datetime ? r.datetime.slice(0,16) : '';
+    const label = `${r.label} · ${timeStr}`;
+
+    if (useSabr && exp.sabr && exp.sabr.alpha && exp.sabr.nu) {
+      const {alpha, beta=1, rho, nu} = exp.sabr;
+      const F = exp.forward;
+      const T = exp.tenor_days / 365;
+      const sMin = Math.min(...exp.strikes);
+      const sMax = Math.max(...exp.strikes);
+      const nPts = 200;
+      const pts = [];
+      for (let i = 0; i < nPts; i++) {
+        const K = sMin + (sMax - sMin) * i / (nPts - 1);
+        const v = sabrVol(F, K, T, alpha, beta, rho, nu);
+        if (v !== null) pts.push({ x: Math.round(K*10)/10, y: Math.round(v*10000)/100 });
+      }
+      return { label, data: pts, borderColor: r.color, borderWidth: 1.5, pointRadius: 0, tension: 0, fill: false };
+    } else {
+      const pts = exp.strikes.map((s,i) => ({ x: s, y: +exp.mkt_vol[i].toFixed(2) }));
+      return { label, data: pts, borderColor: r.color, borderWidth: 1.5, pointRadius: 0, tension: 0, fill: false };
+    }
+  }).filter(Boolean);
+
+  if (sessionSmileI) sessionSmileI.destroy();
+  sessionSmileI = new Chart(document.getElementById('sessionSmileChart'), {
+    type: 'line',
+    data: { datasets: chartDatasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      parsing: false,
+      plugins: {
+        legend: {
+          display: true, position: 'top',
+          labels: { color:'#6b7280', font:{family:'IBM Plex Mono',size:11}, boxWidth:20, boxHeight:2, padding:14 },
+          onClick: legendHighlightClick,
+        },
+        tooltip: {
+          mode:'nearest', intersect:false,
+          backgroundColor:'rgba(255,255,255,0.97)', borderColor:'rgba(0,0,0,0.1)', borderWidth:1,
+          titleColor:'#6b7280', bodyColor:'#111827', padding:10,
+          callbacks: { label: ctx => {
+            const x = ctx.parsed.x;
+            const xStr = x >= 1000 ? x.toLocaleString() : x.toFixed(3).replace(/\.?0+$/,'');
+            return `Strike ${xStr}: ${ctx.parsed.y.toFixed(1)}%`;
+          }}
+        }
+      },
+      scales: {
+        x: { type:'linear',
+             ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxTicksLimit:8,callback:v=>v>=1000?v.toLocaleString():v},
+             grid:{color:GC}, border:{color:'rgba(0,0,0,0.08)'},
+             title:{display:true,text:'Strike',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+        y: { ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},callback:v=>v.toFixed(0)+'%'},
+             grid:{color:GC}, border:{color:'rgba(0,0,0,0.08)'},
+             title:{display:true,text:'Implied vol (%)',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+      }
+    }
+  });
 }
 
 function setCcy(c){ccy=c;delete realData['surface_'+c];document.querySelectorAll('#ccy-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===c));update();}
