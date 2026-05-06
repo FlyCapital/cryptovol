@@ -4,6 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CryptoVol — Crypto Volatility Intelligence</title>
+<meta name="description" content="Institutional-grade implied volatility indices and vol surfaces for BTC, ETH and SOL. CryptoVIX index, SABR vol surface and option Greeks captured across Asia, London and US sessions.">
+<meta name="keywords" content="crypto volatility, implied volatility, bitcoin volatility, BTC options, ETH options, vol surface, SABR, CryptoVIX, options Greeks, crypto derivatives">
+<meta name="author" content="CryptoVol">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph (for social sharing) -->
+<meta property="og:title" content="CryptoVol — Crypto Volatility Intelligence">
+<meta property="og:description" content="Institutional-grade implied volatility indices and vol surfaces for BTC, ETH and SOL. Free dashboard + API access.">
+<meta property="og:url" content="https://www.cryptovol.io">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CryptoVol">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="CryptoVol — Crypto Volatility Intelligence">
+<meta name="twitter:description" content="Institutional-grade implied volatility indices and vol surfaces for BTC, ETH and SOL.">
+<meta name="twitter:site" content="@cryptovol">
+
+<!-- Canonical -->
+<link rel="canonical" href="https://www.cryptovol.io">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -708,12 +728,14 @@ async function renderSessionSmile() {
 
   const useSabr = ['BTC','ETH','SOL'].includes(ccy);
 
-  const chartDatasets = results.map(r => {
+  const chartDatasets = [];
+  results.forEach(r => {
     const exp = r.expiries.find(e => e.expiry === sessionSmileExpiry);
-    if (!exp) return null;
+    if (!exp) return;
 
     const timeStr = r.datetime ? r.datetime.slice(0,16) : '';
     const label = `${r.label} · ${timeStr}`;
+    const mktPts = exp.strikes.map((s,i) => ({ x: s, y: +exp.mkt_vol[i].toFixed(2) }));
 
     if (useSabr && exp.sabr && exp.sabr.alpha && exp.sabr.nu) {
       const {alpha, beta=1, rho, nu} = exp.sabr;
@@ -722,18 +744,20 @@ async function renderSessionSmile() {
       const sMin = Math.min(...exp.strikes);
       const sMax = Math.max(...exp.strikes);
       const nPts = 200;
-      const pts = [];
+      const sabrPts = [];
       for (let i = 0; i < nPts; i++) {
         const K = sMin + (sMax - sMin) * i / (nPts - 1);
         const v = sabrVol(F, K, T, alpha, beta, rho, nu);
-        if (v !== null) pts.push({ x: Math.round(K*10)/10, y: Math.round(v*10000)/100 });
+        if (v !== null) sabrPts.push({ x: Math.round(K*10)/10, y: Math.round(v*10000)/100 });
       }
-      return { label, data: pts, borderColor: r.color, borderWidth: 1.5, pointRadius: 0, tension: 0, fill: false };
+      // SABR line
+      chartDatasets.push({ label, data: sabrPts, borderColor: r.color, borderWidth: 1.5, pointRadius: 0, tension: 0, fill: false });
+      // Market dots
+      chartDatasets.push({ label: '', data: mktPts, borderColor: r.color, backgroundColor: r.color, borderWidth: 0, pointRadius: 3, showLine: false, fill: false });
     } else {
-      const pts = exp.strikes.map((s,i) => ({ x: s, y: +exp.mkt_vol[i].toFixed(2) }));
-      return { label, data: pts, borderColor: r.color, borderWidth: 1.5, pointRadius: 0, tension: 0, fill: false };
+      chartDatasets.push({ label, data: mktPts, borderColor: r.color, borderWidth: 1.5, pointRadius: 2, tension: 0, fill: false });
     }
-  }).filter(Boolean);
+  });
 
   if (sessionSmileI) sessionSmileI.destroy();
   document.getElementById('sessionSmileLoading').style.display='none';
@@ -746,7 +770,8 @@ async function renderSessionSmile() {
       plugins: {
         legend: {
           display: true, position: 'top',
-          labels: { color:'#6b7280', font:{family:'IBM Plex Mono',size:11}, boxWidth:20, boxHeight:2, padding:14 },
+          labels: { color:'#6b7280', font:{family:'IBM Plex Mono',size:11}, boxWidth:20, boxHeight:2, padding:14,
+            filter: item => item.text !== '' },
           onClick: legendHighlightClick,
         },
         tooltip: {
