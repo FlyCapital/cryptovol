@@ -782,7 +782,8 @@ async function renderSessionSmile() {
       plugins: {
         legend: {
           display: true, position: 'top',
-          labels: { color:'#6b7280', font:{family:'IBM Plex Mono',size:11}, boxWidth:20, boxHeight:2, padding:14 },
+          labels: { color:'#6b7280', font:{family:'IBM Plex Mono',size:11}, boxWidth:20, boxHeight:2, padding:14,
+            filter: item => item.text !== '' },
           onClick: (e, legendItem, legend) => {
             const chart = legend.chart;
             const clickedIdx = legendItem.datasetIndex;
