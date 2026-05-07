@@ -253,7 +253,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
     <div class="panel-hd">
       <div>
         <div class="panel-title">Session Smile Comparison</div>
-        <div class="panel-sub">Vol smile for a single expiry across Asia, London and US sessions</div>
+        <div class="panel-sub">Vol smile for a single expiry across Asia, London and US sessions · lines = SABR fit · dots = market quotes</div>
       </div>
       <div>
         <select id="expiry-select" style="font-family:var(--mono);font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;">
@@ -366,7 +366,10 @@ async function fetchVix(c, tenor) {
   const key = c+'_'+tenor;
   if (realData[key]) return realData[key];
   try {
-    const res = await fetch(`${API}/v1/vol-index?ccy=${c}&tenor=${tenor}`);
+    const end   = new Date();
+    const start = new Date(); start.setMonth(start.getMonth() - 6);
+    const fmt   = d => d.toISOString().slice(0,10);
+    const res = await fetch(`${API}/v1/vol-index?ccy=${c}&tenor=${tenor}&start_date=${fmt(start)}&end_date=${fmt(end)}`);
     const json = await res.json();
     realData[key] = json.data || [];
     return realData[key];
@@ -379,10 +382,10 @@ async function fetchVix(c, tenor) {
 async function renderMetrics() {
   const data7  = await fetchVix(ccy, '7D');
   const data30 = await fetchVix(ccy, '30D');
-  const latest7  = data7.length  ? data7[data7.length-1].vi   : null;
-  const prev7    = data7.length>1 ? data7[data7.length-2].vi   : null;
-  const latest30 = data30.length  ? data30[data30.length-1].vi : null;
-  const prev30   = data30.length>1 ? data30[data30.length-2].vi : null;
+  const latest7  = data7.length  ? data7[data7.length-1].vol  : null;
+  const prev7    = data7.length>1 ? data7[data7.length-2].vol  : null;
+  const latest30 = data30.length  ? data30[data30.length-1].vol : null;
+  const prev30   = data30.length>1 ? data30[data30.length-2].vol : null;
   const d7  = (latest7  && prev7)  ? (latest7  - prev7).toFixed(2)  : null;
   const d30 = (latest30 && prev30) ? (latest30 - prev30).toFixed(2) : null;
   const prem = (latest7 && latest30) ? (latest7 - latest30).toFixed(2) : '—';
@@ -390,7 +393,7 @@ async function renderMetrics() {
   // IV rank: position of latest7 in 1Y range
   let ivrank = '—';
   if (data7.length > 10) {
-    const vals = data7.map(d=>d.vi);
+    const vals = data7.map(d=>d.vol);
     const mn = Math.min(...vals), mx = Math.max(...vals);
     ivrank = mx>mn ? Math.round((latest7-mn)/(mx-mn)*100) : 50;
   }
@@ -406,16 +409,16 @@ async function renderVix() {
   const data7  = await fetchVix(ccy, '7D');
   const data30 = await fetchVix(ccy, '30D');
 
-  const labels7  = data7.map(d=>d.time.slice(0,10));
-  const values7  = data7.map(d=>d.vi);
-  const labels30 = data30.map(d=>d.time.slice(0,10));
-  const values30 = data30.map(d=>d.vi);
+  const labels7  = data7.map(d=>d.date);
+  const values7  = data7.map(d=>d.vol);
+  const labels30 = data30.map(d=>d.date);
+  const values30 = data30.map(d=>d.vol);
 
   // merge labels
   const allLabels = [...new Set([...labels7,...labels30])].sort();
 
-  const map7  = Object.fromEntries(data7.map(d=>[d.time.slice(0,10),d.vi]));
-  const map30 = Object.fromEntries(data30.map(d=>[d.time.slice(0,10),d.vi]));
+  const map7  = Object.fromEntries(data7.map(d=>[d.date,d.vol]));
+  const map30 = Object.fromEntries(data30.map(d=>[d.date,d.vol]));
 
   if(vixI)vixI.destroy();
   document.getElementById('vixLoading').style.display='none';
@@ -760,11 +763,11 @@ async function renderSessionSmile() {
         if (v !== null) sabrPts.push({ x: Math.round(K*10)/10, y: Math.round(v*10000)/100 });
       }
       // SABR line
-      chartDatasets.push({ label, data: sabrPts, borderColor: r.color, borderWidth: 1.5, pointRadius: 0, tension: 0, fill: false });
-      // Market dots
-      chartDatasets.push({ label: '', data: mktPts, borderColor: r.color, backgroundColor: r.color, borderWidth: 0, pointRadius: 3, showLine: false, fill: false });
+      chartDatasets.push({ label, data: sabrPts, borderColor: r.color, borderWidth: 1.5, pointRadius: 0, tension: 0, fill: false, _sessionKey: r.key });
+      // Market dots — no label (explained in subtitle)
+      chartDatasets.push({ label: '', data: mktPts, borderColor: r.color, backgroundColor: r.color, borderWidth: 0, pointRadius: 3, showLine: false, fill: false, _sessionKey: r.key });
     } else {
-      chartDatasets.push({ label, data: mktPts, borderColor: r.color, borderWidth: 1.5, pointRadius: 2, tension: 0, fill: false });
+      chartDatasets.push({ label, data: mktPts, borderColor: r.color, borderWidth: 1.5, pointRadius: 2, tension: 0, fill: false, _sessionKey: r.key });
     }
   });
 
@@ -779,9 +782,45 @@ async function renderSessionSmile() {
       plugins: {
         legend: {
           display: true, position: 'top',
-          labels: { color:'#6b7280', font:{family:'IBM Plex Mono',size:11}, boxWidth:20, boxHeight:2, padding:14,
-            filter: item => item.text !== '' },
-          onClick: legendHighlightClick,
+          labels: { color:'#6b7280', font:{family:'IBM Plex Mono',size:11}, boxWidth:20, boxHeight:2, padding:14 },
+          onClick: (e, legendItem, legend) => {
+            const chart = legend.chart;
+            const clickedIdx = legendItem.datasetIndex;
+            const clickedKey = chart.data.datasets[clickedIdx]._sessionKey;
+
+            const isFaded = chart.data.datasets.some((ds, i) =>
+              i !== clickedIdx && ds._origColor && ds.borderColor === ds._origColor + '33'
+            );
+
+            if (isFaded) {
+              // Restore all
+              chart.data.datasets.forEach((ds, i) => {
+                if (ds._origColor) ds.borderColor = ds._origColor;
+                if (ds._origBgColor) ds.backgroundColor = ds._origBgColor;
+                if (ds._origWidth) ds.borderWidth = ds._origWidth;
+                chart.getDatasetMeta(i).hidden = false;
+              });
+            } else {
+              // Highlight clicked session (both line and dots), fade others
+              chart.data.datasets.forEach((ds, i) => {
+                if (!ds._origColor) ds._origColor = ds.borderColor;
+                if (!ds._origBgColor) ds._origBgColor = ds.backgroundColor;
+                if (!ds._origWidth) ds._origWidth = ds.borderWidth;
+                if (ds._sessionKey === clickedKey) {
+                  ds.borderColor = ds._origColor;
+                  ds.backgroundColor = ds._origBgColor;
+                  ds.borderWidth = ds._origWidth;
+                  chart.getDatasetMeta(i).hidden = false;
+                } else {
+                  ds.borderColor = ds._origColor + '33';
+                  ds.backgroundColor = ds._origColor + '33';
+                  ds.borderWidth = 0.8;
+                  chart.getDatasetMeta(i).hidden = false;
+                }
+              });
+            }
+            chart.update();
+          },
         },
         tooltip: {
           mode:'nearest', intersect:false,
