@@ -366,7 +366,7 @@ async function fetchVix(c, tenor) {
   const key = c+'_'+tenor;
   if (realData[key]) return realData[key];
   try {
-    const res = await fetch(`${API}/v1/vix?ccy=${c}&tenor=${tenor}`);
+    const res = await fetch(`${API}/v1/vol-index?ccy=${c}&tenor=${tenor}`);
     const json = await res.json();
     realData[key] = json.data || [];
     return realData[key];
@@ -442,7 +442,7 @@ async function renderVix() {
 async function fetchSurface(c) {
   try {
     const sessionParam = sess === 'all' ? '' : `&session=${sess}`;
-    const res = await fetch(`${API}/v1/surface?ccy=${c}${sessionParam}`);
+    const res = await fetch(`${API}/v1/vol-surface/full?ccy=${c}${sessionParam}`);
     const json = await res.json();
     return json.expiries || [];
   } catch(e) { return []; }
@@ -459,7 +459,7 @@ async function renderTerm(){
   // Fetch all 3 sessions in parallel
   const results = await Promise.all(
     sessions.map(s =>
-      fetch(`${API}/v1/surface?ccy=${ccy}&session=${s.key}`)
+      fetch(`${API}/v1/vol-surface/full?ccy=${ccy}&session=${s.key}`)
         .then(r => r.json())
         .then(j => ({ ...s, expiries: j.expiries || [], datetime: j.datetime }))
         .catch(() => ({ ...s, expiries: [], datetime: null }))
@@ -711,7 +711,7 @@ async function renderSessionSmile() {
   // Fetch all 3 sessions in parallel
   const results = await Promise.all(
     sessions.map(s =>
-      fetch(`${API}/v1/surface?ccy=${ccy}&session=${s.key}`)
+      fetch(`${API}/v1/vol-surface/full?ccy=${ccy}&session=${s.key}`)
         .then(r => r.json())
         .then(j => ({ ...s, expiries: j.expiries || [], datetime: j.datetime }))
         .catch(() => ({ ...s, expiries: [], datetime: null }))
