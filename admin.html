@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+// ── Admin access gate ─────────────────────────────────────────────────────────
+// Hardcoded secret. Don't share this URL with key publicly.
+// To rotate: change ADMIN_KEY here, redeploy, clear localStorage on your devices.
+(function() {
+  const ADMIN_KEY = "9slY-Usns7qMNNrYLvxbEA";
+  const params = new URLSearchParams(window.location.search);
+  const urlKey = params.get("key");
+  const stored = localStorage.getItem("cryptovol_admin_key");
+
+  // First visit with key in URL — save and clean URL
+  if (urlKey === ADMIN_KEY) {
+    localStorage.setItem("cryptovol_admin_key", ADMIN_KEY);
+    history.replaceState({}, "", window.location.pathname);
+    return;
+  }
+
+  // Returning visit with valid stored key
+  if (stored === ADMIN_KEY) return;
+
+  // Otherwise, block access
+  document.documentElement.innerHTML = "<title>404 Not Found</title><body style='font-family:monospace;padding:40px;color:#666;'>404 Not Found</body>";
+  throw new Error("admin: access denied");
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CryptoVol — Admin</title>
+<meta name="description" content="Institutional-grade implied volatility indices and vol surfaces for BTC, ETH, SOL, XRP, AVAX and TRX. CryptoVIX index, SABR vol surface and option Greeks captured across Asia, London and US sessions.">
+<meta name="keywords" content="crypto volatility, implied volatility, bitcoin volatility, BTC options, ETH options, vol surface, SABR, CryptoVIX, options Greeks, crypto derivatives">
+<meta name="author" content="CryptoVol">
+<meta name="robots" content="noindex, nofollow">
+
+<!-- Open Graph (for social sharing) -->
+<meta property="og:title" content="CryptoVol — Crypto Volatility Intelligence">
+<meta property="og:description" content="Institutional-grade implied volatility indices and vol surfaces for BTC, ETH, SOL, XRP, AVAX and TRX. Free dashboard + API access.">
+<meta property="og:url" content="https://www.cryptovol.io">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CryptoVol">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="CryptoVol — Crypto Volatility Intelligence">
+<meta name="twitter:description" content="Institutional-grade implied volatility indices and vol surfaces for BTC, ETH, SOL, XRP, AVAX and TRX.">
+<meta name="twitter:site" content="@cryptovol">
+
+<!-- Canonical -->
+<meta name="google-site-verification" content="wq5s-jCg0_bbxgMyhjLo8dQ6vHpp6mk5XKILXkSW2mg" />
+<link rel="canonical" href="https://www.cryptovol.io">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg:      #f5f6f8;
+  --surface: #ffffff;
+  --surface2:#f0f2f5;
+  --border:  rgba(0,0,0,0.07);
+  --border2: rgba(0,0,0,0.12);
+  --text:    #111827;
+  --text2:   #6b7280;
+  --text3:   #b0b8c4;
+  --blue:    #1F6FBF;
+  --red:     #E8845A;
+  --green:   #1D9E75;
+  --purple:  #7F77DD;
+  --amber:   #888780;
+  --sans:    'Inter', sans-serif;
+  --mono:    'IBM Plex Mono', monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+nav {
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(10px);
+  border-bottom: 0.5px solid var(--border2);
+  position: sticky; top:0; z-index:100;
+}
+.nav-inner {
+  max-width: 1100px; margin:0 auto; padding:0 24px;
+  display:flex; align-items:center; justify-content:space-between; height:52px;
+}
+.logo { font-family:var(--sans); font-size:17px; font-weight:800; letter-spacing:-0.3px; color:var(--text); }
+.logo span { color:var(--blue); }
+.nav-links { display:flex; align-items:center; gap:20px; }
+.nav-link { color:var(--text2); text-decoration:none; font-size:12px; letter-spacing:0.04em; transition:color 0.15s; }
+.nav-link:hover { color:var(--text); }
+.nav-cta { background:var(--blue); color:#fff; border:none; padding:6px 16px; border-radius:4px; font-family:var(--mono); font-size:12px; cursor:pointer; text-decoration:none; letter-spacing:0.03em; transition:opacity 0.15s; }
+.nav-cta:hover { opacity:0.85; }
+
+.wrap { max-width:1100px; margin:0 auto; padding:0 24px; }
+
+.hero { padding:48px 0 32px; border-bottom:0.5px solid var(--border2); }
+.live-tag { display:inline-flex; align-items:center; gap:6px; background:rgba(55,138,221,0.08); border:1px solid rgba(55,138,221,0.2); color:var(--blue); font-size:11px; letter-spacing:0.08em; padding:3px 10px; border-radius:2px; margin-bottom:16px; }
+.live-dot { width:6px;height:6px;background:var(--blue);border-radius:50%;animation:blink 2s infinite; }
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.25}}
+.hero h1 { font-family:var(--sans); font-size:clamp(28px,4vw,44px); font-weight:800; letter-spacing:-1px; line-height:1.1; color:var(--text); margin-bottom:12px; }
+.hero h1 em { font-style:normal; color:var(--blue); }
+.hero-sub { color:var(--text2); font-size:13px; max-width:500px; line-height:1.75; margin-bottom:28px; }
+.hero-pills { display:flex; gap:24px; flex-wrap:wrap; }
+.pill { display:flex; flex-direction:column; gap:2px; }
+.pill-label { font-size:10px; letter-spacing:0.1em; color:var(--text3); text-transform:uppercase; }
+.pill-value { font-size:13px; color:var(--text2); }
+.pill-value strong { color:var(--text); font-weight:500; }
+
+.controls-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:14px 0; border-bottom:0.5px solid var(--border); }
+.ctrl-label { font-size:10px; letter-spacing:0.1em; color:var(--text3); }
+.btn-group { display:flex; }
+.ctrl-btn { background:transparent; border:0.5px solid var(--border2); color:var(--text2); font-family:var(--mono); font-size:12px; padding:4px 12px; cursor:pointer; transition:all 0.12s; border-right:none; }
+.btn-group .ctrl-btn:first-child { border-radius:3px 0 0 3px; }
+.btn-group .ctrl-btn:last-child  { border-radius:0 3px 3px 0; border-right:0.5px solid var(--border2); }
+.ctrl-btn:hover { background:var(--surface2); color:var(--text); }
+.ctrl-btn.active { background:rgba(55,138,221,0.1); border-color:rgba(55,138,221,0.3); color:var(--blue); }
+.ctrl-btn.locked { color:var(--text3); cursor:not-allowed; opacity:0.65; position:relative; padding-right:8px; }
+.ctrl-btn.locked:hover { background:transparent; color:var(--text3); }
+.ctrl-btn.locked::after { content:'🔒'; font-size:9px; margin-left:5px; opacity:0.7; }
+.upgrade-pill {
+  display:inline-flex; align-items:center; gap:4px;
+  background:rgba(55,138,221,0.08);
+  border:0.5px solid rgba(55,138,221,0.25);
+  color:var(--blue);
+  font-family:var(--mono); font-size:11px; font-weight:500;
+  padding:4px 10px; border-radius:3px;
+  text-decoration:none;
+  letter-spacing:0.02em;
+  transition:all 0.15s;
+  margin-left:6px;
+}
+.upgrade-pill:hover { background:rgba(55,138,221,0.15); border-color:rgba(55,138,221,0.4); }
+.ctrl-sep { width:1px; height:18px; background:var(--border2); }
+.ts { font-size:11px; color:var(--text3); margin-left:auto; }
+
+.metric-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--border); border:0.5px solid var(--border2); border-radius:8px; overflow:hidden; margin:18px 0; }
+.metric { background:var(--surface); padding:14px 18px; transition:background 0.12s; }
+.metric:hover { background:var(--surface2); }
+.m-lbl { font-size:10px; letter-spacing:0.09em; color:var(--text3); text-transform:uppercase; margin-bottom:4px; }
+.m-val { font-size:24px; font-family:var(--sans); font-weight:700; color:var(--text); letter-spacing:-0.5px; }
+.m-d   { font-size:11px; margin-top:2px; }
+.up  { color:var(--green); }
+.dn  { color:var(--red); }
+.neu { color:var(--text3); }
+
+.panel { background:var(--surface); border:0.5px solid var(--border2); border-radius:8px; overflow:hidden; margin-bottom:14px; }
+.panel-hd { display:flex; align-items:center; justify-content:space-between; padding:12px 18px; border-bottom:0.5px solid var(--border); flex-wrap:wrap; gap:8px; }
+.panel-title { font-family:var(--sans); font-size:13px; font-weight:700; color:var(--text); }
+.panel-sub   { font-size:11px; color:var(--text3); margin-top:1px; }
+.legend { display:flex; gap:14px; flex-wrap:wrap; }
+.leg { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text2); }
+.leg-bar  { width:18px; height:2px; border-radius:1px; }
+.leg-dash { width:18px; height:0; border-top:2px dashed; }
+.panel-body { padding:14px 18px 18px; }
+
+.exp-row { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:12px; }
+.exp-btn { background:transparent; border:0.5px solid var(--border2); color:var(--text2); font-family:var(--mono); font-size:11px; padding:3px 10px; border-radius:3px; cursor:pointer; transition:all 0.12s; }
+.exp-btn:hover { background:var(--surface2); color:var(--text); }
+.exp-btn.active { background:rgba(55,138,221,0.08); border-color:rgba(55,138,221,0.25); color:var(--blue); }
+.smile-note { font-size:11px; color:var(--text3); margin-top:10px; padding-top:10px; border-top:0.5px solid var(--border); }
+
+.pricing-wrap { margin:20px 0 48px; }
+.pricing-cta { background:var(--surface); border:0.5px solid var(--border2); border-radius:8px; padding:36px; display:grid; grid-template-columns:1fr auto; align-items:center; gap:28px; margin-bottom:12px; }
+.cta-tag { font-size:10px; letter-spacing:0.1em; color:var(--blue); text-transform:uppercase; margin-bottom:6px; }
+.cta-h   { font-family:var(--sans); font-size:20px; font-weight:700; color:var(--text); margin-bottom:8px; letter-spacing:-0.2px; }
+.cta-p   { color:var(--text2); font-size:13px; line-height:1.7; max-width:460px; }
+.cta-acts { display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+.btn-pri { background:var(--blue); color:#fff; border:none; padding:10px 24px; border-radius:4px; font-family:var(--mono); font-size:13px; cursor:pointer; text-decoration:none; white-space:nowrap; transition:opacity 0.15s; display:inline-block; }
+.btn-pri:hover { opacity:0.85; }
+.btn-sec { background:transparent; color:var(--text2); border:0.5px solid var(--border2); padding:9px 24px; border-radius:4px; font-family:var(--mono); font-size:13px; cursor:pointer; text-decoration:none; white-space:nowrap; display:inline-block; text-align:center; transition:all 0.15s; }
+.btn-sec:hover { color:var(--text); background:var(--surface2); }
+
+.tiers { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.tier  { background:var(--surface); border:0.5px solid var(--border2); border-radius:8px; padding:20px; }
+.tier.hot { border-color:rgba(55,138,221,0.3); background:rgba(55,138,221,0.03); }
+.tier-badge { display:inline-block; background:rgba(55,138,221,0.1); color:var(--blue); font-size:10px; letter-spacing:0.07em; padding:2px 8px; border-radius:2px; margin-bottom:8px; }
+.tier-name  { font-family:var(--sans); font-size:14px; font-weight:700; color:var(--text); margin-bottom:4px; }
+.tier-price { font-family:var(--sans); font-size:22px; font-weight:700; color:var(--blue); margin:6px 0; }
+.tier-price span { font-size:12px; color:var(--text3); font-family:var(--mono); font-weight:400; }
+.tier-feats { list-style:none; margin-top:10px; display:flex; flex-direction:column; gap:5px; }
+.tier-feats li { font-size:12px; color:var(--text2); display:flex; gap:7px; }
+.tier-feats li::before { content:'—'; color:var(--blue); flex-shrink:0; }
+
+footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.ft-logo { font-family:var(--sans); font-size:14px; font-weight:700; color:var(--text2); }
+.ft-logo span { color:var(--blue); }
+.ft-note { font-size:11px; color:var(--text3); }
+.ft-note a { color:var(--blue); text-decoration:none; }
+.ft-note a:hover { text-decoration:underline; }
+
+@media(max-width:680px){
+  .pricing-cta{grid-template-columns:1fr;}
+  .cta-acts{align-items:flex-start;flex-direction:row;flex-wrap:wrap;}
+  .tiers{grid-template-columns:1fr;}
+}
+
+.chart-loading {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:12px; color:var(--text3); letter-spacing:0.05em;
+  background:var(--surface); z-index:10;
+}
+</style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-3W1WWECEBL"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-3W1WWECEBL');
+</script>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo">crypto<span>vol</span> <span style="background:#E8845A; color:#fff; font-size:9px; padding:2px 6px; border-radius:3px; margin-left:6px; letter-spacing:0.05em; vertical-align:middle;">ADMIN</span></div>
+    <div class="nav-links">
+      <a href="methodology.html" class="nav-link">METHODOLOGY</a>
+      <a href="#pricing" class="nav-link">PRICING</a>
+      <a href="https://rapidapi.com" target="_blank" class="nav-link">API DOCS</a>
+      <a href="https://rapidapi.com" target="_blank" class="nav-cta">GET API KEY</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <section class="hero">
+    <div class="live-tag"><div class="live-dot"></div>LIVE · 3 SESSIONS DAILY</div>
+    <h1>Crypto volatility<br><em>intelligently measured</em></h1>
+    <p class="hero-sub">Institutional-grade implied volatility indices and vol surfaces for BTC, ETH, SOL, XRP, AVAX and TRX — captured across Asia, London and US sessions. Preview BTC live below; full coverage via <a href="#pricing" style="color:var(--blue); text-decoration:none;">API</a>.</p>
+    <div class="hero-pills">
+      <div class="pill"><span class="pill-label">Coverage</span><span class="pill-value"><strong>6</strong> assets</span></div>
+      <div class="pill"><span class="pill-label">Sessions</span><span class="pill-value"><strong>Asia · London · US</strong></span></div>
+
+    </div>
+  </section>
+
+  <div class="controls-bar">
+    <span class="ctrl-label">ASSET</span>
+    <div class="btn-group" id="ccy-grp">
+      <button class="ctrl-btn active" onclick="setCcy('BTC')">BTC</button>
+      <button class="ctrl-btn" onclick="setCcy('ETH')">ETH</button>
+      <button class="ctrl-btn" onclick="setCcy('SOL')">SOL</button>
+      <button class="ctrl-btn" onclick="setCcy('XRP')">XRP</button>
+      <button class="ctrl-btn" onclick="setCcy('AVAX')">AVAX</button>
+      <button class="ctrl-btn" onclick="setCcy('TRX')">TRX</button>
+    </div>
+
+    <span class="ts" id="ts"></span>
+  </div>
+
+  <div class="metric-grid" id="metrics"></div>
+
+  <div class="panel">
+    <div class="panel-hd">
+      <div><div class="panel-title">CryptoVIX — Implied Volatility Index</div><div class="panel-sub">Annualized implied vol index · click legend to toggle</div></div>
+    </div>
+    <div class="panel-body">
+      <div style="position:relative;width:100%;height:270px;"><div class="chart-loading" id="vixLoading">LOADING DATA...</div><canvas id="vixChart" role="img" aria-label="CryptoVIX implied and realized volatility over time"></canvas></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hd">
+      <div><div class="panel-title">Vol Smile by Expiry</div><div class="panel-sub">Implied vol across delta strikes · put wing → ATM → call wing</div></div>
+    </div>
+    <div class="panel-body">
+      <div style="position:relative;width:100%;height:360px;"><div class="chart-loading" id="smileLoading">LOADING DATA...</div><canvas id="smileChart" role="img" aria-label="Volatility smile by expiry date"></canvas></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hd">
+      <div><div class="panel-title">Vol Term Structure</div><div class="panel-sub">Latest ATM vol across tenors by session</div></div>
+    </div>
+    <div class="panel-body">
+      <div class="exp-row" id="exp-row" style="display:none"></div>
+      <div style="position:relative;width:100%;height:190px;"><div class="chart-loading" id="termLoading">LOADING DATA...</div><canvas id="termChart" role="img" aria-label="Volatility term structure by session"></canvas></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hd">
+      <div>
+        <div class="panel-title">Session Smile Comparison</div>
+        <div class="panel-sub">Vol smile for a single expiry across Asia, London and US sessions · lines = fitted · dots = market quotes</div>
+      </div>
+      <div>
+        <select id="expiry-select" style="font-family:var(--mono);font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;">
+          <option value="">Loading expiries...</option>
+        </select>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div style="position:relative;width:100%;height:300px;"><div class="chart-loading" id="sessionSmileLoading">LOADING DATA...</div><canvas id="sessionSmileChart" role="img" aria-label="Vol smile by session for selected expiry"></canvas></div>
+    </div>
+  </div>
+
+  <section class="pricing-wrap" id="pricing">
+    <div class="pricing-cta">
+      <div>
+        <div class="cta-tag">API ACCESS</div>
+        <div class="cta-h">Integrate crypto vol data into your workflow</div>
+        <p class="cta-p">Programmatic access to crypto volatility data. Query implied vol by strike, moneyness, or delta. Pull constant-maturity history for backtesting. Retrieve full SABR-calibrated surfaces with Greeks. Six assets, three daily sessions, available on RapidAPI.</p>
+      </div>
+      <div class="cta-acts">
+        <a href="https://rapidapi.com" target="_blank" class="btn-pri">Get API Key →</a>
+        <a href="https://rapidapi.com" target="_blank" class="btn-sec">View Docs</a>
+      </div>
+    </div>
+    <div class="tiers">
+      <div class="tier">
+        <div class="tier-name">Basic</div>
+        <div class="tier-price">$0 <span>/month</span></div>
+        <ul class="tier-feats">
+          <li>BTC volatility data</li>
+          <li>30 days of history</li>
+          <li>US session snapshot</li>
+          <li>Vol Index + Vol Surface query</li>
+          <li>500 API calls / month</li>
+          <li>Documentation only</li>
+        </ul>
+      </div>
+      <div class="tier hot">
+        <div class="tier-badge">MOST POPULAR</div>
+        <div class="tier-name">Pro</div>
+        <div class="tier-price">$49 <span>/month</span></div>
+        <ul class="tier-feats">
+          <li>BTC, ETH, SOL coverage</li>
+          <li>1 year of history</li>
+          <li>US session snapshot</li>
+          <li>Vol Index + Vol Surface + Vol History</li>
+          <li>1,000,000 API calls / month</li>
+          <li><a href="mailto:support@cryptovol.io" style="color:inherit; text-decoration:underline; text-decoration-color:rgba(55,138,221,0.4); text-underline-offset:3px;">24hr email support</a></li>
+        </ul>
+      </div>
+      <div class="tier">
+        <div class="tier-name">Ultra</div>
+        <div class="tier-price">$199 <span>/month</span></div>
+        <ul class="tier-feats">
+          <li>All 6 assets (incl. XRP, AVAX, TRX)</li>
+          <li>Full historical archive</li>
+          <li>3 daily snapshots (Asia/London/US)</li>
+          <li>Full vol surface object + Greeks</li>
+          <li>1,000,000 API calls / month</li>
+          <li><a href="mailto:support@cryptovol.io" style="color:inherit; text-decoration:underline; text-decoration-color:rgba(55,138,221,0.4); text-underline-offset:3px;">Priority email + feature input</a></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="ft-logo">crypto<span>vol</span></div>
+    <div class="ft-note">Support: <a href="mailto:support@cryptovol.io">support@cryptovol.io</a> · Data for informational purposes only. Not financial advice. © 2026 CryptoVol.</div>
+  </footer>
+
+</div>
+
+<script>
+const API = 'https://cryptovol-api-nbakzshi6q-uc.a.run.app';
+const SCOL  = {'7D':'#E8845A','14D':'#1F6FBF','30D':'#1D9E75','60D':'#7F77DD','90D':'#888780'};
+const DLBL  = ['10Δp','15Δp','25Δp','35Δp','ATM','35Δc','25Δc','15Δc','10Δc'];
+const TENORS= ['7D','14D','21D','30D','60D','90D'];
+const SCOL3 = {asia:'#1D9E75',london:'#1F6FBF',us:'#E8845A'};
+const BASE  = {BTC:65,ETH:72,SOL:88,XRP:58,AVAX:92,TRX:55};
+
+let ccy='BTC', sess='all', smileMode='all';
+let vixI=null, termI=null, smileI=null;
+let realData = {}; // cache: realData[ccy][tenor] = [{time,vi}]
+
+// ── Dummy data helpers (used for term structure & smile, still no API for these) ──
+function rng(seed){
+  let h=0; for(let c of String(seed)){h=(Math.imul(31,h)+c.charCodeAt(0))|0;}
+  return()=>{h^=h<<13;h^=h>>17;h^=h<<5;return(h>>>0)/4294967296;};
+}
+function smile(atm,sk,cv,wg,key){
+  const r=rng(key+ccy+sess);
+  return DLBL.map((_,i)=>{
+    const x=(i-4)/4;
+    return +(atm+(x<0?-sk*x:sk*0.35*x)+cv*x*x+(i===0||i===8?wg:0)+(r()-0.5)*1.2).toFixed(1);
+  });
+}
+
+const GC='rgba(0,0,0,0.05)', TC='#b0b8c4';
+const BASE_OPTS={
+  responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,
+    backgroundColor:'rgba(255,255,255,0.97)',borderColor:'rgba(0,0,0,0.1)',borderWidth:1,
+    titleColor:'#6b7280',bodyColor:'#111827',padding:10,
+  }},
+  scales:{
+    x:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxTicksLimit:8,autoSkip:true},grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'}},
+    y:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},callback:v=>v.toFixed(0)+'%'},grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'}},
+  }
+};
+
+// ── Fetch real VIX data from API ──
+async function fetchVix(c, tenor) {
+  const key = c+'_'+tenor;
+  if (realData[key]) return realData[key];
+  try {
+    const end   = new Date();
+    const start = new Date(); start.setMonth(start.getMonth() - 6);
+    const fmt   = d => d.toISOString().slice(0,10);
+    const res = await fetch(`${API}/v1/vol-index?ccy=${c}&tenor=${tenor}&start_date=${fmt(start)}&end_date=${fmt(end)}`);
+    const json = await res.json();
+    realData[key] = json.data || [];
+    return realData[key];
+  } catch(e) {
+    return [];
+  }
+}
+
+// ── Metrics ──
+async function renderMetrics() {
+  const data7  = await fetchVix(ccy, '7D');
+  const data30 = await fetchVix(ccy, '30D');
+  const latest7  = data7.length  ? data7[data7.length-1].vol  : null;
+  const prev7    = data7.length>1 ? data7[data7.length-2].vol  : null;
+  const latest30 = data30.length  ? data30[data30.length-1].vol : null;
+  const prev30   = data30.length>1 ? data30[data30.length-2].vol : null;
+  const d7  = (latest7  && prev7)  ? (latest7  - prev7).toFixed(2)  : null;
+  const d30 = (latest30 && prev30) ? (latest30 - prev30).toFixed(2) : null;
+  const prem = (latest7 && latest30) ? (latest7 - latest30).toFixed(2) : '—';
+
+  // IV rank: position of latest7 in 1Y range
+  let ivrank = '—';
+  if (data7.length > 10) {
+    const vals = data7.map(d=>d.vol);
+    const mn = Math.min(...vals), mx = Math.max(...vals);
+    ivrank = mx>mn ? Math.round((latest7-mn)/(mx-mn)*100) : 50;
+  }
+
+  document.getElementById('metrics').innerHTML=`
+    <div class="metric"><div class="m-lbl">7D</div><div class="m-val">${latest7!=null?latest7.toFixed(1)+'%':'—'}</div><div class="m-d ${parseFloat(d7)>=0?'up':'dn'}">${d7!=null?(parseFloat(d7)>=0?'▲':'▼')+' '+Math.abs(d7)+'% 1D':''}</div></div>
+    <div class="metric"><div class="m-lbl">30D</div><div class="m-val">${latest30!=null?latest30.toFixed(1)+'%':'—'}</div><div class="m-d ${parseFloat(d30)>=0?'up':'dn'}">${d30!=null?(parseFloat(d30)>=0?'▲':'▼')+' '+Math.abs(d30)+'% 1D':''}</div></div>
+  `;
+}
+
+// ── VIX chart with real data ──
+async function renderVix() {
+  const data7  = await fetchVix(ccy, '7D');
+  const data30 = await fetchVix(ccy, '30D');
+
+  const labels7  = data7.map(d=>d.date);
+  const values7  = data7.map(d=>d.vol);
+  const labels30 = data30.map(d=>d.date);
+  const values30 = data30.map(d=>d.vol);
+
+  // merge labels
+  const allLabels = [...new Set([...labels7,...labels30])].sort();
+
+  const map7  = Object.fromEntries(data7.map(d=>[d.date,d.vol]));
+  const map30 = Object.fromEntries(data30.map(d=>[d.date,d.vol]));
+
+  if(vixI)vixI.destroy();
+  document.getElementById('vixLoading').style.display='none';
+  vixI=new Chart(document.getElementById('vixChart'),{type:'line',data:{
+    labels: allLabels,
+    datasets:[
+      {label:'30D',data:allLabels.map(l=>map30[l]??null), borderColor:'#1F6FBF',borderWidth:1.5,pointRadius:0,tension:0.3,fill:false,spanGaps:true},
+      {label:'7D', data:allLabels.map(l=>map7[l]??null),  borderColor:'#E8845A',borderWidth:1.5,pointRadius:0,tension:0.3,fill:false,spanGaps:true},
+    ]
+  },options:{
+    ...BASE_OPTS,
+    plugins:{
+      ...BASE_OPTS.plugins,
+      legend:{
+        display:true, position:'top',
+        labels:{color:'#6b7280',font:{family:'IBM Plex Mono',size:11},boxWidth:20,boxHeight:2,padding:14},
+        onClick: legendHighlightClick,
+      }
+    }
+  }});
+}
+
+// ── Fetch vol surface from API ──
+async function fetchSurface(c) {
+  try {
+    const sessionParam = sess === 'all' ? '' : `&session=${sess}`;
+    const res = await fetch(`${API}/v1/vol-surface/full?ccy=${c}${sessionParam}`);
+    const json = await res.json();
+    return json.expiries || [];
+  } catch(e) { return []; }
+}
+
+// ── Term structure — 3 sessions, click legend to toggle ──
+async function renderTerm(){
+  const sessions = [
+    { key: 'asia',   label: 'Asia',   color: '#1D9E75' },
+    { key: 'london', label: 'London', color: '#1F6FBF' },
+    { key: 'us',     label: 'US',     color: '#E8845A' },
+  ];
+
+  // Fetch all 3 sessions in parallel
+  const results = await Promise.all(
+    sessions.map(s =>
+      fetch(`${API}/v1/vol-surface/full?ccy=${ccy}&session=${s.key}`)
+        .then(r => r.json())
+        .then(j => ({ ...s, expiries: j.expiries || [], datetime: j.datetime }))
+        .catch(() => ({ ...s, expiries: [], datetime: null }))
+    )
+  );
+
+  // Build ATM vol per session
+  function getAtmPts(expiries) {
+    const pts = [];
+    for (const exp of expiries) {
+      if (!exp.strikes || !exp.mkt_vol || !exp.forward) continue;
+      const fwd = exp.forward;
+      let bestIdx = 0, bestDist = Infinity;
+      exp.strikes.forEach((s,i) => { const d=Math.abs(s-fwd); if(d<bestDist){bestDist=d;bestIdx=i;} });
+      const atmVol = exp.mkt_vol[bestIdx];
+      if (atmVol == null) continue;
+      pts.push({ expiry: exp.expiry, vol: +atmVol.toFixed(2) });
+    }
+    return pts;
+  }
+
+  // Union of all expiry dates
+  const allExpiries = [...new Set(results.flatMap(r => getAtmPts(r.expiries).map(p => p.expiry)))].sort();
+
+  const datasets = results.map(r => {
+    const pts = getAtmPts(r.expiries);
+    const volMap = Object.fromEntries(pts.map(p => [p.expiry, p.vol]));
+    const timeStr = r.datetime ? r.datetime.slice(0,16) : '';
+    return {
+      label: `${r.label} · ${timeStr || 'n/a'}`,
+      data: allExpiries.map(e => volMap[e] ?? null),
+      borderColor: r.color,
+      borderWidth: 1.5,
+      pointRadius: 0,
+      tension: 0,
+      fill: false,
+      spanGaps: false,
+    };
+  });
+
+  if(termI)termI.destroy();
+  document.getElementById('termLoading').style.display='none';
+  termI=new Chart(document.getElementById('termChart'),{type:'line',data:{
+    labels: allExpiries,
+    datasets,
+  },options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{
+        display:true, position:'top',
+        labels:{color:'#6b7280',font:{family:'IBM Plex Mono',size:11},boxWidth:20,boxHeight:2,padding:12},
+        onClick: legendHighlightClick
+      },
+      tooltip:{mode:'index',intersect:false,
+        backgroundColor:'rgba(255,255,255,0.97)',borderColor:'rgba(0,0,0,0.1)',borderWidth:1,
+        titleColor:'#6b7280',bodyColor:'#111827',padding:10,
+        callbacks:{label: ctx=> ctx.parsed.y != null ? `${ctx.dataset.label.split(' ·')[0]}: ${ctx.parsed.y.toFixed(1)}%` : null}
+      }
+    },
+    scales:{
+      x:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxRotation:30,autoSkip:true,maxTicksLimit:8},
+         grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'}},
+      y:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},callback:v=>v.toFixed(0)+'%'},
+         grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'},
+         title:{display:true,text:'ATM vol (%)',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+    }
+  }});
+}
+
+// ── Build expiry buttons dynamically ──
+function buildExpiryButtons(expiries) {
+  const row = document.getElementById('exp-row');
+  while (row.children.length > 1) row.removeChild(row.lastChild);
+  expiries.forEach(exp => {
+    const btn = document.createElement('button');
+    btn.className = 'exp-btn';
+    btn.textContent = exp.expiry;
+    btn.onclick = () => setSmile(exp.expiry);
+    row.appendChild(btn);
+  });
+}
+
+// ── SABR vol — exact port of QLib m_sabr_sigma (lognormal) ──
+function sabrVol(F, K, T, alpha, beta, rho, nu) {
+  if (!alpha || alpha <= 0 || !F || !K || T <= 0) return null;
+  beta = (beta != null) ? beta : 1;
+
+  function x_z(z, rho) {
+    if (Math.abs(z) < 1e-6) {
+      return 1 - rho*z/2 + (2-3*rho*rho)*z*z/24;
+    }
+    const num = Math.sqrt(1 - 2*rho*z + z*z) + z - rho;
+    const den = 1 - rho;
+    if (num/den <= 0) return null;
+    return Math.log(num/den);
+  }
+
+  let result;
+  if (Math.abs(F - K) < 1e-10) {
+    // ATM
+    const f_term = Math.pow(F, 1-beta);
+    const B = 1 + (((1-beta)**2/24)*alpha*alpha/Math.pow(F,2-2*beta)
+              + 0.25*alpha*beta*rho*nu/Math.pow(F,1-beta)
+              + (2-3*rho*rho)/24*nu*nu) * T;
+    result = alpha / f_term * B;
+  } else {
+    const log_fk = Math.log(F/K);
+    const fk_avg = Math.pow(F*K, (1-beta)/2);
+    const A = alpha / (fk_avg * (1 + Math.pow(1-beta,2)/24*log_fk*log_fk + Math.pow(1-beta,4)/1920*Math.pow(log_fk,4)));
+    const B = 1 + (Math.pow(1-beta,2)/24*alpha*alpha/(fk_avg*fk_avg)
+              + 0.25*alpha*beta*rho*nu/fk_avg
+              + (2-3*rho*rho)/24*nu*nu) * T;
+    const z = nu/alpha * fk_avg * log_fk;
+    const x = x_z(z, rho);
+    if (x === null || Math.abs(x) < 1e-10) return null;
+    result = A * z/x * B;
+  }
+  return (isFinite(result) && result > 0 && result < 20) ? result : null;
+}
+
+// ── Smile (SABR smooth curves, click legend to toggle) ──
+async function renderSmile(){
+  const allExpiries = await fetchSurface(ccy);
+  if (!allExpiries.length) return;
+
+  const expiries = allExpiries.filter(e => e.tenor_days >= 5);
+  if (!expiries.length) return;
+
+  const colors = ['#E8845A','#1F6FBF','#1D9E75','#7F77DD','#888780','#E8A838','#C84B8F','#4BA0C8'];
+
+  const chartDatasets = expiries.map((exp, idx) => {
+    const sabr = exp.sabr;
+    const useSabr = sabr && sabr.alpha && sabr.nu && sabr.nu > 0.01
+      && !['XRP','AVAX','TRX'].includes(ccy);
+
+    if (useSabr) {
+      const {alpha, beta=1, rho, nu} = sabr;
+      const F = exp.forward;
+      const T = exp.tenor_days / 365;
+      const sMin = Math.min(...exp.strikes);
+      const sMax = Math.max(...exp.strikes);
+      const nPts = 200;
+      const pts = [];
+      for (let i = 0; i < nPts; i++) {
+        const K = sMin + (sMax - sMin) * i / (nPts - 1);
+        const v = sabrVol(F, K, T, alpha, beta, rho, nu);
+        if (v !== null) pts.push({ x: Math.round(K*10)/10, y: Math.round(v*10000)/100 });
+      }
+      return {
+        label: exp.expiry + ' (' + exp.tenor_days + 'D)',
+        data: pts,
+        borderColor: colors[idx % colors.length],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0,
+        fill: false,
+      };
+    } else {
+      return {
+        label: exp.expiry + ' (' + exp.tenor_days + 'D)',
+        data: exp.strikes.map((s,i) => ({ x: s, y: +exp.mkt_vol[i].toFixed(2) })),
+        borderColor: colors[idx % colors.length],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0,
+        fill: false,
+      };
+    }
+  });
+
+  if(smileI)smileI.destroy();
+  document.getElementById('smileLoading').style.display='none';
+  smileI=new Chart(document.getElementById('smileChart'),{type:'line',data:{datasets:chartDatasets},options:{
+    responsive:true, maintainAspectRatio:false,
+    parsing: false,
+    plugins:{
+      legend:{display:true,position:'top',labels:{color:'#6b7280',font:{family:'IBM Plex Mono',size:11},boxWidth:12,boxHeight:2,padding:14},onClick:legendHighlightClick},
+      tooltip:{
+        mode:'nearest',intersect:false,
+        backgroundColor:'rgba(255,255,255,0.97)',borderColor:'rgba(0,0,0,0.1)',borderWidth:1,
+        titleColor:'#6b7280',bodyColor:'#111827',padding:10,
+        callbacks:{label: ctx=>{
+          const x = ctx.parsed.x;
+          const xStr = x >= 1000 ? x.toLocaleString() : x.toFixed(3).replace(/\.?0+$/,'');
+          return `Strike ${xStr}: ${ctx.parsed.y.toFixed(1)}%`;
+        }}
+      }
+    },
+    scales:{
+      x:{type:'linear',
+         ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxTicksLimit:8,callback:v=> v>=1000 ? v.toLocaleString() : v},
+         grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'},
+         title:{display:true,text:'Strike',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+      y:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},callback:v=>v.toFixed(0)+'%'},
+         grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'},
+         title:{display:true,text:'Implied vol (%)',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+    }
+  }});
+}
+
+
+function legendHighlightClick(e, legendItem, legend) {
+  const chart = legend.chart;
+  const clickedIdx = legendItem.datasetIndex;
+
+  // Check if we're already in highlight mode (any dataset is faded)
+  const isFaded = chart.data.datasets.some((ds, i) =>
+    i !== clickedIdx && ds._origColor && ds.borderColor === ds._origColor + '33'
+  );
+
+  if (isFaded) {
+    // Restore all to original
+    chart.data.datasets.forEach((ds, i) => {
+      if (ds._origColor) ds.borderColor = ds._origColor;
+      if (ds._origWidth) ds.borderWidth = ds._origWidth;
+      chart.getDatasetMeta(i).hidden = false;
+    });
+  } else {
+    // Highlight clicked, fade others
+    chart.data.datasets.forEach((ds, i) => {
+      if (!ds._origColor) ds._origColor = ds.borderColor;
+      if (!ds._origWidth) ds._origWidth = ds.borderWidth;
+      if (i === clickedIdx) {
+        ds.borderColor = ds._origColor;
+        ds.borderWidth = ds._origWidth;
+        chart.getDatasetMeta(i).hidden = false;
+      } else {
+        ds.borderColor = ds._origColor + '33';
+        ds.borderWidth = 0.8;
+        chart.getDatasetMeta(i).hidden = false;
+      }
+    });
+  }
+  chart.update();
+}
+
+
+let sessionSmileI = null;
+let sessionSmileExpiry = null;
+
+// ── Session Smile Comparison ──
+async function renderSessionSmile() {
+  const sessions = [
+    { key: 'asia',   label: 'Asia',   color: '#1D9E75' },
+    { key: 'london', label: 'London', color: '#1F6FBF' },
+    { key: 'us',     label: 'US',     color: '#E8845A' },
+  ];
+
+  // Fetch all 3 sessions in parallel
+  const results = await Promise.all(
+    sessions.map(s =>
+      fetch(`${API}/v1/vol-surface/full?ccy=${ccy}&session=${s.key}`)
+        .then(r => r.json())
+        .then(j => ({ ...s, expiries: j.expiries || [], datetime: j.datetime }))
+        .catch(() => ({ ...s, expiries: [], datetime: null }))
+    )
+  );
+
+  // Populate expiry dropdown from US session (most complete)
+  const usExpiries = results.find(r => r.key === 'us')?.expiries || [];
+  const validExpiries = usExpiries.filter(e => e.tenor_days >= 5);
+
+  const select = document.getElementById('expiry-select');
+  if (select.options.length <= 1 || select.options[0].value === '') {
+    select.innerHTML = validExpiries.map(e =>
+      `<option value="${e.expiry}">${e.expiry} (${e.tenor_days}D)</option>`
+    ).join('');
+    select.onchange = () => { sessionSmileExpiry = select.value; renderSessionSmile(); };
+    if (!sessionSmileExpiry && validExpiries.length > 0) {
+      sessionSmileExpiry = validExpiries[0].expiry;
+    }
+  }
+
+  if (!sessionSmileExpiry) return;
+
+  const useSabr = ['BTC','ETH','SOL'].includes(ccy);
+
+  const chartDatasets = [];
+  results.forEach(r => {
+    const exp = r.expiries.find(e => e.expiry === sessionSmileExpiry);
+    if (!exp) return;
+
+    const timeStr = r.datetime ? r.datetime.slice(0,16) : '';
+    const label = `${r.label} · ${timeStr}`;
+    const mktPts = exp.strikes.map((s,i) => ({ x: s, y: +exp.mkt_vol[i].toFixed(2) }));
+
+    if (useSabr && exp.sabr && exp.sabr.alpha && exp.sabr.nu) {
+      const {alpha, beta=1, rho, nu} = exp.sabr;
+      const F = exp.forward;
+      const T = exp.tenor_days / 365;
+      const sMin = Math.min(...exp.strikes);
+      const sMax = Math.max(...exp.strikes);
+      const nPts = 200;
+      const sabrPts = [];
+      for (let i = 0; i < nPts; i++) {
+        const K = sMin + (sMax - sMin) * i / (nPts - 1);
+        const v = sabrVol(F, K, T, alpha, beta, rho, nu);
+        if (v !== null) sabrPts.push({ x: Math.round(K*10)/10, y: Math.round(v*10000)/100 });
+      }
+      // SABR line
+      chartDatasets.push({ label, data: sabrPts, borderColor: r.color, borderWidth: 1.5, pointRadius: 0, tension: 0, fill: false, _sessionKey: r.key });
+      // Market dots — no label (explained in subtitle)
+      chartDatasets.push({ label: '', data: mktPts, borderColor: r.color, backgroundColor: r.color, borderWidth: 0, pointRadius: 3, showLine: false, fill: false, _sessionKey: r.key });
+    } else {
+      chartDatasets.push({ label, data: mktPts, borderColor: r.color, borderWidth: 1.5, pointRadius: 2, tension: 0, fill: false, _sessionKey: r.key });
+    }
+  });
+
+  if (sessionSmileI) sessionSmileI.destroy();
+  document.getElementById('sessionSmileLoading').style.display='none';
+  sessionSmileI = new Chart(document.getElementById('sessionSmileChart'), {
+    type: 'line',
+    data: { datasets: chartDatasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      parsing: false,
+      plugins: {
+        legend: {
+          display: true, position: 'top',
+          labels: { color:'#6b7280', font:{family:'IBM Plex Mono',size:11}, boxWidth:20, boxHeight:2, padding:14,
+            filter: item => item.text !== '' },
+          onClick: (e, legendItem, legend) => {
+            const chart = legend.chart;
+            const clickedIdx = legendItem.datasetIndex;
+            const clickedKey = chart.data.datasets[clickedIdx]._sessionKey;
+
+            const isFaded = chart.data.datasets.some((ds, i) =>
+              i !== clickedIdx && ds._origColor && ds.borderColor === ds._origColor + '33'
+            );
+
+            if (isFaded) {
+              // Restore all
+              chart.data.datasets.forEach((ds, i) => {
+                if (ds._origColor) ds.borderColor = ds._origColor;
+                if (ds._origBgColor) ds.backgroundColor = ds._origBgColor;
+                if (ds._origWidth) ds.borderWidth = ds._origWidth;
+                chart.getDatasetMeta(i).hidden = false;
+              });
+            } else {
+              // Highlight clicked session (both line and dots), fade others
+              chart.data.datasets.forEach((ds, i) => {
+                if (!ds._origColor) ds._origColor = ds.borderColor;
+                if (!ds._origBgColor) ds._origBgColor = ds.backgroundColor;
+                if (!ds._origWidth) ds._origWidth = ds.borderWidth;
+                if (ds._sessionKey === clickedKey) {
+                  ds.borderColor = ds._origColor;
+                  ds.backgroundColor = ds._origBgColor;
+                  ds.borderWidth = ds._origWidth;
+                  chart.getDatasetMeta(i).hidden = false;
+                } else {
+                  ds.borderColor = ds._origColor + '33';
+                  ds.backgroundColor = ds._origColor + '33';
+                  ds.borderWidth = 0.8;
+                  chart.getDatasetMeta(i).hidden = false;
+                }
+              });
+            }
+            chart.update();
+          },
+        },
+        tooltip: {
+          mode:'nearest', intersect:false,
+          backgroundColor:'rgba(255,255,255,0.97)', borderColor:'rgba(0,0,0,0.1)', borderWidth:1,
+          titleColor:'#6b7280', bodyColor:'#111827', padding:10,
+          callbacks: { label: ctx => {
+            const x = ctx.parsed.x;
+            const xStr = x >= 1000 ? x.toLocaleString() : x.toFixed(3).replace(/\.?0+$/,'');
+            return `Strike ${xStr}: ${ctx.parsed.y.toFixed(1)}%`;
+          }}
+        }
+      },
+      scales: {
+        x: { type:'linear',
+             ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxTicksLimit:8,callback:v=>v>=1000?v.toLocaleString():v},
+             grid:{color:GC}, border:{color:'rgba(0,0,0,0.08)'},
+             title:{display:true,text:'Strike',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+        y: { ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},callback:v=>v.toFixed(0)+'%'},
+             grid:{color:GC}, border:{color:'rgba(0,0,0,0.08)'},
+             title:{display:true,text:'Implied vol (%)',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+      }
+    }
+  });
+}
+
+function setCcy(c){ccy=c;delete realData['surface_'+c];['vixLoading','smileLoading','termLoading','sessionSmileLoading'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='flex';});document.querySelectorAll('#ccy-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===c));update();}
+function setSess(s){sess=s;document.querySelectorAll('#sess-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===s.toUpperCase()));update();}
+function setSmile(m){}
+
+async function update(){
+  await renderMetrics();
+  await renderVix();
+  await renderTerm();
+  await renderSmile();
+  sessionSmileExpiry = null;
+  document.getElementById('expiry-select').innerHTML = '<option value="">Loading...</option>';
+  await renderSessionSmile();
+}
+
+document.getElementById('ts').textContent='Updated '+new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+' EST';
+update();
+</script>
+
+</body>
+</html>
