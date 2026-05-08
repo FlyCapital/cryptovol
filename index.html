@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CryptoVol — Crypto Volatility Intelligence</title>
-<meta name="description" content="Institutional-grade implied volatility indices and vol surfaces for BTC, ETH and SOL. CryptoVIX index, SABR vol surface and option Greeks captured across Asia, London and US sessions.">
+<meta name="description" content="Institutional-grade implied volatility indices and vol surfaces for BTC, ETH, SOL, XRP, AVAX and TRX. CryptoVIX index, SABR vol surface and option Greeks captured across Asia, London and US sessions.">
 <meta name="keywords" content="crypto volatility, implied volatility, bitcoin volatility, BTC options, ETH options, vol surface, SABR, CryptoVIX, options Greeks, crypto derivatives">
 <meta name="author" content="CryptoVol">
 <meta name="robots" content="index, follow">
 
 <!-- Open Graph (for social sharing) -->
 <meta property="og:title" content="CryptoVol — Crypto Volatility Intelligence">
-<meta property="og:description" content="Institutional-grade implied volatility indices and vol surfaces for BTC, ETH and SOL. Free dashboard + API access.">
+<meta property="og:description" content="Institutional-grade implied volatility indices and vol surfaces for BTC, ETH, SOL, XRP, AVAX and TRX. Free dashboard + API access.">
 <meta property="og:url" content="https://www.cryptovol.io">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CryptoVol">
@@ -19,7 +19,7 @@
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="CryptoVol — Crypto Volatility Intelligence">
-<meta name="twitter:description" content="Institutional-grade implied volatility indices and vol surfaces for BTC, ETH and SOL.">
+<meta name="twitter:description" content="Institutional-grade implied volatility indices and vol surfaces for BTC, ETH, SOL, XRP, AVAX and TRX.">
 <meta name="twitter:site" content="@cryptovol">
 
 <!-- Canonical -->
@@ -100,6 +100,22 @@ nav {
 .btn-group .ctrl-btn:last-child  { border-radius:0 3px 3px 0; border-right:0.5px solid var(--border2); }
 .ctrl-btn:hover { background:var(--surface2); color:var(--text); }
 .ctrl-btn.active { background:rgba(55,138,221,0.1); border-color:rgba(55,138,221,0.3); color:var(--blue); }
+.ctrl-btn.locked { color:var(--text3); cursor:not-allowed; opacity:0.65; position:relative; padding-right:8px; }
+.ctrl-btn.locked:hover { background:transparent; color:var(--text3); }
+.ctrl-btn.locked::after { content:'🔒'; font-size:9px; margin-left:5px; opacity:0.7; }
+.upgrade-pill {
+  display:inline-flex; align-items:center; gap:4px;
+  background:rgba(55,138,221,0.08);
+  border:0.5px solid rgba(55,138,221,0.25);
+  color:var(--blue);
+  font-family:var(--mono); font-size:11px; font-weight:500;
+  padding:4px 10px; border-radius:3px;
+  text-decoration:none;
+  letter-spacing:0.02em;
+  transition:all 0.15s;
+  margin-left:6px;
+}
+.upgrade-pill:hover { background:rgba(55,138,221,0.15); border-color:rgba(55,138,221,0.4); }
 .ctrl-sep { width:1px; height:18px; background:var(--border2); }
 .ts { font-size:11px; color:var(--text3); margin-left:auto; }
 
@@ -155,6 +171,8 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
 .ft-logo { font-family:var(--sans); font-size:14px; font-weight:700; color:var(--text2); }
 .ft-logo span { color:var(--blue); }
 .ft-note { font-size:11px; color:var(--text3); }
+.ft-note a { color:var(--blue); text-decoration:none; }
+.ft-note a:hover { text-decoration:underline; }
 
 @media(max-width:680px){
   .pricing-cta{grid-template-columns:1fr;}
@@ -196,9 +214,9 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
   <section class="hero">
     <div class="live-tag"><div class="live-dot"></div>LIVE · 3 SESSIONS DAILY</div>
     <h1>Crypto volatility<br><em>intelligently measured</em></h1>
-    <p class="hero-sub">Institutional-grade implied volatility indices and vol surfaces for BTC, ETH and SOL — captured across Asia, London and US sessions.</p>
+    <p class="hero-sub">Institutional-grade implied volatility indices and vol surfaces for BTC, ETH, SOL, XRP, AVAX and TRX — captured across Asia, London and US sessions. Preview BTC live below; full coverage via <a href="#pricing" style="color:var(--blue); text-decoration:none;">API</a>.</p>
     <div class="hero-pills">
-      <div class="pill"><span class="pill-label">Coverage</span><span class="pill-value"><strong>3</strong> assets</span></div>
+      <div class="pill"><span class="pill-label">Coverage</span><span class="pill-value"><strong>6</strong> assets</span></div>
       <div class="pill"><span class="pill-label">Sessions</span><span class="pill-value"><strong>Asia · London · US</strong></span></div>
 
     </div>
@@ -208,12 +226,13 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
     <span class="ctrl-label">ASSET</span>
     <div class="btn-group" id="ccy-grp">
       <button class="ctrl-btn active" onclick="setCcy('BTC')">BTC</button>
-      <button class="ctrl-btn" onclick="setCcy('ETH')">ETH</button>
-      <button class="ctrl-btn" onclick="setCcy('SOL')">SOL</button>
+      <button class="ctrl-btn" onclick="setCcy('ETH')" style="display:none">ETH</button>
+      <button class="ctrl-btn" onclick="setCcy('SOL')" style="display:none">SOL</button>
       <button class="ctrl-btn" onclick="setCcy('XRP')" style="display:none">XRP</button>
       <button class="ctrl-btn" onclick="setCcy('AVAX')" style="display:none">AVAX</button>
       <button class="ctrl-btn" onclick="setCcy('TRX')" style="display:none">TRX</button>
     </div>
+    <a href="#pricing" class="upgrade-pill">🔒 ETH · SOL · XRP · AVAX · TRX → unlock via API</a>
 
     <span class="ts" id="ts"></span>
   </div>
@@ -240,12 +259,11 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
 
   <div class="panel">
     <div class="panel-hd">
-      <div><div class="panel-title">Vol Term Structure</div><div class="panel-sub">Latest snapshot across tenors by session</div></div>
+      <div><div class="panel-title">Vol Term Structure</div><div class="panel-sub">Latest ATM vol across tenors by session</div></div>
     </div>
     <div class="panel-body">
       <div class="exp-row" id="exp-row" style="display:none"></div>
       <div style="position:relative;width:100%;height:190px;"><div class="chart-loading" id="termLoading">LOADING DATA...</div><canvas id="termChart" role="img" aria-label="Volatility term structure by session"></canvas></div>
-      <div class="smile-note">Shorter expiries show steeper skew · elevated put wing reflects persistent downside demand · data captured at each session open</div>
     </div>
   </div>
 
@@ -253,7 +271,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
     <div class="panel-hd">
       <div>
         <div class="panel-title">Session Smile Comparison</div>
-        <div class="panel-sub">Vol smile for a single expiry across Asia, London and US sessions · lines = SABR fit · dots = market quotes</div>
+        <div class="panel-sub">Vol smile for a single expiry across Asia, London and US sessions · lines = fitted · dots = market quotes</div>
       </div>
       <div>
         <select id="expiry-select" style="font-family:var(--mono);font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;">
@@ -271,7 +289,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
       <div>
         <div class="cta-tag">API ACCESS</div>
         <div class="cta-h">Integrate crypto vol data into your workflow</div>
-        <p class="cta-p">Full vol surface, option Greeks, volatility indices and constant-maturity history available via REST API. SABR-calibrated, 3 daily snapshots across Asia/London/US sessions. Available on RapidAPI.</p>
+        <p class="cta-p">Programmatic access to crypto volatility data. Query implied vol by strike, moneyness, or delta. Pull constant-maturity history for backtesting. Retrieve full SABR-calibrated surfaces with Greeks. Six assets, three daily sessions, available on RapidAPI.</p>
       </div>
       <div class="cta-acts">
         <a href="https://rapidapi.com" target="_blank" class="btn-pri">Get API Key →</a>
@@ -297,11 +315,11 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
         <div class="tier-price">$49 <span>/month</span></div>
         <ul class="tier-feats">
           <li>BTC, ETH, SOL coverage</li>
-          <li>6 months of history</li>
+          <li>1 year of history</li>
           <li>US session snapshot</li>
           <li>Vol Index + Vol Surface + Vol History</li>
           <li>1,000,000 API calls / month</li>
-          <li>24hr email support</li>
+          <li><a href="mailto:support@cryptovol.io" style="color:inherit; text-decoration:underline; text-decoration-color:rgba(55,138,221,0.4); text-underline-offset:3px;">24hr email support</a></li>
         </ul>
       </div>
       <div class="tier">
@@ -313,7 +331,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
           <li>3 daily snapshots (Asia/London/US)</li>
           <li>Full vol surface object + Greeks</li>
           <li>1,000,000 API calls / month</li>
-          <li>Priority email + feature input</li>
+          <li><a href="mailto:support@cryptovol.io" style="color:inherit; text-decoration:underline; text-decoration-color:rgba(55,138,221,0.4); text-underline-offset:3px;">Priority email + feature input</a></li>
         </ul>
       </div>
     </div>
@@ -321,7 +339,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
 
   <footer>
     <div class="ft-logo">crypto<span>vol</span></div>
-    <div class="ft-note">Data for informational purposes only. Not financial advice. © 2025 CryptoVol.</div>
+    <div class="ft-note">Support: <a href="mailto:support@cryptovol.io">support@cryptovol.io</a> · Data for informational purposes only. Not financial advice. © 2026 CryptoVol.</div>
   </footer>
 
 </div>
