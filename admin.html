@@ -640,8 +640,7 @@ async function renderSmile(){
 
   const chartDatasets = expiries.map((exp, idx) => {
     const sabr = exp.sabr;
-    const useSabr = sabr && sabr.alpha && sabr.nu && sabr.nu > 0.01
-      && !['XRP','AVAX','TRX'].includes(ccy);
+    const useSabr = sabr && sabr.alpha && sabr.nu && sabr.nu > 0.01;
 
     if (useSabr) {
       const {alpha, beta=1, rho, nu} = sabr;
@@ -783,7 +782,7 @@ async function renderSessionSmile() {
 
   if (!sessionSmileExpiry) return;
 
-  const useSabr = ['BTC','ETH','SOL'].includes(ccy);
+  const useSabr = true;
 
   const chartDatasets = [];
   results.forEach(r => {
