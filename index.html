@@ -571,14 +571,17 @@ function sabrVol(F, K, T, alpha, beta, rho, nu) {
   if (!alpha || alpha <= 0 || !F || !K || T <= 0) return null;
   beta = (beta != null) ? beta : 1;
 
-  function x_z(z, rho) {
+  function z_over_chi(z, rho) {
+    // Return z/χ(z) directly; Taylor-expand near z=0 to avoid 0/0.
     if (Math.abs(z) < 1e-6) {
-      return 1 - rho*z/2 + (2-3*rho*rho)*z*z/24;
+      return 1.0 - rho*z/2.0 + (1.0/3.0 + rho*rho/4.0) * z*z;
     }
     const num = Math.sqrt(1 - 2*rho*z + z*z) + z - rho;
     const den = 1 - rho;
     if (num/den <= 0) return null;
-    return Math.log(num/den);
+    const chi = Math.log(num/den);
+    if (Math.abs(chi) < 1e-15) return null;
+    return z / chi;
   }
 
   let result;
@@ -597,11 +600,11 @@ function sabrVol(F, K, T, alpha, beta, rho, nu) {
               + 0.25*alpha*beta*rho*nu/fk_avg
               + (2-3*rho*rho)/24*nu*nu) * T;
     const z = nu/alpha * fk_avg * log_fk;
-    const x = x_z(z, rho);
-    if (x === null || Math.abs(x) < 1e-10) return null;
-    result = A * z/x * B;
+    const zoc = z_over_chi(z, rho);
+    if (zoc === null) return null;
+    result = A * zoc * B;
   }
-  return (isFinite(result) && result > 0 && result < 20) ? result : null;
+  return (isFinite(result) && result > 0 && result < 50) ? result : null;
 }
 
 // ── Smile (SABR smooth curves, click legend to toggle) ──
