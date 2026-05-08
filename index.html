@@ -633,7 +633,7 @@ async function renderSmile(){
       for (let i = 0; i < nPts; i++) {
         const K = sMin + (sMax - sMin) * i / (nPts - 1);
         const v = sabrVol(F, K, T, alpha, beta, rho, nu);
-        if (v !== null) pts.push({ x: Math.round(K*10)/10, y: Math.round(v*10000)/100 });
+        if (v !== null) pts.push({ x: Math.round(K*10000)/10000, y: Math.round(v*1000000)/10000 });
       }
       return {
         label: exp.expiry + ' (' + exp.tenor_days + 'D)',
@@ -784,7 +784,7 @@ async function renderSessionSmile() {
       for (let i = 0; i < nPts; i++) {
         const K = sMin + (sMax - sMin) * i / (nPts - 1);
         const v = sabrVol(F, K, T, alpha, beta, rho, nu);
-        if (v !== null) sabrPts.push({ x: Math.round(K*10)/10, y: Math.round(v*10000)/100 });
+        if (v !== null) sabrPts.push({ x: Math.round(K*10000)/10000, y: Math.round(v*1000000)/10000 });
       }
       // SABR line
       chartDatasets.push({ label, data: sabrPts, borderColor: r.color, borderWidth: 1.5, pointRadius: 0, tension: 0, fill: false, _sessionKey: r.key });
