@@ -4,11 +4,16 @@
       "source": "/api",
       "destination": "https://rapidapi.com/mfzhang21/api/cryptovol",
       "permanent": false
-    },
+    }
+  ],
+  "rewrites": [
     {
       "source": "/docs",
-      "destination": "https://rapidapi.com/mfzhang21/api/cryptovol",
-      "permanent": false
+      "destination": "/docs.html"
+    },
+    {
+      "source": "/openapi.json",
+      "destination": "https://cryptovol-api-nbakzshi6q-uc.a.run.app/openapi.json"
     }
   ]
 }

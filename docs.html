@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Reference — CryptoVol</title>
+<meta name="description" content="REST API reference for CryptoVol's crypto implied volatility data. Endpoint specifications, parameters, and response schemas.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://www.cryptovol.io/docs.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background: #f5f6f8; }
+
+  /* Top nav matching the rest of the site */
+  .top-nav {
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(10px);
+    border-bottom: 0.5px solid rgba(0,0,0,0.12);
+    position: sticky; top: 0; z-index: 1000;
+  }
+  .top-nav-inner {
+    max-width: 1400px; margin: 0 auto;
+    padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 52px;
+  }
+  .logo {
+    font-family: 'Inter', sans-serif;
+    font-size: 17px; font-weight: 800;
+    letter-spacing: -0.3px; color: #111827;
+    text-decoration: none;
+  }
+  .logo span { color: #378ADD; }
+  .nav-links {
+    display: flex; align-items: center; gap: 20px;
+  }
+  .nav-link {
+    color: #6b7280; text-decoration: none;
+    font-size: 12px; letter-spacing: 0.04em;
+    font-family: 'IBM Plex Mono', monospace;
+    transition: color 0.15s;
+  }
+  .nav-link:hover { color: #111827; }
+  .nav-cta {
+    background: #378ADD; color: #fff;
+    padding: 6px 16px; border-radius: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px; text-decoration: none;
+  }
+
+  /* Loading state */
+  #docs-loading {
+    display: flex; align-items: center; justify-content: center;
+    height: calc(100vh - 52px);
+    color: #6b7280;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+  #docs-loading.hidden { display: none; }
+
+  /* Redoc container — let it take over the page below the nav */
+  redoc { display: block; }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="top-nav-inner">
+    <a href="index.html" class="logo">crypto<span>vol</span></a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">DASHBOARD</a>
+      <a href="methodology.html" class="nav-link">METHODOLOGY</a>
+      <a href="index.html#pricing" class="nav-link">PRICING</a>
+      <a href="/api" target="_blank" class="nav-cta">GET API KEY</a>
+    </div>
+  </div>
+</nav>
+
+<div id="docs-loading">LOADING API REFERENCE...</div>
+
+<redoc
+  spec-url="/openapi.json"
+  hide-download-button="true"
+  expand-responses="200"
+  theme='{
+    "colors": {
+      "primary": { "main": "#378ADD" },
+      "text": { "primary": "#111827", "secondary": "#6b7280" },
+      "border": { "dark": "rgba(0,0,0,0.12)", "light": "rgba(0,0,0,0.07)" },
+      "http": {
+        "get": "#378ADD",
+        "post": "#22c55e",
+        "put": "#f59e0b",
+        "delete": "#ef4444"
+      }
+    },
+    "typography": {
+      "fontFamily": "Inter, sans-serif",
+      "fontSize": "14px",
+      "lineHeight": "1.6",
+      "headings": { "fontFamily": "Inter, sans-serif", "fontWeight": "600" },
+      "code": { "fontFamily": "IBM Plex Mono, monospace", "fontSize": "13px" }
+    },
+    "sidebar": {
+      "backgroundColor": "#ffffff",
+      "textColor": "#111827",
+      "width": "260px"
+    },
+    "rightPanel": {
+      "backgroundColor": "#1a1f2e",
+      "textColor": "#e5e7eb"
+    }
+  }'>
+</redoc>
+
+<script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+<script>
+  // Hide loading message once Redoc renders
+  document.addEventListener('DOMContentLoaded', () => {
+    const checkRendered = setInterval(() => {
+      const redocEl = document.querySelector('redoc');
+      if (redocEl && redocEl.querySelector('.menu-content')) {
+        document.getElementById('docs-loading').classList.add('hidden');
+        clearInterval(checkRendered);
+      }
+    }, 200);
+    // Failsafe: hide after 10s regardless
+    setTimeout(() => document.getElementById('docs-loading').classList.add('hidden'), 10000);
+  });
+</script>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-3W1WWECEBL"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-3W1WWECEBL');
+</script>
+</body>
+</html>
