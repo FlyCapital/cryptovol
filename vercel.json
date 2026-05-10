@@ -12,6 +12,10 @@
       "destination": "/docs.html"
     },
     {
+      "source": "/methodology",
+      "destination": "/methodology.html"
+    },
+    {
       "source": "/openapi.json",
       "destination": "https://cryptovol-api-nbakzshi6q-uc.a.run.app/openapi.json"
     }
