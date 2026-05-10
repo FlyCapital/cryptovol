@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Methodology — CryptoVol</title>
-<meta name="description" content="How CryptoVol constructs volatility indices, vol surfaces and Greeks. SABR calibration, variance swap methodology and constant maturity interpolation explained.">
-<meta name="keywords" content="SABR model, vol surface methodology, CryptoVIX methodology, implied volatility calculation, variance swap, crypto options">
+<meta name="description" content="How CryptoVol constructs volatility indices, vol surfaces, constant-maturity history, and Greeks for crypto options. SABR calibration, variance swap methodology and K/S moneyness convention explained.">
+<meta name="keywords" content="SABR model, vol surface methodology, CryptoVIX methodology, implied volatility calculation, variance swap, crypto options, BTC ETH SOL XRP AVAX TRX">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://www.cryptovol.io/methodology.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -33,16 +33,28 @@ nav {
 .nav-link:hover { color:var(--text); }
 .nav-cta { background:var(--blue); color:#fff; border:none; padding:6px 16px; border-radius:4px; font-family:var(--mono); font-size:12px; cursor:pointer; text-decoration:none; }
 
-.wrap { max-width:800px; margin:0 auto; padding:48px 24px 80px; }
+.wrap { max-width:1100px; margin:0 auto; padding:48px 24px 80px; display:grid; grid-template-columns:200px 1fr; gap:48px; align-items:start; }
+.toc { position:sticky; top:80px; font-size:14px; max-height:calc(100vh - 100px); overflow-y:auto; padding-right:12px; }
+.toc-title { font-family:var(--mono); font-size:11px; color:var(--text3); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:14px; padding-bottom:8px; border-bottom:0.5px solid var(--border2); }
+.toc a { display:block; color:var(--text2); text-decoration:none; padding:7px 0 7px 12px; border-left:2px solid transparent; line-height:1.45; transition:color 0.15s, border-color 0.15s; }
+.toc a:hover { color:var(--text); }
+.toc a.active { color:var(--blue); border-left-color:var(--blue); }
+.content { min-width:0; }
+
+@media (max-width:900px) {
+  .wrap { grid-template-columns:1fr; gap:0; max-width:800px; }
+  .toc { display:none; }
+}
 
 h1 { font-size:32px; font-weight:700; letter-spacing:-0.5px; margin-bottom:8px; }
 .subtitle { color:var(--text2); font-size:15px; margin-bottom:48px; }
 
-h2 { font-size:18px; font-weight:600; margin:40px 0 12px; padding-top:8px; border-top:0.5px solid var(--border2); }
+h2 { font-size:18px; font-weight:600; margin:40px 0 12px; padding-top:8px; border-top:0.5px solid var(--border2); scroll-margin-top:72px; }
 h3 { font-size:14px; font-weight:600; font-family:var(--mono); color:var(--blue); margin:24px 0 8px; }
 p { color:var(--text2); margin-bottom:14px; }
 ul { color:var(--text2); padding-left:20px; margin-bottom:14px; }
 ul li { margin-bottom:6px; }
+code { font-family:var(--mono); font-size:13px; background:var(--surface2); padding:1px 6px; border-radius:3px; color:var(--text); }
 
 .formula {
   background:var(--surface); border:0.5px solid var(--border2);
@@ -61,6 +73,12 @@ ul li { margin-bottom:6px; }
   padding:12px 16px; border-radius:0 4px 4px 0;
   font-size:13px; color:var(--text2); margin:16px 0;
 }
+footer { border-top:0.5px solid var(--border2); margin-top:64px; padding-top:24px; text-align:center; }
+.ft-logo { font-family:var(--sans); font-size:14px; font-weight:700; color:var(--text2); }
+.ft-logo span { color:var(--blue); }
+.ft-note { font-size:11px; color:var(--text3); margin-top:6px; }
+.ft-note a { color:var(--blue); text-decoration:none; }
+.ft-note a:hover { text-decoration:underline; }
 </style>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-3W1WWECEBL"></script>
@@ -77,89 +95,229 @@ ul li { margin-bottom:6px; }
     <a href="index.html" class="logo">crypto<span>vol</span></a>
     <div class="nav-links">
       <a href="index.html" class="nav-link">DASHBOARD</a>
-      <a href="#pricing" class="nav-link">PRICING</a>
-      <a href="https://rapidapi.com" target="_blank" class="nav-cta">GET API KEY</a>
+      <a href="index.html#pricing" class="nav-link">PRICING</a>
+      <a href="/api" target="_blank" class="nav-cta">GET API KEY</a>
     </div>
   </div>
 </nav>
 
 <div class="wrap">
+  <aside class="toc">
+    <div class="toc-title">On this page</div>
+    <a href="#data-sources">1. Data Sources and Snapshots</a>
+    <a href="#calibration">2. Vol Surface Calibration</a>
+    <a href="#interpolation">3. Vol Interpolation</a>
+    <a href="#strike-conventions">4. Strike Conventions</a>
+    <a href="#constant-maturity">5. Constant-Maturity Convention</a>
+    <a href="#vol-index">6. Volatility Index</a>
+    <a href="#greeks">7. Greeks and Analytics</a>
+    <a href="#limitations">8. Limitations and Caveats</a>
+    <a href="#api-access">API Access</a>
+  </aside>
+
+  <div class="content">
   <h1>Methodology</h1>
-  <p class="subtitle">How CryptoVol constructs volatility indices, surfaces and Greeks from live options market data.</p>
+  <p class="subtitle">How CryptoVol constructs volatility indices, surfaces, constant-maturity history, and Greeks from live crypto options market data.</p>
 
-  <h2>1. Data Collection</h2>
-  <p>Option chain snapshots are collected from <strong>Deribit</strong> — the dominant venue for BTC, ETH and SOL options — three times daily, capturing the open of each major trading session:</p>
+  <h2 id="data-sources">1. Data Sources and Snapshots</h2>
+  <p>Option chain snapshots are collected from <strong>Deribit</strong> and <strong>OKX</strong> — the two largest venues for crypto options trading. For each snapshot we capture the full option chain: bid/ask prices, strikes, maturities, plus underlying spot and futures prices across all listed expiries.</p>
+
+  <h3>Asset Coverage</h3>
+  <p>Coverage spans <span class="tag">BTC</span><span class="tag">ETH</span><span class="tag">SOL</span><span class="tag">XRP</span><span class="tag">AVAX</span><span class="tag">TRX</span></p>
+  <p>To follow the major liquidity flows in the market, we use <strong>coin-collateralized</strong> (inverse) options for BTC and ETH — where the contract is denominated and settled in the underlying coin — and <strong>USDC/USDT-collateralized</strong> (linear) options for SOL, XRP, AVAX, and TRX, where settlement is in stablecoin. This matches where the deepest order books and tightest bid-ask spreads sit for each asset.</p>
+  <p>Historical depth varies by asset:</p>
   <ul>
-    <li><strong>Asia session</strong> — 02:00 UTC</li>
-    <li><strong>London session</strong> — 08:00 UTC</li>
-    <li><strong>US session</strong> — 16:05 UTC</li>
+    <li><span class="tag">BTC</span><span class="tag">ETH</span> from June 2024</li>
+    <li><span class="tag">SOL</span><span class="tag">XRP</span> from May 2025</li>
+    <li><span class="tag">AVAX</span><span class="tag">TRX</span> from January 2026</li>
   </ul>
-  <p>For each snapshot, we collect the full option chain: bid/ask prices, strikes, maturities, and underlying spot and futures prices across all listed expiries.</p>
 
-  <h2>2. Forward Curve & Yield Curve</h2>
-  <p>We bootstrap a <strong>forward curve</strong> from listed futures prices and a <strong>yield curve</strong> from put-call parity across strikes and expiries. This gives us a consistent discount and carry framework for each snapshot.</p>
+  <h3>Sessions</h3>
+  <p>We capture three snapshots per day, timed to the close of each major global trading session. This gives users a consistent intra-day view of vol levels and term structure across geographies:</p>
+  <ul>
+    <li><strong>Asia session</strong> — 05:00 EST (10:00 UTC)</li>
+    <li><strong>London session</strong> — 12:00 EST (17:00 UTC)</li>
+    <li><strong>US session</strong> — 16:00 EST (21:00 UTC)</li>
+  </ul>
+
+  <h2 id="calibration">2. Vol Surface Calibration</h2>
+  <p>For each snapshot, we construct an arbitrage-free implied volatility surface in four stages: cleaning the raw option chain, implying the forward and yield curves, inverting Black-Scholes to recover implied vols from option premia, and calibrating the SABR model per expiry against those vols.</p>
+
+  <h3>Data Cleansing</h3>
+  <p>Raw option chains contain stale, one-sided, and arbitrageable quotes that would distort calibration. We apply a series of filters before any fitting:</p>
+  <ul>
+    <li><strong>Two-sided quotes only.</strong> Strikes without both a bid and ask are excluded. We use the bid-ask midpoint as the reference price.</li>
+    <li><strong>Bid-ask sanity check.</strong> Quotes where <code>3 × bid &lt; ask</code> are dropped — too wide a spread signals stale or unreliable pricing.</li>
+    <li><strong>Out-of-the-money only.</strong> For each expiry, we keep calls at strikes ≥ ATM and puts at strikes &lt; ATM. OTM options carry the cleanest information about implied vol; ITM options are dominated by intrinsic value and are derivable from the OTM side via put-call parity.</li>
+    <li><strong>Premium sanity bound.</strong> Calls with mid price ≥ 50% of forward, or puts with mid price ≥ 50% of strike, are excluded as economically implausible.</li>
+    <li><strong>Monotonicity filter.</strong> We sort puts from high to low strike and calls from low to high strike. As we move further out-of-the-money, option premia should strictly decrease; any quote that violates this monotonicity is treated as stale and dropped.</li>
+    <li><strong>Minimum quote count.</strong> Expiries with fewer than 5 valid strikes after filtering are excluded from calibration — too few points to fit SABR's parameters reliably.</li>
+  </ul>
+
+  <h3>Forward and Yield Curves</h3>
+  <p>For each option expiry, we find the closest-to-ATM strike with both call and put two-sided quotes and solve for the yield from put-call parity.</p>
   <div class="formula">
-    F(T) = S × e^(r-q)T<br>
-    Put-Call Parity: C - P = (F - K) × e^(-rT)
+    r(T) = −ln((S − C + P) / K) / T<br>
+    F(T) = S × e<sup>r(T) · T</sup> = K + (C − P) × e<sup>r(T) · T</sup>
   </div>
+  <p>We prefer the option-implied forward over the listed futures price. The implied forward is, by construction, internally consistent with the option market: using it ensures that subsequent implied vols are arbitrage-free across calls and puts at the same strike. Using a listed futures price instead can introduce a small mismatch between the two markets, producing put-call parity violations and contaminating the calibration.</p>
+  <p>The implied forward and yield curves are also exposed in the API as additional analytic fields.</p>
 
-  <h2>3. Vol Surface Calibration</h2>
-  <p>For each expiry, we calibrate a <strong>SABR model</strong> (Hagan et al. 2002) to the observed market implied volatilities. The SABR model captures the volatility smile with four parameters:</p>
+  <h3>Implied Volatility Calculation</h3>
+  <p>Each cleaned option premium is converted to an implied volatility by inverting the Black-Scholes formula. For each strike <code>K</code> and expiry <code>T</code>, we solve numerically for the σ that reproduces the observed market price under the calibrated forward and yield:</p>
+  <div class="formula">
+    Call: C = e<sup>−rT</sup> × [F · N(d₁) − K · N(d₂)]<br>
+    Put:  P = e<sup>−rT</sup> × [K · N(−d₂) − F · N(−d₁)]<br>
+    where d₁ = [ln(F/K) + σ²T/2] / (σ√T),  d₂ = d₁ − σ√T
+  </div>
+  <p>The resulting (strike, vol) pairs form the input to SABR calibration.</p>
+
+  <h3>SABR Calibration</h3>
+  <p>For each (asset, expiry, snapshot) combination with sufficient cleaned quotes, we calibrate a <strong>SABR model</strong> (Hagan et al. 2002) to the implied volatilities. SABR fits the volatility smile with four parameters and provides a smooth, arbitrage-free surface for interpolation between quoted strikes.</p>
 
   <h3>SABR Parameters</h3>
   <ul>
     <li><strong>α (alpha)</strong> — Level of implied vol (ATM vol proxy)</li>
-    <li><strong>β (beta)</strong> — Set to 1 (lognormal backbone)</li>
-    <li><strong>ρ (rho)</strong> — Correlation between spot and vol; controls skew</li>
+    <li><strong>β (beta)</strong> — Fixed at 1 (lognormal backbone, appropriate for crypto)</li>
+    <li><strong>ρ (rho)</strong> — Correlation between spot and vol; controls smile skew</li>
     <li><strong>ν (nu)</strong> — Vol-of-vol; controls smile curvature</li>
   </ul>
 
   <h3>SABR Lognormal Formula (β=1)</h3>
   <div class="formula">
-    σ_B(K,F) = A × (z/χ(z)) × B<br><br>
+    σ(K, F) = A × (z / χ(z)) × B<br><br>
     where:<br>
-    A = α / [(FK)^((1-β)/2) × (1 + (1-β)²/24 × ln²(F/K) + (1-β)⁴/1920 × ln⁴(F/K))]<br>
-    B = 1 + [(1-β)²α²/(24(FK)^(1-β)) + ρβνα/(4(FK)^((1-β)/2)) + (2-3ρ²)ν²/24] × T<br>
-    z = ν/α × (FK)^((1-β)/2) × ln(F/K)<br>
-    χ(z) = ln[(√(1-2ρz+z²) + z - ρ) / (1-ρ)]
+    A = α / [(FK)<sup>(1−β)/2</sup> × (1 + (1−β)²/24 · ln²(F/K) + (1−β)⁴/1920 · ln⁴(F/K))]<br>
+    B = 1 + [((1−β)²α²)/(24(FK)<sup>1−β</sup>) + (ρβνα)/(4(FK)<sup>(1−β)/2</sup>) + ((2−3ρ²)ν²)/24] × T<br>
+    z = (ν/α) × (FK)<sup>(1−β)/2</sup> × ln(F/K)<br>
+    χ(z) = ln[(√(1 − 2ρz + z²) + z − ρ) / (1 − ρ)]
   </div>
 
   <div class="note">
-    When F ≈ K (ATM), we use the limiting form: σ_ATM = α/F^(1-β) × B to avoid numerical instability.
-    When z ≈ 0, χ(z) is computed via Taylor expansion: 1 - ρz/2 + (2-3ρ²)z²/24.
+    Numerical safeguards: when F ≈ K, we use the ATM limiting form σ_ATM = α/F<sup>1−β</sup> × B.
   </div>
 
-  <h2>4. CryptoVIX Index</h2>
-  <p>Our <strong>CryptoVIX</strong> is computed following the VIX methodology (model-free variance swap rate), adapted for crypto options:</p>
+  <p>Calibration is performed independently per expiry using least-squares minimization on the difference between SABR-implied and market vols.</p>
 
-  <h3>Variance Swap Rate</h3>
+  <h2 id="interpolation">3. Vol Interpolation</h2>
+  <p>To answer a query for vol at an arbitrary <code>(strike, maturity)</code> pair, we interpolate along both axes of the calibrated surface:</p>
+  <ol style="color:var(--text2); padding-left:20px; margin-bottom:14px;">
+    <li><strong>Strike axis (per expiry).</strong> For each calibrated expiry, we evaluate the SABR formula at the target strike using that expiry's fitted parameters. This produces one implied vol per expiry — a slice of the surface at the requested strike.</li>
+    <li><strong>Time axis.</strong> The per-expiry vols (evaluated at the same target strike on both bracketing expiries T₁ and T₂) are interpolated to the target maturity T* in <strong>total-variance space</strong>:
+      <div class="formula" style="margin:8px 0;">
+        σ²(K, T*) · T* = w · σ²(K, T₁) · T₁ + (1 − w) · σ²(K, T₂) · T₂<br>
+        where w = (T₂ − T*) / (T₂ − T₁)
+      </div>
+      This "linear-in-total-variance" interpolation preserves no-arbitrage between adjacent maturities at a fixed strike.
+    </li>
+  </ol>
+  <p>If the queried maturity is beyond the longest calibrated expiry, we extrapolate using the last expiry's SABR parameters evaluated at the queried maturity (flat-parameter extrapolation). If a particular expiry's calibration failed (e.g. insufficient strikes after cleansing), we use the nearest neighboring expiry's SABR parameters as a substitute.</p>
+
+  <h2 id="strike-conventions">4. Strike Conventions</h2>
+  <p>We adopt a <strong>spot-based</strong> convention for both moneyness and delta queries:</p>
+
+  <h3>Moneyness</h3>
   <div class="formula">
-    VarSwap(T) = (2/T) × Σᵢ [ΔKᵢ/Kᵢ²] × e^(rT) × Q(Kᵢ)
+    moneyness = K / S
   </div>
-  <p>where Q(Kᵢ) is the mid-price of the out-of-the-money option at strike Kᵢ. We integrate over all available strikes from 10% to 300% moneyness.</p>
+  <p>where <code>K</code> is the strike and <code>S</code> is the spot price at the snapshot time. <code>moneyness = 1.0</code> is at-the-money relative to spot. <code>moneyness = 0.95</code> is a strike 5% below spot (typical OTM put), <code>moneyness = 1.05</code> is 5% above (typical OTM call).</p>
 
-  <h3>Constant Maturity</h3>
-  <p>To produce a constant-maturity index (e.g. 7D, 30D), we compute the variance swap rate for each listed expiry then interpolate in variance space:</p>
+  <h3>Delta</h3>
+  <p>Delta queries also use the spot-based convention. The delta is the standard Black-Scholes lognormal delta computed at the SABR-fitted vol with spot as the underlying:</p>
   <div class="formula">
-    CryptoVIX(T*) = √[ interp(VarSwap, T₁, T₂, T*) ] × 100
+    Δ_call = N(d₁),  Δ_put = N(d₁) − 1<br>
+    where d₁ = [ln(S/K) + (r + σ²/2)·T] / (σ·√T)
+  </div>
+  <p>A <code>0.25</code> delta call is the strike where the option's spot delta equals 0.25 (typical OTM call), and a <code>0.25</code> delta put is the strike where the put's delta equals -0.25 (typical OTM put). When you query by delta, the API solves for the strike that produces the requested delta under the calibrated SABR vol surface.</p>
+
+  <div class="note">
+    Spot is stored alongside each snapshot. The vol-surface and vol-surface/bulk endpoints expose the spot price in their response so users can convert between moneyness, delta, and absolute strike consistently. This convention is intuitive for crypto markets where carry is small relative to volatility, and matches how most crypto practitioners think about strikes.
   </div>
 
-  <h2>5. Vol Smile Display</h2>
-  <p>The vol smile chart shows SABR-interpolated implied volatility across the full strike range for each listed expiry. The SABR curve is evaluated at 200 equally-spaced strike points between the minimum and maximum quoted strike.</p>
-  <p>Market quotes (bid/ask midpoints) are shown as dots overlaid on the fitted curve, allowing users to assess calibration quality.</p>
-
-  <h2>6. Term Structure</h2>
-  <p>The ATM term structure plots the SABR ATM implied vol (closest quoted strike to the forward price) against each listed expiry date, showing how vol varies with tenor.</p>
-
-  <h2>Data Coverage</h2>
+  <h2 id="constant-maturity">5. Constant-Maturity Convention</h2>
+  <p>Listed option expiries are discrete and roll forward periodically. For consistent time series suitable for backtesting and regression analysis, we expose data at <strong>fixed constant tenors</strong> rather than at calendar expiry dates.</p>
+  <p>Available constant maturities:</p>
   <ul>
-    <li><span class="tag">BTC</span> Bitcoin — full smile, all expiries</li>
-    <li><span class="tag">ETH</span> Ethereum — full smile, all expiries</li>
-    <li><span class="tag">SOL</span> Solana — full smile, all expiries</li>
+    <li><span class="tag">1D</span><span class="tag">1W</span><span class="tag">2W</span><span class="tag">3W</span> Short-dated</li>
+    <li><span class="tag">1M</span><span class="tag">2M</span><span class="tag">3M</span> Medium-dated</li>
+    <li><span class="tag">6M</span><span class="tag">9M</span><span class="tag">1Y</span> Long-dated</li>
+  </ul>
+  <p>For each constant tenor, we publish vol at a grid of fixed strikes — addressable either by moneyness or by delta:</p>
+  <h3>Moneyness grid (K / S)</h3>
+  <ul>
+    <li><strong>Deep OTM puts:</strong> 0.30, 0.40, 0.60</li>
+    <li><strong>OTM puts:</strong> 0.80, 0.85, 0.90, 0.95, 0.975</li>
+    <li><strong>ATM:</strong> 1.00</li>
+    <li><strong>OTM calls:</strong> 1.025, 1.05, 1.10, 1.20</li>
+    <li><strong>Deep OTM calls:</strong> 1.30, 1.50, 1.75, 2.00, 2.50, 3.00</li>
+  </ul>
+  <h3>Delta grid (spot delta magnitude)</h3>
+  <ul>
+    <li><strong>Puts:</strong> 5Δ, 10Δ, 15Δ, 25Δ, 35Δ</li>
+    <li><strong>ATM:</strong> 50Δ (call only)</li>
+    <li><strong>Calls:</strong> 5Δ, 10Δ, 15Δ, 25Δ, 35Δ</li>
+  </ul>
+  <p>Constant-maturity vols are produced by the same vol-interpolation procedure described in Section 3: SABR is evaluated at the requested strike on each bracketing expiry, and the resulting vols are interpolated to the target tenor in total-variance space.</p>
+  <p>The result: a clean daily time series at, say, 30-day constant maturity 25-delta call, suitable for regression and backtesting without expiry-rolloff artifacts. Available via <code>/v1/vol-history</code>.</p>
+
+  <h2 id="vol-index">6. Volatility Index</h2>
+  <p>The <strong>CryptoVol Index</strong> is a model-free implied volatility measure following the variance-swap methodology popularized by the CBOE VIX, adapted for crypto options:</p>
+  <div class="formula">
+    VarSwap(T) = (2/T) × Σᵢ (ΔKᵢ / Kᵢ²) · e<sup>rT</sup> · Q(Kᵢ)
+  </div>
+  <p>where <code>Q(Kᵢ)</code> is the mid-price of the out-of-the-money option at strike <code>Kᵢ</code>.</p>
+  <p>Constant-maturity indices (7D, 30D) are produced by interpolating the variance swap rate to the target tenor in total-variance space:</p>
+  <div class="formula">
+    VarSwap(T*) · T* = w · VarSwap(T₁) · T₁ + (1 − w) · VarSwap(T₂) · T₂<br>
+    where w = (T₂ − T*) / (T₂ − T₁)<br><br>
+    Index(T*) = √[ VarSwap(T*) ] × 100
+  </div>
+  <p>Available via <code>/v1/vol-index</code>.</p>
+
+  <h2 id="greeks">7. Greeks and Analytics</h2>
+  <p>For ULTRA tier, the <code>/v1/vol-surface</code> and <code>/v1/vol-surface/bulk</code> endpoints support <code>include_analytics=true</code>, which returns spot, forward, yield rate, Black-Scholes option price, and Greeks (delta, gamma, vega, theta) for each queried point.</p>
+
+  <h2 id="limitations">8. Limitations and Caveats</h2>
+  <ul>
+    <li><strong>Liquidity varies by asset and tenor.</strong> Short-dated options on illiquid alts (XRP, AVAX, TRX) may have wide bid-ask spreads or sparse quotes; SABR fits in these regions are best treated as indicative.</li>
+    <li><strong>Snapshot, not streaming.</strong> Data is captured 3× daily, not in real time. We are evaluating live data as a future feature.</li>
+    <li><strong>Not financial advice.</strong> The data is provided for research, modeling, and informational purposes only.</li>
   </ul>
 
-  <h2>API Access</h2>
-  <p>All data described above is available via REST API on RapidAPI. Endpoints include <code>/v1/vix</code> for time series, <code>/v1/surface</code> for the full calibrated vol surface, and <code>/v1/greeks</code> for option Greeks (coming soon).</p>
+  <h2 id="api-access">API Access</h2>
+  <p>All data described above is available via REST API on RapidAPI:</p>
+  <ul>
+    <li><code>GET /v1/vol-index</code> — daily implied volatility index time series</li>
+    <li><code>GET /v1/vol-surface</code> — single-point vol query by strike, moneyness, or delta</li>
+    <li><code>POST /v1/vol-surface/bulk</code> — multiple points in one request</li>
+    <li><code>GET /v1/vol-history</code> — historical constant-maturity / constant-strike series</li>
+  </ul>
+  <p>See pricing and full coverage details on the <a href="index.html#pricing" style="color:var(--blue); text-decoration:none;">main page</a>, or get an API key at <a href="/api" target="_blank" style="color:var(--blue); text-decoration:none;">cryptovol.io/api</a>. Questions? Email <a href="mailto:support@cryptovol.io" style="color:var(--blue); text-decoration:none;">support@cryptovol.io</a>.</p>
+
+  <footer>
+    <div class="ft-logo">crypto<span>vol</span></div>
+    <div class="ft-note">Support: <a href="mailto:support@cryptovol.io">support@cryptovol.io</a> · Data for informational purposes only. Not financial advice. © 2026 CryptoVol.</div>
+  </footer>
+  </div>
 </div>
+
+<script>
+// TOC scroll-spy: highlight the section currently in view
+(function(){
+  const links = document.querySelectorAll('.toc a');
+  const sections = Array.from(links).map(a => document.getElementById(a.getAttribute('href').slice(1))).filter(Boolean);
+  function update(){
+    const scrollY = window.scrollY + 100;  // offset for sticky nav
+    let activeIdx = 0;
+    for (let i=0; i<sections.length; i++) {
+      if (sections[i].offsetTop <= scrollY) activeIdx = i;
+    }
+    links.forEach((a,i) => a.classList.toggle('active', i === activeIdx));
+  }
+  window.addEventListener('scroll', update, { passive: true });
+  window.addEventListener('resize', update);
+  update();
+})();
+</script>
 </body>
 </html>
