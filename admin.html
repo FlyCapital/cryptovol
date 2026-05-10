@@ -174,7 +174,7 @@ nav {
 .pricing-wrap { margin:20px 0 48px; }
 .pricing-wrap { margin:20px 0 48px; }
 .pricing-header { margin-bottom:24px; }
-.pricing-title { font-family:var(--sans); font-size:20px; font-weight:700; color:var(--text); letter-spacing:-0.2px; margin:0; }
+.pricing-title { font-family:var(--sans); font-size:24px; font-weight:700; color:var(--text); letter-spacing:-0.3px; margin:0; }
 .cta-tag { font-size:10px; letter-spacing:0.1em; color:var(--blue); text-transform:uppercase; margin-bottom:6px; }
 .btn-pri { background:var(--blue); color:#fff; border:none; padding:10px 24px; border-radius:4px; font-family:var(--mono); font-size:13px; cursor:pointer; text-decoration:none; white-space:nowrap; transition:opacity 0.15s; display:inline-block; }
 .btn-pri:hover { opacity:0.85; }
@@ -235,7 +235,6 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
 <div class="wrap">
 
   <section class="hero">
-    <div class="live-tag"><div class="live-dot"></div>LIVE · 3 SESSIONS DAILY</div>
     <h1>Crypto volatility<br><em>intelligently measured</em></h1>
     <p class="hero-sub">Institutional-grade implied volatility data for BTC, ETH, SOL, XRP, AVAX and TRX — captured across Asia, London and US sessions. Query implied vol by strike, moneyness, or delta. Pull constant-maturity history for backtesting. Retrieve full SABR-calibrated surfaces with Greeks via REST API.</p>
     <div class="hero-actions">
@@ -313,15 +312,14 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
 
   <section class="pricing-wrap" id="pricing">
     <div class="pricing-header">
-      <div class="cta-tag">PRICING</div>
-      <h2 class="pricing-title">Plans for every team</h2>
+      <h2 class="pricing-title">PRICING</h2>
     </div>
     <div class="tiers">
       <div class="tier">
         <div class="tier-name">Basic</div>
         <div class="tier-price">$0 <span>/month</span></div>
         <ul class="tier-feats">
-          <li>BTC volatility data</li>
+          <li>BTC only</li>
           <li>30 days of history</li>
           <li>US session snapshot</li>
           <li>Vol Index + Vol Surface query</li>
@@ -338,7 +336,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
           <li>1 year of history</li>
           <li>US session snapshot</li>
           <li>Vol Index + Vol Surface + Vol History</li>
-          <li>1,000,000 API calls / month</li>
+          <li>70,000 API calls / day</li>
           <li><a href="mailto:support@cryptovol.io" style="color:inherit; text-decoration:underline; text-decoration-color:rgba(55,138,221,0.4); text-underline-offset:3px;">24hr email support</a></li>
         </ul>
       </div>
@@ -350,7 +348,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
           <li>Full historical archive</li>
           <li>3 daily snapshots (Asia/London/US)</li>
           <li>Full vol surface object + Greeks</li>
-          <li>1,000,000 API calls / month</li>
+          <li>200,000 API calls / day</li>
           <li><a href="mailto:support@cryptovol.io" style="color:inherit; text-decoration:underline; text-decoration-color:rgba(55,138,221,0.4); text-underline-offset:3px;">Priority email + feature input</a></li>
         </ul>
       </div>
@@ -904,7 +902,7 @@ async function update(){
   await renderSessionSmile();
 }
 
-document.getElementById('ts').textContent='Updated '+new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+' EST';
+document.getElementById('ts').textContent=''+new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+' EST';
 update();
 </script>
 
