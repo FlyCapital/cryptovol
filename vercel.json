@@ -1,0 +1,14 @@
+{
+  "redirects": [
+    {
+      "source": "/api",
+      "destination": "https://rapidapi.com/mfzhang21/api/cryptovol",
+      "permanent": false
+    },
+    {
+      "source": "/docs",
+      "destination": "https://rapidapi.com/mfzhang21/api/cryptovol",
+      "permanent": false
+    }
+  ]
+}
