@@ -748,7 +748,11 @@ async function renderSessionSmile() {
     ).join('');
     select.onchange = () => { sessionSmileExpiry = select.value; renderSessionSmile(); };
     if (!sessionSmileExpiry && validExpiries.length > 0) {
-      sessionSmileExpiry = validExpiries[0].expiry;
+      // Default to the first expiry with at least 20 days to expiry (avoids noisy near-dated smiles).
+      // Fall back to the longest available if none qualify.
+      const preferred = validExpiries.find(e => e.tenor_days >= 20);
+      sessionSmileExpiry = (preferred || validExpiries[validExpiries.length - 1]).expiry;
+      select.value = sessionSmileExpiry;
     }
   }
 
