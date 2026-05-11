@@ -748,10 +748,29 @@ async function renderSessionSmile() {
     ).join('');
     select.onchange = () => { sessionSmileExpiry = select.value; renderSessionSmile(); };
     if (!sessionSmileExpiry && validExpiries.length > 0) {
-      // Default to the first expiry with at least 20 days to expiry (avoids noisy near-dated smiles).
-      // Fall back to the longest available if none qualify.
-      const preferred = validExpiries.find(e => e.tenor_days >= 20);
-      sessionSmileExpiry = (preferred || validExpiries[validExpiries.length - 1]).expiry;
+      // Default selection logic:
+      //   1. Find the "month-end" expiry of the current month (last expiry within the current calendar month).
+      //   2. If it's at least 14 days away, use it.
+      //   3. Otherwise use the month-end expiry of the next month.
+      //   4. Fall back to the longest available if neither exists.
+      const today = new Date();
+      const monthEndExpiry = (year, monthIdx) => {  // monthIdx is 0-based
+        const inMonth = validExpiries.filter(e => {
+          const d = new Date(e.expiry);
+          return d.getFullYear() === year && d.getMonth() === monthIdx;
+        });
+        if (inMonth.length === 0) return null;
+        // Pick the latest expiry within that month
+        return inMonth.reduce((a, b) => new Date(a.expiry) > new Date(b.expiry) ? a : b);
+      };
+      const curEnd  = monthEndExpiry(today.getFullYear(), today.getMonth());
+      const nextDt  = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+      const nextEnd = monthEndExpiry(nextDt.getFullYear(), nextDt.getMonth());
+      let pick = null;
+      if (curEnd && curEnd.tenor_days >= 14) pick = curEnd;
+      else if (nextEnd)                       pick = nextEnd;
+      else                                    pick = validExpiries[validExpiries.length - 1];
+      sessionSmileExpiry = pick.expiry;
       select.value = sessionSmileExpiry;
     }
   }
