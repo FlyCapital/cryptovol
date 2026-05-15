@@ -91,9 +91,8 @@ nav {
 .hero h1 em { font-style:normal; color:var(--blue); }
 .hero-sub { color:var(--text2); font-size:13px; line-height:1.7; margin-bottom:18px; }
 .hero-bullets { list-style:none; padding:0; margin:0 0 24px; }
-.hero-bullets li { color:var(--text2); font-size:13px; line-height:1.65; padding:3px 0 3px 22px; position:relative; }
-.hero-bullets li::before { content:'✓'; position:absolute; left:0; top:3px; color:var(--blue); font-weight:600; font-size:13px; }
-.hero-bullets li strong { color:var(--text); font-weight:600; }
+.hero-bullets li { color:#374151; font-size:14px; line-height:1.7; padding:4px 0 4px 22px; position:relative; }
+.hero-bullets li::before { content:'✓'; position:absolute; left:0; top:4px; color:var(--blue); font-weight:600; font-size:13px; }
 .hero-actions { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:22px; }
 .hero-code { border:0.5px solid var(--border2); border-radius:8px; overflow:hidden; background:#0f1419; }
 .hero-code-hd { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; background:#1a1f2e; border-bottom:0.5px solid rgba(255,255,255,0.06); }
@@ -202,6 +201,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
     <div class="logo">crypto<span>vol</span></div>
     <div class="nav-links">
       <a href="methodology" class="nav-link">METHODOLOGY</a>
+      <a href="/blog" class="nav-link">RESEARCH</a>
       <a href="#pricing" class="nav-link">PRICING</a>
       <a href="docs" class="nav-link">API DOCS</a>
       <a href="/api" target="_blank" class="nav-cta">GET API KEY</a>
@@ -218,11 +218,11 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
         <p class="hero-sub">Institutional-grade implied vol surfaces for crypto options.<br>Built for traders, quants and researchers.</p>
 
         <ul class="hero-bullets">
-          <li><strong>6 assets · history since June 2024</strong></li>
-          <li>Daily snapshots at <strong>Asia, London, US</strong> session closes</li>
+          <li>6 assets · history since June 2024</li>
+          <li>Daily snapshots at Asia, London, US session closes</li>
           <li>Robust quote filtering removes arbitrage-able prints</li>
           <li>SABR-calibrated surfaces with full Greeks</li>
-          <li>Query by <strong>strike, moneyness, or delta</strong></li>
+          <li>Query by strike, moneyness, or delta</li>
           <li>Constant-maturity history for clean backtesting</li>
           <li>REST API for programmatic access</li>
         </ul>
@@ -234,6 +234,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
         </div>
 
         <p class="hero-methlink"><a href="methodology">Read more about the data and model methodology →</a></p>
+        <p class="hero-methlink"><a href="/blog/btc-covered-call-backtest">Research: BTC covered call backtest →</a></p>
         <p class="hero-support">Questions? <a href="mailto:support@cryptovol.io">support@cryptovol.io</a></p>
       </div>
 
