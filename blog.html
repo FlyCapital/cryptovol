@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research — CryptoVol</title>
+<meta name="description" content="Quantitative research on crypto volatility, options strategies, and systematic trading from the CryptoVol team.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://www.cryptovol.io/blog">
+
+<meta property="og:title" content="Research — CryptoVol">
+<meta property="og:description" content="Quantitative research on crypto volatility, options strategies, and systematic trading.">
+<meta property="og:url" content="https://www.cryptovol.io/blog">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CryptoVol Research">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #ffffff;
+    --ink:       #111111;
+    --ink-soft:  #3a3a3a;
+    --muted:     #767676;
+    --rule:      #e6e6e6;
+    --rule-soft: #f0f0f0;
+    --accent:    #14406b;
+    --code-bg:   #f6f6f4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    font-size: 17px;
+    line-height: 1.62;
+    font-feature-settings: "kern", "liga", "onum";
+  }
+
+  /* Masthead */
+  .masthead-bar {
+    border-bottom: 1px solid var(--ink);
+    background: var(--bg);
+  }
+  .masthead-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 14px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .masthead-inner .brand {
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-decoration: none;
+  }
+  .masthead-inner .nav a {
+    color: var(--muted);
+    text-decoration: none;
+    margin-left: 18px;
+    border-bottom: 1px solid transparent;
+    padding-bottom: 1px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .masthead-inner .nav a:hover { color: var(--ink); border-bottom-color: var(--ink); }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 56px 28px 96px;
+  }
+
+  /* Page header */
+  .page-header {
+    margin-bottom: 48px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--rule);
+  }
+  h1.page-title {
+    font-family: 'Source Serif 4', serif;
+    font-weight: 700;
+    font-size: clamp(32px, 5vw, 44px);
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    margin-bottom: 14px;
+    font-variation-settings: "opsz" 60;
+  }
+  .page-sub {
+    font-family: 'Source Serif 4', serif;
+    font-style: italic;
+    color: var(--ink-soft);
+    font-size: 18px;
+    line-height: 1.5;
+  }
+
+  /* Post list */
+  .post-list { list-style: none; }
+  .post-item {
+    padding: 32px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .post-item:last-child { border-bottom: none; }
+
+  .post-date {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .post-title {
+    font-family: 'Source Serif 4', serif;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 1.22;
+    letter-spacing: -0.01em;
+    margin-bottom: 12px;
+    font-variation-settings: "opsz" 36;
+  }
+  .post-title a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .post-title a:hover {
+    color: var(--accent);
+  }
+  .post-excerpt {
+    color: var(--ink-soft);
+    font-size: 17px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+  .post-tags {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .post-tags .tag::before { content: "·"; margin: 0 6px; }
+  .post-tags .tag:first-child::before { content: none; }
+
+  /* Footer */
+  .footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+  .footer a {
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 1px solid var(--rule);
+    margin: 0 6px;
+    padding-bottom: 1px;
+  }
+  .footer a:hover { color: var(--ink); border-bottom-color: var(--ink); }
+
+  @media (max-width: 640px) {
+    .container { padding: 40px 20px 72px; }
+    body { font-size: 16px; }
+    .post-title { font-size: 20px; }
+    .post-excerpt { font-size: 15px; }
+  }
+</style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-3W1WWECEBL"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-3W1WWECEBL');
+</script>
+</head>
+<body>
+
+<header class="masthead-bar">
+  <div class="masthead-inner">
+    <a href="/blog" class="brand">CryptoVol · Research</a>
+    <nav class="nav">
+      <a href="/">Dashboard</a>
+      <a href="/methodology">Methodology</a>
+      <a href="/docs">Docs</a>
+      <a href="/api" target="_blank">API</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+
+  <div class="page-header">
+    <h1 class="page-title">Research</h1>
+    <p class="page-sub">Quantitative analysis and backtests on crypto volatility and options strategies.</p>
+  </div>
+
+  <ul class="post-list">
+
+    <li class="post-item">
+      <div class="post-date">15 May 2026</div>
+      <h2 class="post-title"><a href="/blog/btc-covered-call-backtest">Monthly ATM Beat HODL by 15pp: A BTC Covered Call Backtest</a></h2>
+      <p class="post-excerpt">We backtested six BTC covered-call strategies — weekly and monthly rolls at 10Δ, 25Δ, and 50Δ — against a HODL benchmark over two years. Monthly ATM led on return and Sharpe; weekly OTM underperformed HODL.</p>
+      <div class="post-tags">
+        <span class="tag">BTC</span>
+        <span class="tag">Options</span>
+        <span class="tag">Backtest</span>
+        <span class="tag">Covered Calls</span>
+      </div>
+    </li>
+
+  </ul>
+
+  <div class="footer">
+    © 2026 CryptoVol &nbsp;·&nbsp; <a href="/">cryptovol.io</a> &nbsp;·&nbsp; <a href="mailto:hello@cryptovol.io">hello@cryptovol.io</a>
+  </div>
+
+</main>
+
+</body>
+</html>

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monthly ATM Beat HODL by 15pp: A BTC Covered Call Backtest — CryptoVol Research</title>
+<meta name="description" content="Two-year backtest of six BTC covered-call strategies vs HODL. Monthly ATM led on return and Sharpe; weekly OTM underperformed HODL.">
+<meta name="keywords" content="bitcoin covered calls, BTC options strategy, covered call backtest, crypto options, volatility risk premium, BTC HODL">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://www.cryptovol.io/blog/btc-covered-call-backtest">
+
+<!-- Open Graph -->
+<meta property="og:title" content="Monthly ATM Beat HODL by 15pp: A BTC Covered Call Backtest">
+<meta property="og:description" content="Two-year backtest of six BTC covered-call strategies vs HODL. Monthly ATM led on return and Sharpe; weekly OTM underperformed HODL.">
+<meta property="og:url" content="https://www.cryptovol.io/blog/btc-covered-call-backtest">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="CryptoVol Research">
+<meta property="og:image" content="https://www.cryptovol.io/blog/equity_curves.png">
+<meta property="article:published_time" content="2026-05-15">
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Monthly ATM Beat HODL by 15pp: A BTC Covered Call Backtest">
+<meta name="twitter:description" content="Two-year backtest of six BTC covered-call strategies vs HODL.">
+<meta name="twitter:image" content="https://www.cryptovol.io/blog/equity_curves.png">
+<meta name="twitter:site" content="@cryptovol">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #ffffff;
+    --ink:       #111111;
+    --ink-soft:  #3a3a3a;
+    --muted:     #767676;
+    --rule:      #e6e6e6;
+    --rule-soft: #f0f0f0;
+    --accent:    #14406b;
+    --code-bg:   #f6f6f4;
+    --row-alt:   #fafaf9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    font-size: 17px;
+    line-height: 1.62;
+    font-feature-settings: "kern", "liga", "onum";
+  }
+
+  /* Masthead bar (publication-level) */
+  .masthead-bar {
+    border-bottom: 1px solid var(--ink);
+    background: var(--bg);
+  }
+  .masthead-inner {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 14px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .masthead-inner .brand {
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-decoration: none;
+  }
+  .masthead-inner .nav a {
+    color: var(--muted);
+    text-decoration: none;
+    margin-left: 18px;
+    border-bottom: 1px solid transparent;
+    padding-bottom: 1px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .masthead-inner .nav a:hover { color: var(--ink); border-bottom-color: var(--ink); }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 32px 28px 96px;
+  }
+
+  /* Breadcrumb back to /blog */
+  .crumb {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 32px;
+  }
+  .crumb a {
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 1px;
+  }
+  .crumb a:hover { color: var(--ink); border-bottom-color: var(--ink); }
+
+  /* Title */
+  h1 {
+    font-family: 'Source Serif 4', serif;
+    font-weight: 700;
+    font-size: clamp(28px, 4.5vw, 38px);
+    line-height: 1.18;
+    letter-spacing: -0.012em;
+    margin-bottom: 18px;
+    color: var(--ink);
+    font-variation-settings: "opsz" 60;
+  }
+
+  .byline {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    margin: 0 0 44px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .byline strong { color: var(--ink); font-weight: 500; }
+
+  /* Body */
+  p { margin: 0 0 1.25em; }
+  p strong { color: var(--ink); font-weight: 600; }
+
+  h2 {
+    font-family: 'Source Serif 4', serif;
+    font-weight: 600;
+    font-size: 22px;
+    line-height: 1.3;
+    margin: 56px 0 18px;
+    color: var(--ink);
+    padding-top: 8px;
+  }
+
+  /* Tables */
+  .table-wrap {
+    margin: 28px 0;
+    overflow-x: auto;
+    border-top: 1px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+  }
+  th, td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  th {
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--ink);
+    background: var(--bg);
+  }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: none; }
+  tr.highlight td { background: #f0f4fa !important; font-weight: 600; color: var(--ink); }
+  tr.benchmark td { font-style: italic; color: var(--ink-soft); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  tbody tr:nth-child(even) td { background: var(--row-alt); }
+  tr.highlight td, tr.benchmark td { background: inherit; }
+  tr.highlight td { background: #f0f4fa !important; }
+
+  /* Code */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--rule);
+    padding: 18px 20px;
+    margin: 24px 0;
+    overflow-x: auto;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+  code {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 0.88em;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border: 1px solid var(--rule);
+    color: var(--ink);
+  }
+  pre code { background: none; padding: 0; border: none; font-size: 1em; }
+  .kw { color: #7a2e83; }
+  .str { color: #2a5a35; }
+  .com { color: var(--muted); font-style: italic; }
+  .fn { color: #14406b; }
+
+  /* Figure */
+  figure { margin: 28px 0; }
+  figure img {
+    width: 100%;
+    border: 1px solid var(--rule);
+    background: white;
+    display: block;
+  }
+  figcaption {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 8px;
+  }
+
+  /* Lists */
+  ul { margin: 1em 0; padding-left: 22px; }
+  li { margin-bottom: 0.4em; }
+
+  /* Links */
+  a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+  a:hover { text-decoration-thickness: 2px; }
+
+  /* CTA */
+  .cta {
+    margin: 36px 0;
+    padding: 24px 28px;
+    border: 1px solid var(--ink);
+    background: var(--bg);
+  }
+  .cta p {
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .cta .btn {
+    display: inline-block;
+    padding: 9px 18px;
+    background: var(--ink);
+    color: var(--bg);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+  .cta .btn:hover { background: var(--accent); }
+
+  /* Footer */
+  .footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+  .footer a {
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 1px solid var(--rule);
+    margin: 0 6px;
+    padding-bottom: 1px;
+  }
+  .footer a:hover { color: var(--ink); border-bottom-color: var(--ink); }
+
+  @media (max-width: 640px) {
+    .container { padding: 24px 18px 64px; }
+    body { font-size: 16px; }
+    h2 { font-size: 19px; margin-top: 44px; }
+    pre { font-size: 11.5px; padding: 14px; }
+  }
+</style>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-3W1WWECEBL"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-3W1WWECEBL');
+</script>
+</head>
+<body>
+
+<header class="masthead-bar">
+  <div class="masthead-inner">
+    <a href="/blog" class="brand">CryptoVol · Research</a>
+    <nav class="nav">
+      <a href="/">Dashboard</a>
+      <a href="/methodology">Methodology</a>
+      <a href="/docs">Docs</a>
+      <a href="/api" target="_blank">API</a>
+    </nav>
+  </div>
+</header>
+
+<article class="container">
+
+  <div class="crumb"><a href="/blog">← All Research</a></div>
+
+  <h1>Monthly ATM Beat HODL by 15pp: A BTC Covered Call Backtest</h1>
+
+  <p class="byline"><strong>CryptoVol Research</strong> &nbsp;·&nbsp; 15 May 2026</p>
+
+  <p>Covered calls are a long-standing income strategy in equity markets, popularized by products like CBOE's BXM index and BlackRock's BXMX fund. The mechanics are simple: hold the underlying, sell a call option against it, collect the premium. You give up upside above the strike in exchange for income that cushions the downside — a small, steady payment in return for capping your large, occasional gain.</p>
+
+  <p>The strategy is well-studied in equities. In crypto, despite a mature options market on Deribit and rising institutional interest, public analysis of covered-call performance remains thin. This post tests the strategy on BTC with two years of option data.</p>
+
+  <p>We backtested six BTC covered-call strategies — weekly and monthly rolls at 10Δ, 25Δ, and 50Δ — against a HODL (buy and hold) benchmark over the two years from June 2024 to May 2026.</p>
+
+  <p>The headline result: <strong>Monthly 50Δ returned +27.6% with a max drawdown of −26.1%, compared to HODL's +12.2% and −46.6%.</strong> Two strategies (Weekly 25Δ, Weekly 10Δ) underperformed HODL.</p>
+
+  <h2>Methodology</h2>
+
+  <div class="table-wrap">
+    <table>
+      <tbody>
+        <tr><td style="width:30%"><strong>Data source</strong></td><td><a href="https://www.cryptovol.io">CryptoVol.io</a></td></tr>
+        <tr><td><strong>Period</strong></td><td>7 Jun 2024 – 8 May 2026</td></tr>
+        <tr><td><strong>Underlying</strong></td><td>BTC, 1 unit held throughout</td></tr>
+        <tr><td><strong>Rolls</strong></td><td>Weekly: every Friday. Monthly: last Friday of each month</td></tr>
+        <tr><td><strong>Strike</strong></td><td>Resolved from target delta on the fitted vol surface</td></tr>
+        <tr><td><strong>Fill</strong></td><td>BS mid, no spread</td></tr>
+        <tr><td><strong>Settlement</strong></td><td>Hold to expiry; assigned cash flow = <code>max(0, S − K)</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Equity is the BTC value plus accumulated cash from premiums net of assignment losses, rebased to 100 at start.</p>
+
+  <h2>Results</h2>
+
+  <figure>
+    <img src="/blog/equity_curves.png" alt="Equity curves: 6 covered call strategies vs HODL">
+    <figcaption>Equity curves, rebased to 100. June 2024 – May 2026.</figcaption>
+  </figure>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Strategy</th>
+          <th class="num">Total Return</th>
+          <th class="num">Annualized</th>
+          <th class="num">Sharpe</th>
+          <th class="num">Max DD</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="highlight"><td>Monthly 50Δ</td><td class="num">+27.6%</td><td class="num">+13.9%</td><td class="num">0.67</td><td class="num">−26.1%</td></tr>
+        <tr><td>Monthly 25Δ</td><td class="num">+18.2%</td><td class="num">+9.3%</td><td class="num">0.44</td><td class="num">−35.8%</td></tr>
+        <tr><td>Monthly 10Δ</td><td class="num">+15.1%</td><td class="num">+7.8%</td><td class="num">0.39</td><td class="num">−41.5%</td></tr>
+        <tr><td>Weekly 50Δ</td><td class="num">+14.2%</td><td class="num">+7.2%</td><td class="num">0.41</td><td class="num">−37.4%</td></tr>
+        <tr class="benchmark"><td>HODL (benchmark)</td><td class="num">+12.2%</td><td class="num">+6.3%</td><td class="num">0.36</td><td class="num">−46.6%</td></tr>
+        <tr><td>Weekly 10Δ</td><td class="num">+1.9%</td><td class="num">+1.0%</td><td class="num">0.23</td><td class="num">−47.7%</td></tr>
+        <tr><td>Weekly 25Δ</td><td class="num">−0.7%</td><td class="num">−0.4%</td><td class="num">0.17</td><td class="num">−46.6%</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Three observations</h2>
+
+  <p><strong>1. Monthly dominated weekly at every delta.</strong> Same-delta comparisons: 50Δ monthly +13.4pp vs weekly, 25Δ +18.9pp, 10Δ +13.2pp. Monthly produced higher Sharpe and lower drawdown in every bucket. The IV–RV spread is harvested more cleanly at 30 days than at 7, and weekly rolls incur additional path-dependent drag from frequent strike resets in trending markets.</p>
+
+  <p><strong>2. ATM outperformed OTM within the monthly cohort.</strong> Returns scaled inversely with moneyness: 50Δ (+27.6%) &gt; 25Δ (+18.2%) &gt; 10Δ (+15.1%). The vol risk premium concentrates near at-the-money where vega is largest. Deep-OTM premiums are too small to compensate for the tail exposure they create.</p>
+
+  <p><strong>3. Outperformance came from drawdowns, not rallies.</strong> Covered calls underperformed HODL during the Nov 2024 – Mar 2025 rally (BTC: ~$70k → ~$108k) as short-call caps bound. They outperformed during the Sep 2025 – Feb 2026 drawdown as accumulated premium offset spot losses. The Monthly 50Δ vs HODL gap is largely a function of the recent drawdown.</p>
+
+  <h2>Implementation</h2>
+
+  <p>The full backtest required one endpoint per roll to retrieve the data needed:</p>
+
+<pre><code><span class="kw">import</span> requests
+
+<span class="kw">def</span> <span class="fn">get_call_for_target_delta</span>(date, expiry, delta_target):
+    <span class="str">"""Returns strike, vol, BS premium, spot, and Greeks for a target-delta call."""</span>
+    r = requests.<span class="fn">get</span>(
+        <span class="str">"https://api.cryptovol.io/v1/vol-surface"</span>,
+        headers={<span class="str">"X-RapidAPI-Key"</span>: YOUR_API_KEY},
+        params={
+            <span class="str">"ccy"</span>:               <span class="str">"BTC"</span>,
+            <span class="str">"date"</span>:              date,
+            <span class="str">"expiry"</span>:            expiry,
+            <span class="str">"strike_type"</span>:       <span class="str">"delta"</span>,
+            <span class="str">"strike_value"</span>:      delta_target,
+            <span class="str">"option_type"</span>:       <span class="str">"C"</span>,
+            <span class="str">"session"</span>:           <span class="str">"us"</span>,
+            <span class="str">"include_analytics"</span>: <span class="str">"true"</span>,
+        },
+    ).<span class="fn">json</span>()
+    <span class="kw">return</span> {
+        <span class="str">"strike"</span>:  r[<span class="str">"strike"</span>],
+        <span class="str">"vol"</span>:     r[<span class="str">"vol"</span>],
+        <span class="str">"premium"</span>: r[<span class="str">"analytics"</span>][<span class="str">"price"</span>],
+        <span class="str">"spot"</span>:    r[<span class="str">"analytics"</span>][<span class="str">"spot"</span>],
+        <span class="str">"delta"</span>:   r[<span class="str">"analytics"</span>][<span class="str">"delta"</span>],
+    }</code></pre>
+
+  <h2>Caveats</h2>
+
+  <ul>
+    <li><strong>Mid-price fills.</strong> No bid-ask spread modeled. Live results for Monthly 50Δ would be 2–4pp lower; Weekly 10Δ would be substantially worse given wider relative spreads on small premiums.</li>
+    <li><strong>Cash is not reinvested.</strong> Accumulated premium sits idle at 0%. In practice, parking cash in T-bills or stablecoin lending at ~4–5% would add roughly 1–2pp to total returns for the covered-call strategies. HODL holds no cash and is unaffected, so the comparison is biased against the option strategies.</li>
+    <li><strong>Sample size.</strong> 97 weekly rolls and 22 monthly rolls. Monthly point estimates have wide confidence intervals.</li>
+  </ul>
+
+  <h2>API access</h2>
+
+  <div class="cta">
+    <p>The vol surface, pricing, and Greeks are available via the CryptoVol API.</p>
+    <a href="/api" class="btn">Get an API key →</a>
+  </div>
+
+  <div class="footer">
+    © 2026 CryptoVol &nbsp;·&nbsp; <a href="/">cryptovol.io</a> &nbsp;·&nbsp; <a href="/blog">More research</a> &nbsp;·&nbsp; <a href="mailto:hello@cryptovol.io">hello@cryptovol.io</a>
+  </div>
+
+</article>
+
+</body>
+</html>

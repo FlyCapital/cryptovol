@@ -16,6 +16,14 @@
       "destination": "/methodology.html"
     },
     {
+      "source": "/blog",
+      "destination": "/blog.html"
+    },
+    {
+      "source": "/blog/btc-covered-call-backtest",
+      "destination": "/blog/btc-covered-call-backtest.html"
+    },
+    {
       "source": "/openapi.json",
       "destination": "https://cryptovol-api-nbakzshi6q-uc.a.run.app/openapi.json"
     }
