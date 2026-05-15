@@ -126,34 +126,13 @@ nav {
 .btn-group .ctrl-btn:last-child  { border-radius:0 3px 3px 0; border-right:0.5px solid var(--border2); }
 .ctrl-btn:hover { background:var(--surface2); color:var(--text); }
 .ctrl-btn.active { background:rgba(55,138,221,0.1); border-color:rgba(55,138,221,0.3); color:var(--blue); }
-.ctrl-btn.locked { color:var(--text3); cursor:not-allowed; opacity:0.65; position:relative; padding-right:8px; }
-.ctrl-btn.locked:hover { background:transparent; color:var(--text3); }
-.ctrl-btn.locked::after { content:'🔒'; font-size:9px; margin-left:5px; opacity:0.7; }
-.upgrade-pill {
-  display:inline-flex; align-items:center; gap:4px;
-  background:rgba(55,138,221,0.08);
-  border:0.5px solid rgba(55,138,221,0.25);
-  color:var(--blue);
-  font-family:var(--mono); font-size:11px; font-weight:500;
-  padding:4px 10px; border-radius:3px;
-  text-decoration:none;
-  letter-spacing:0.02em;
-  transition:all 0.15s;
-  margin-left:6px;
-}
-.upgrade-pill:hover { background:rgba(55,138,221,0.15); border-color:rgba(55,138,221,0.4); }
 .ctrl-sep { width:1px; height:18px; background:var(--border2); }
+.ctrl-hint { font-family:var(--mono); font-size:10px; color:var(--text3); letter-spacing:0.02em; margin-left:8px; }
+.tenor-toggle { display:inline-flex; gap:2px; padding:2px; background:var(--surface2); border-radius:5px; }
+.tenor-btn { font-family:var(--mono); font-size:11px; padding:4px 10px; border:none; background:transparent; color:var(--text2); cursor:pointer; border-radius:3px; letter-spacing:0.04em; transition:background 0.15s, color 0.15s; }
+.tenor-btn:hover { color:var(--text); }
+.tenor-btn.active { background:var(--surface); color:var(--text); box-shadow:0 1px 2px rgba(0,0,0,0.06); }
 .ts { font-size:11px; color:var(--text3); margin-left:auto; }
-
-.metric-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--border); border:0.5px solid var(--border2); border-radius:8px; overflow:hidden; margin:18px 0; }
-.metric { background:var(--surface); padding:14px 18px; transition:background 0.12s; }
-.metric:hover { background:var(--surface2); }
-.m-lbl { font-size:10px; letter-spacing:0.09em; color:var(--text3); text-transform:uppercase; margin-bottom:4px; }
-.m-val { font-size:24px; font-family:var(--sans); font-weight:700; color:var(--text); letter-spacing:-0.5px; }
-.m-d   { font-size:11px; margin-top:2px; }
-.up  { color:var(--green); }
-.dn  { color:var(--red); }
-.neu { color:var(--text3); }
 
 .panel { background:var(--surface); border:0.5px solid var(--border2); border-radius:8px; overflow:hidden; margin-bottom:14px; }
 .panel-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
@@ -253,6 +232,23 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
   </section>
 
   <div class="controls-bar">
+    <span class="ts" id="ts"></span>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hd">
+      <div><div class="panel-title">Implied Volatility Index</div><div class="panel-sub">Annualized implied vol · click legend to isolate · last 6 months</div></div>
+      <div class="tenor-toggle" role="tablist" aria-label="Index tenor">
+        <button class="tenor-btn" data-tenor="7D" aria-selected="false">7D</button>
+        <button class="tenor-btn active" data-tenor="30D" aria-selected="true">30D</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div style="position:relative;width:100%;height:300px;"><div class="chart-loading" id="vixLoading">LOADING DATA...</div><canvas id="vixChart" role="img" aria-label="Implied volatility index time series for all assets"></canvas></div>
+    </div>
+  </div>
+
+  <div class="controls-bar">
     <span class="ctrl-label">ASSET</span>
     <div class="btn-group" id="ccy-grp">
       <button class="ctrl-btn active" onclick="setCcy('BTC')">BTC</button>
@@ -262,24 +258,12 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
       <button class="ctrl-btn" onclick="setCcy('AVAX')">AVAX</button>
       <button class="ctrl-btn" onclick="setCcy('TRX')">TRX</button>
     </div>
-
-    <span class="ts" id="ts"></span>
-  </div>
-
-  <div class="metric-grid" id="metrics"></div>
-
-  <div class="panel">
-    <div class="panel-hd">
-      <div><div class="panel-title">CryptoVIX — Implied Volatility Index</div><div class="panel-sub">Annualized implied vol index · click legend to toggle</div></div>
-    </div>
-    <div class="panel-body">
-      <div style="position:relative;width:100%;height:270px;"><div class="chart-loading" id="vixLoading">LOADING DATA...</div><canvas id="vixChart" role="img" aria-label="CryptoVIX implied and realized volatility over time"></canvas></div>
-    </div>
+    <span class="ctrl-hint">Controls the smile, term structure, and session charts below</span>
   </div>
 
   <div class="panel">
     <div class="panel-hd">
-      <div><div class="panel-title">Vol Smile by Expiry</div><div class="panel-sub">Implied vol across strikes</div></div>
+      <div><div class="panel-title">Vol Smile by Expiry</div><div class="panel-sub">SABR-fitted vol · weekly · bi-weekly · monthly · quarterly · semi-annual · annual</div></div>
     </div>
     <div class="panel-body">
       <div style="position:relative;width:100%;height:360px;"><div class="chart-loading" id="smileLoading">LOADING DATA...</div><canvas id="smileChart" role="img" aria-label="Volatility smile by expiry date"></canvas></div>
@@ -375,7 +359,19 @@ const TENORS= ['7D','14D','21D','30D','60D','90D'];
 const SCOL3 = {asia:'#1D9E75',london:'#1F6FBF',us:'#E8845A'};
 const BASE  = {BTC:65,ETH:72,SOL:88,XRP:58,AVAX:92,TRX:55};
 
+// Color palette for multi-asset vol index chart — prioritizes visual distinguishability
+const ASSET_COLORS = {
+  BTC:  '#F7931A',   // BTC orange
+  ETH:  '#627EEA',   // ETH purple
+  SOL:  '#14AB66',   // SOL green (darker than brand for readability)
+  XRP:  '#3a9bdc',   // light blue
+  AVAX: '#E84142',   // AVAX red
+  TRX:  '#9B59B6',   // purple (TRX brand red too close to AVAX)
+};
+const ALL_CCYS = ['BTC','ETH','SOL','XRP','AVAX','TRX'];
+
 let ccy='BTC', sess='all', smileMode='all';
+let vixTenor='30D';  // selected tenor for multi-asset vol index chart
 let vixI=null, termI=null, smileI=null;
 let realData = {}; // cache: realData[ccy][tenor] = [{time,vi}]
 
@@ -422,67 +418,71 @@ async function fetchVix(c, tenor) {
   }
 }
 
-// ── Metrics ──
-async function renderMetrics() {
-  const data7  = await fetchVix(ccy, '7D');
-  const data30 = await fetchVix(ccy, '30D');
-  const latest7  = data7.length  ? data7[data7.length-1].vol  : null;
-  const prev7    = data7.length>1 ? data7[data7.length-2].vol  : null;
-  const latest30 = data30.length  ? data30[data30.length-1].vol : null;
-  const prev30   = data30.length>1 ? data30[data30.length-2].vol : null;
-  const d7  = (latest7  && prev7)  ? (latest7  - prev7).toFixed(2)  : null;
-  const d30 = (latest30 && prev30) ? (latest30 - prev30).toFixed(2) : null;
-  const prem = (latest7 && latest30) ? (latest7 - latest30).toFixed(2) : '—';
-
-  // IV rank: position of latest7 in 1Y range
-  let ivrank = '—';
-  if (data7.length > 10) {
-    const vals = data7.map(d=>d.vol);
-    const mn = Math.min(...vals), mx = Math.max(...vals);
-    ivrank = mx>mn ? Math.round((latest7-mn)/(mx-mn)*100) : 50;
-  }
-
-  document.getElementById('metrics').innerHTML=`
-    <div class="metric"><div class="m-lbl">7D</div><div class="m-val">${latest7!=null?latest7.toFixed(1)+'%':'—'}</div><div class="m-d ${parseFloat(d7)>=0?'up':'dn'}">${d7!=null?(parseFloat(d7)>=0?'▲':'▼')+' '+Math.abs(d7)+'% 1D':''}</div></div>
-    <div class="metric"><div class="m-lbl">30D</div><div class="m-val">${latest30!=null?latest30.toFixed(1)+'%':'—'}</div><div class="m-d ${parseFloat(d30)>=0?'up':'dn'}">${d30!=null?(parseFloat(d30)>=0?'▲':'▼')+' '+Math.abs(d30)+'% 1D':''}</div></div>
-  `;
-}
-
 // ── VIX chart with real data ──
 async function renderVix() {
-  const data7  = await fetchVix(ccy, '7D');
-  const data30 = await fetchVix(ccy, '30D');
+  // Fetch the selected tenor for all 6 assets in parallel
+  const tenor = vixTenor;
+  const seriesArr = await Promise.all(ALL_CCYS.map(c => fetchVix(c, tenor)));
+  const series = Object.fromEntries(ALL_CCYS.map((c, i) => [c, seriesArr[i]]));
 
-  const labels7  = data7.map(d=>d.date);
-  const values7  = data7.map(d=>d.vol);
-  const labels30 = data30.map(d=>d.date);
-  const values30 = data30.map(d=>d.vol);
+  // Build a union of all dates across the 6 series
+  const allDateSet = new Set();
+  ALL_CCYS.forEach(c => (series[c] || []).forEach(d => allDateSet.add(d.date)));
+  const allLabels = [...allDateSet].sort();
 
-  // merge labels
-  const allLabels = [...new Set([...labels7,...labels30])].sort();
+  // Build per-asset maps for fast lookup
+  const maps = Object.fromEntries(
+    ALL_CCYS.map(c => [c, Object.fromEntries((series[c] || []).map(d => [d.date, d.vol]))])
+  );
 
-  const map7  = Object.fromEntries(data7.map(d=>[d.date,d.vol]));
-  const map30 = Object.fromEntries(data30.map(d=>[d.date,d.vol]));
+  // Construct one dataset per asset
+  const datasets = ALL_CCYS.map(c => ({
+    label:       c,
+    data:        allLabels.map(l => maps[c][l] ?? null),
+    borderColor: ASSET_COLORS[c],
+    borderWidth: 1.6,
+    pointRadius: 0,
+    tension:     0.3,
+    fill:        false,
+    spanGaps:    true,
+  }));
 
-  if(vixI)vixI.destroy();
-  document.getElementById('vixLoading').style.display='none';
-  vixI=new Chart(document.getElementById('vixChart'),{type:'line',data:{
-    labels: allLabels,
-    datasets:[
-      {label:'30D',data:allLabels.map(l=>map30[l]??null), borderColor:'#1F6FBF',borderWidth:1.5,pointRadius:0,tension:0.3,fill:false,spanGaps:true},
-      {label:'7D', data:allLabels.map(l=>map7[l]??null),  borderColor:'#E8845A',borderWidth:1.5,pointRadius:0,tension:0.3,fill:false,spanGaps:true},
-    ]
-  },options:{
-    ...BASE_OPTS,
-    plugins:{
-      ...BASE_OPTS.plugins,
-      legend:{
-        display:true, position:'top',
-        labels:{color:'#6b7280',font:{family:'IBM Plex Mono',size:11},boxWidth:20,boxHeight:2,padding:14},
-        onClick: legendHighlightClick,
+  if (vixI) vixI.destroy();
+  document.getElementById('vixLoading').style.display = 'none';
+  vixI = new Chart(document.getElementById('vixChart'), {
+    type: 'line',
+    data: { labels: allLabels, datasets },
+    options: {
+      ...BASE_OPTS,
+      plugins: {
+        ...BASE_OPTS.plugins,
+        legend: {
+          display: true, position: 'top',
+          labels: { color: '#6b7280', font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 20, boxHeight: 2, padding: 14 },
+          onClick: legendHighlightClick,
+        }
       }
     }
-  }});
+  });
+}
+
+// Wire up tenor toggle buttons (7D/30D)
+function initVixTenorToggle() {
+  document.querySelectorAll('.tenor-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const newTenor = btn.dataset.tenor;
+      if (newTenor === vixTenor) return;
+      vixTenor = newTenor;
+      document.querySelectorAll('.tenor-btn').forEach(b => {
+        const isActive = b.dataset.tenor === newTenor;
+        b.classList.toggle('active', isActive);
+        b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+      const ld = document.getElementById('vixLoading');
+      if (ld) ld.style.display = 'flex';
+      renderVix();
+    });
+  });
 }
 
 // ── Fetch vol surface from API ──
@@ -635,7 +635,26 @@ async function renderSmile(){
   const allExpiries = await fetchSurface(ccy);
   if (!allExpiries.length) return;
 
-  const expiries = allExpiries.filter(e => e.tenor_days >= 5);
+  // Pick canonical tenors: weekly, bi-weekly, monthly, quarterly, semi-annual, annual.
+  // For each target, find the listed expiry whose tenor_days is closest.
+  // Dedupe (multiple targets may map to the same listed expiry), then sort by tenor.
+  const TARGET_TENORS = [7, 14, 30, 90, 180, 365];  // weekly, bi-weekly, monthly, quarterly, semi-annual, annual
+  const valid = allExpiries.filter(e => e.tenor_days >= 1);
+  if (!valid.length) return;
+  const pickedSet = new Set();
+  const picked = [];
+  TARGET_TENORS.forEach(target => {
+    let best = null, bestDiff = Infinity;
+    for (const e of valid) {
+      const d = Math.abs(e.tenor_days - target);
+      if (d < bestDiff) { best = e; bestDiff = d; }
+    }
+    if (best && !pickedSet.has(best.expiry)) {
+      pickedSet.add(best.expiry);
+      picked.push(best);
+    }
+  });
+  const expiries = picked.sort((a, b) => a.tenor_days - b.tenor_days);
   if (!expiries.length) return;
 
   const colors = ['#E8845A','#1F6FBF','#1D9E75','#7F77DD','#888780','#E8A838','#C84B8F','#4BA0C8'];
@@ -769,7 +788,7 @@ async function renderSessionSmile() {
 
   // Populate expiry dropdown from US session (most complete)
   const usExpiries = results.find(r => r.key === 'us')?.expiries || [];
-  const validExpiries = usExpiries.filter(e => e.tenor_days >= 5);
+  const validExpiries = usExpiries.filter(e => e.tenor_days >= 1);
 
   const select = document.getElementById('expiry-select');
   if (select.options.length <= 1 || select.options[0].value === '') {
@@ -916,12 +935,34 @@ async function renderSessionSmile() {
   });
 }
 
-function setCcy(c){ccy=c;delete realData['surface_'+c];['vixLoading','smileLoading','termLoading','sessionSmileLoading'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='flex';});document.querySelectorAll('#ccy-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===c));update();}
-function setSess(s){sess=s;document.querySelectorAll('#sess-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===s.toUpperCase()));update();}
+function setCcy(c){
+  ccy=c;
+  delete realData['surface_'+c];
+  // Only show loading for the asset-dependent charts (not the multi-asset vix index)
+  ['smileLoading','termLoading','sessionSmileLoading'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='flex';
+  });
+  document.querySelectorAll('#ccy-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===c));
+  updateAssetCharts();
+}
+function setSess(s){
+  sess=s;
+  document.querySelectorAll('#sess-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===s.toUpperCase()));
+  updateAssetCharts();
+}
 function setSmile(m){}
 
+// Re-renders only the per-asset charts (not the multi-asset vol index above)
+async function updateAssetCharts(){
+  await renderTerm();
+  await renderSmile();
+  sessionSmileExpiry = null;
+  document.getElementById('expiry-select').innerHTML = '<option value="">Loading...</option>';
+  await renderSessionSmile();
+}
+
+// Full re-render — used at page load
 async function update(){
-  await renderMetrics();
   await renderVix();
   await renderTerm();
   await renderSmile();
@@ -931,6 +972,7 @@ async function update(){
 }
 
 document.getElementById('ts').textContent=''+new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+' EST';
+initVixTenorToggle();
 update();
 </script>
 
