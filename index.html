@@ -159,9 +159,9 @@ nav {
 .btn-sec:hover { color:var(--text); background:var(--surface2); }
 
 .tiers { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
-.tier  { background:var(--surface); border:0.5px solid var(--border2); border-radius:8px; padding:20px; }
+.tier  { background:var(--surface); border:0.5px solid var(--border2); border-radius:8px; padding:20px; position:relative; }
 .tier.hot { border-color:rgba(55,138,221,0.3); background:rgba(55,138,221,0.03); }
-.tier-badge { display:inline-block; background:rgba(55,138,221,0.1); color:var(--blue); font-size:10px; letter-spacing:0.07em; padding:2px 8px; border-radius:2px; margin-bottom:8px; }
+.tier-badge { position:absolute; top:14px; right:14px; background:rgba(55,138,221,0.1); color:var(--blue); font-size:10px; letter-spacing:0.07em; padding:2px 8px; border-radius:2px; }
 .tier-name  { font-family:var(--sans); font-size:14px; font-weight:700; color:var(--text); margin-bottom:4px; }
 .tier-price { font-family:var(--sans); font-size:22px; font-weight:700; color:var(--blue); margin:6px 0; }
 .tier-price span { font-size:12px; color:var(--text3); font-family:var(--mono); font-weight:400; }
@@ -369,18 +369,20 @@ r = requests.get(
           <li>1 year of history</li>
           <li>US session snapshot</li>
           <li>Vol Index + Vol Surface + Vol History</li>
+          <li>Full Greeks (delta, gamma, vega, theta)</li>
           <li>70,000 API calls / day</li>
           <li><a href="mailto:support@cryptovol.io" style="color:inherit; text-decoration:underline; text-decoration-color:rgba(55,138,221,0.4); text-underline-offset:3px;">24hr email support</a></li>
         </ul>
       </div>
       <div class="tier">
         <div class="tier-name">Ultra</div>
-        <div class="tier-price">$149 <span>/month</span></div>
+        <div class="tier-price">$99 <span>/month</span></div>
         <ul class="tier-feats">
           <li>All 6 assets (incl. XRP, AVAX, TRX)</li>
           <li>Full historical archive</li>
           <li>3 daily snapshots (Asia/London/US)</li>
-          <li>Full vol surface object + Greeks</li>
+          <li>Vol Index + Vol Surface + Vol History</li>
+          <li>Full Greeks (delta, gamma, vega, theta)</li>
           <li>180,000 API calls / day</li>
           <li><a href="mailto:support@cryptovol.io" style="color:inherit; text-decoration:underline; text-decoration-color:rgba(55,138,221,0.4); text-underline-offset:3px;">Priority email + feature input</a></li>
         </ul>
