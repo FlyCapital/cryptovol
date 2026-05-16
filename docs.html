@@ -61,6 +61,43 @@
   }
   #docs-loading.hidden { display: none; }
 
+  /* SDK callout banner */
+  .sdk-banner {
+    background: #1a2230;
+    color: #e5e7eb;
+    border-bottom: 1px solid rgba(0,0,0,0.12);
+    padding: 14px 24px;
+  }
+  .sdk-banner-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+  }
+  .sdk-banner-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .sdk-banner-label { color: #b0b8c4; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .sdk-banner .pip {
+    background: #0f1419;
+    color: #e5e7eb;
+    padding: 5px 11px;
+    border-radius: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+  }
+  .sdk-banner .pip .prompt { color: #5BA4E8; user-select: none; }
+  .sdk-banner a {
+    color: #5BA4E8;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(91,164,232,0.3);
+    font-size: 12px;
+  }
+  .sdk-banner a:hover { border-bottom-color: #5BA4E8; }
+
   /* Redoc container — let it take over the page below the nav */
   redoc { display: block; }
 </style>
@@ -71,7 +108,7 @@
   <div class="top-nav-inner">
     <a href="index.html" class="logo">crypto<span>vol</span></a>
     <div class="nav-links">
-      <a href="index.html" class="nav-link">DASHBOARD</a>
+      <a href="index.html" class="nav-link">HOME</a>
       <a href="methodology" class="nav-link">METHODOLOGY</a>
       <a href="/blog" class="nav-link">RESEARCH</a>
       <a href="index.html#pricing" class="nav-link">PRICING</a>
@@ -79,6 +116,18 @@
     </div>
   </div>
 </nav>
+
+<div class="sdk-banner">
+  <div class="sdk-banner-inner">
+    <div class="sdk-banner-left">
+      <span class="sdk-banner-label">Python</span>
+      <span class="pip"><span class="prompt">$</span> pip install cryptovol</span>
+    </div>
+    <div>
+      <a href="https://github.com/FlyCapital/cryptovol-python" target="_blank" rel="noopener">SDK on GitHub →</a>
+    </div>
+  </div>
+</div>
 
 <div id="docs-loading">LOADING API REFERENCE...</div>
 

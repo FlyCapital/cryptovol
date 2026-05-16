@@ -108,6 +108,11 @@ nav {
 .hero-methlink { font-family:var(--mono); font-size:13px; color:var(--text3); }
 .hero-methlink a { color:var(--blue); text-decoration:none; border-bottom:1px solid rgba(55,138,221,0.3); }
 .hero-methlink a:hover { border-bottom-color:var(--blue); }
+.hero-sdk { font-family:var(--mono); font-size:13px; color:var(--text3); margin-top:14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.hero-sdk .pip { font-family:var(--mono); font-size:13px; color:#374151; }
+.hero-sdk .pip .prompt { color:var(--blue); user-select:none; margin-right:4px; }
+.hero-sdk a { color:var(--blue); text-decoration:none; border-bottom:1px solid rgba(55,138,221,0.3); }
+.hero-sdk a:hover { border-bottom-color:var(--blue); }
 .hero-support { font-family:var(--mono); font-size:12px; color:var(--text3); margin-top:16px; }
 .hero-support a { color:var(--blue); text-decoration:none; border-bottom:1px solid rgba(55,138,221,0.3); }
 .hero-support a:hover { border-bottom-color:var(--blue); }
@@ -235,6 +240,7 @@ footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; al
 
         <p class="hero-methlink"><a href="methodology">Read more about the data and model methodology →</a></p>
         <p class="hero-methlink"><a href="/blog/btc-covered-call-backtest">Research: BTC covered call backtest →</a></p>
+        <p class="hero-sdk"><span class="pip"><span class="prompt">$</span> pip install cryptovol</span><a href="https://github.com/FlyCapital/cryptovol-python" target="_blank" rel="noopener">Python SDK on GitHub →</a></p>
         <p class="hero-support">Questions? <a href="mailto:support@cryptovol.io">support@cryptovol.io</a></p>
       </div>
 
