@@ -479,35 +479,38 @@ async function renderVix() {
   const seriesArr = await Promise.all(ALL_CCYS.map(c => fetchVix(c, tenor)));
   const series = Object.fromEntries(ALL_CCYS.map((c, i) => [c, seriesArr[i]]));
 
-  // Build a union of all dates across the 6 series
-  const allDateSet = new Set();
-  ALL_CCYS.forEach(c => (series[c] || []).forEach(d => allDateSet.add(d.date)));
-  const allLabels = [...allDateSet].sort();
-
-  // Build per-asset maps for fast lookup
-  const maps = Object.fromEntries(
-    ALL_CCYS.map(c => [c, Object.fromEntries((series[c] || []).map(d => [d.date, d.vol]))])
-  );
-
-  // Construct one dataset per asset
+  // Construct one dataset per asset using {x: date, y: vol} points so the
+  // time axis places each observation at its actual calendar position,
+  // independent of whether other series have a point on the same date.
   const datasets = ALL_CCYS.map(c => ({
     label:       c,
-    data:        allLabels.map(l => maps[c][l] ?? null),
+    data:        (series[c] || []).map(d => ({ x: d.date, y: d.vol })),
     borderColor: ASSET_COLORS[c],
     borderWidth: 1.6,
     pointRadius: 0,
     tension:     0.3,
     fill:        false,
     spanGaps:    true,
+    parsing:     false,
   }));
 
   if (vixI) vixI.destroy();
   document.getElementById('vixLoading').style.display = 'none';
   vixI = new Chart(document.getElementById('vixChart'), {
     type: 'line',
-    data: { labels: allLabels, datasets },
+    data: { datasets },
     options: {
       ...BASE_OPTS,
+      scales: {
+        ...BASE_OPTS.scales,
+        x: {
+          type: 'time',
+          time: { unit: 'month', tooltipFormat: 'yyyy-MM-dd' },
+          ticks: { color: TC, font: { family: 'IBM Plex Mono', size: 10 }, maxTicksLimit: 8, autoSkip: true },
+          grid: { color: GC },
+          border: { color: 'rgba(0,0,0,0.08)' },
+        },
+      },
       plugins: {
         ...BASE_OPTS.plugins,
         legend: {
