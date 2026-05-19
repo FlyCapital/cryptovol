@@ -24,6 +24,10 @@
       "destination": "/blog/btc-covered-call-backtest.html"
     },
     {
+      "source": "/blog/btc-risk-reversal-skew",
+      "destination": "/blog/btc-risk-reversal-skew.html"
+    },
+    {
       "source": "/openapi.json",
       "destination": "https://cryptovol-api-nbakzshi6q-uc.a.run.app/openapi.json"
     }
