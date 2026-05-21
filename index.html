@@ -773,7 +773,7 @@ async function renderSmile(){
     name: 'Market quotes',
     x: mktX, y: mktY, z: mktZ,
     customdata: mktCustom,
-    marker: { size: 3.5, color: '#111827', opacity: 0.9, line: { width: 0.5, color: '#ffffff' } },
+    marker: { size: 4, color: '#1F6FBF', opacity: 0.95, line: { width: 1, color: '#ffffff' } },
     hovertemplate:
       '<b>%{customdata[0]}</b><br>' +
       'Tenor: %{y}D<br>' +
@@ -784,12 +784,26 @@ async function renderSmile(){
   };
 
   // SABR surface mesh.
+  // Matlab parula colorscale (approximated 11-stop) — Matlab's default since R2014b.
+  const PARULA = [
+    [0.0,  '#352a87'],
+    [0.1,  '#3a4baf'],
+    [0.2,  '#2c6bbf'],
+    [0.3,  '#1d8acd'],
+    [0.4,  '#1ba2c2'],
+    [0.5,  '#38b9a8'],
+    [0.6,  '#7ccd66'],
+    [0.7,  '#bdce30'],
+    [0.8,  '#f1ca35'],
+    [0.9,  '#fab625'],
+    [1.0,  '#f9fb15'],
+  ];
   const surfaceTrace = {
     type: 'surface',
     x: moneyness,
     y: tenors,
     z: z,
-    colorscale: 'Viridis',
+    colorscale: PARULA,
     opacity: 0.85,
     showscale: true,
     colorbar: {
