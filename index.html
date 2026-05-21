@@ -317,7 +317,7 @@ r = requests.get(
     <div class="panel-hd">
       <div>
         <div class="panel-title">Vol Surface (3D)</div>
-        <div class="panel-sub">SABR per expiry · interpolated in total variance between expiries · drag to rotate · scroll to zoom</div>
+        <div class="panel-sub">SABR-fitted surface · drag to rotate · scroll to zoom · hover for details</div>
       </div>
       <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);cursor:pointer;user-select:none;">
         <input type="checkbox" id="smile-mkt-toggle" checked style="cursor:pointer;">
@@ -745,43 +745,6 @@ async function renderSmile(){
     strikesGrid.push(sRow);
   }
 
-  // Interpolate the surface to a fine tenor grid (continuous mesh, not ribbon
-  // strips). Interpolation done in total-variance space — the industry-standard
-  // smoothing for vol surfaces, monotone-friendly in T at fixed moneyness.
-  // Grid is evenly spaced in log(τ) to align with the log y-axis display.
-  const N_T_FINE = 40;
-  let tFine, zFine;
-  if (tenors.length >= 2) {
-    const logTmin = Math.log(tenors[0]);
-    const logTmax = Math.log(tenors[tenors.length - 1]);
-    tFine = Array.from({length: N_T_FINE}, (_, i) =>
-      Math.exp(logTmin + (logTmax - logTmin) * i / (N_T_FINE - 1))
-    );
-    zFine = tFine.map(tau => {
-      // Find bracketing expiry indices
-      let lo = 0;
-      for (let i = 0; i < tenors.length - 1; i++) {
-        if (tenors[i] <= tau && tenors[i+1] >= tau) { lo = i; break; }
-      }
-      const hi = lo + 1;
-      const T_lo = tenors[lo], T_hi = tenors[hi];
-      const w = (T_lo === T_hi) ? 0 :
-        (Math.log(tau) - Math.log(T_lo)) / (Math.log(T_hi) - Math.log(T_lo));
-      return moneyness.map((m, j) => {
-        const vLo = z[lo][j], vHi = z[hi][j];
-        if (vLo === null || vHi === null) return null;  // clipped if either edge missing
-        const sigLo = vLo / 100, sigHi = vHi / 100;
-        const tvLo = sigLo * sigLo * (T_lo / 365);
-        const tvHi = sigHi * sigHi * (T_hi / 365);
-        const tv = (1 - w) * tvLo + w * tvHi;
-        const sig = Math.sqrt(tv * 365 / tau);
-        return +(sig * 100).toFixed(2);
-      });
-    });
-  } else {
-    tFine = tenors; zFine = z;
-  }
-
   // Per-expiry highlight lines — the smile of each expiry traced on the surface.
   // Skip moneyness points outside the quoted strike range (z is null there).
   const SMILE_COLORS = ['#E8845A','#1F6FBF','#1D9E75','#7F77DD','#888780','#E8A838','#C84B8F','#4BA0C8','#9B59B6','#14AB66','#F7931A','#627EEA'];
@@ -868,8 +831,8 @@ async function renderSmile(){
   const surfaceTrace = {
     type: 'surface',
     x: moneyness,
-    y: tFine,
-    z: zFine,
+    y: tenors,
+    z: z,
     colorscale: PARULA,
     opacity: 0.85,
     showscale: false,  // Z-axis already labels vol; colorbar would be redundant
