@@ -725,7 +725,8 @@ async function renderSmile(){
     for (const m of moneyness) {
       const K = F * Math.exp(m);
       const v = sabrVol(F, K, T, alpha, beta, rho, nu);
-      row.push(v !== null ? +v.toFixed(2) : null);
+      // sabrVol returns decimal vol (e.g. 0.27); chart axis is percent
+      row.push(v !== null ? +(v * 100).toFixed(2) : null);
       sRow.push(+K.toFixed(6));
     }
     z.push(row);
@@ -810,7 +811,13 @@ async function renderSmile(){
     font: { family: 'IBM Plex Mono', size: 10, color: '#6b7280' },
     scene: {
       xaxis: { title: { text: 'log-moneyness ln(K/F)', font: { size: 11 } }, gridcolor: '#e5e7eb', zerolinecolor: '#9ca3af' },
-      yaxis: { title: { text: 'Tenor (days)', font: { size: 11 } }, gridcolor: '#e5e7eb' },
+      yaxis: {
+        title: { text: 'Tenor (days)', font: { size: 11 } },
+        gridcolor: '#e5e7eb',
+        type: 'log',
+        tickvals: [1, 2, 7, 14, 30, 60, 90, 180, 365],
+        ticktext: ['1', '2', '7', '14', '30', '60', '90', '180', '365'],
+      },
       zaxis: { title: { text: 'Implied vol (%)', font: { size: 11 } }, gridcolor: '#e5e7eb', ticksuffix: '%' },
       camera: { eye: { x: 1.5, y: -1.5, z: 0.9 } },
       aspectmode: 'auto',
