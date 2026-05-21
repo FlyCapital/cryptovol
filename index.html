@@ -325,7 +325,7 @@ r = requests.get(
       </label>
     </div>
     <div class="panel-body">
-      <div style="position:relative;width:100%;height:480px;"><div class="chart-loading" id="smileLoading">LOADING DATA...</div><div id="smileChart" role="img" aria-label="3D implied volatility surface" style="width:100%;height:100%;"></div></div>
+      <div style="position:relative;width:100%;height:540px;"><div class="chart-loading" id="smileLoading">LOADING DATA...</div><div id="smileChart" role="img" aria-label="3D implied volatility surface" style="width:100%;height:100%;"></div></div>
     </div>
   </div>
 
@@ -845,10 +845,11 @@ async function renderSmile(){
 
   const layout = {
     autosize: true,
-    margin: { l: 0, r: 0, t: 0, b: 0 },
+    margin: { l: 10, r: 10, t: 10, b: 20 },
     paper_bgcolor: 'rgba(0,0,0,0)',
     font: { family: 'IBM Plex Mono', size: 10, color: '#6b7280' },
     scene: {
+      domain: { x: [0, 1], y: [0.06, 1] },  // lift scene up so x/y axis labels aren't clipped
       xaxis: { title: { text: 'log-moneyness ln(K/F)', font: { size: 11 } }, gridcolor: '#e5e7eb', zerolinecolor: '#9ca3af' },
       yaxis: {
         title: { text: 'Tenor (days)', font: { size: 11 } },
@@ -858,7 +859,7 @@ async function renderSmile(){
         ticktext: ['1', '2', '7', '14', '30', '60', '90', '180', '365'],
       },
       zaxis: { title: { text: 'Implied vol (%)', font: { size: 11 } }, gridcolor: '#e5e7eb', ticksuffix: '%' },
-      camera: { eye: { x: 1.5, y: -1.5, z: 0.9 } },
+      camera: { eye: { x: 1.6, y: -1.6, z: 0.85 } },
       aspectmode: 'auto',
     },
     legend: {
