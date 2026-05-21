@@ -317,7 +317,7 @@ r = requests.get(
     <div class="panel-hd">
       <div>
         <div class="panel-title">Vol Surface (3D)</div>
-        <div class="panel-sub">SABR-fitted surface · drag to rotate · scroll to zoom · hover for details</div>
+        <div class="panel-sub">SABR per expiry · interpolated in total variance between expiries · drag to rotate · scroll to zoom</div>
       </div>
       <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);cursor:pointer;user-select:none;">
         <input type="checkbox" id="smile-mkt-toggle" checked style="cursor:pointer;">
@@ -745,6 +745,43 @@ async function renderSmile(){
     strikesGrid.push(sRow);
   }
 
+  // Interpolate the surface to a fine tenor grid (continuous mesh, not ribbon
+  // strips). Interpolation done in total-variance space — the industry-standard
+  // smoothing for vol surfaces, monotone-friendly in T at fixed moneyness.
+  // Grid is evenly spaced in log(τ) to align with the log y-axis display.
+  const N_T_FINE = 40;
+  let tFine, zFine;
+  if (tenors.length >= 2) {
+    const logTmin = Math.log(tenors[0]);
+    const logTmax = Math.log(tenors[tenors.length - 1]);
+    tFine = Array.from({length: N_T_FINE}, (_, i) =>
+      Math.exp(logTmin + (logTmax - logTmin) * i / (N_T_FINE - 1))
+    );
+    zFine = tFine.map(tau => {
+      // Find bracketing expiry indices
+      let lo = 0;
+      for (let i = 0; i < tenors.length - 1; i++) {
+        if (tenors[i] <= tau && tenors[i+1] >= tau) { lo = i; break; }
+      }
+      const hi = lo + 1;
+      const T_lo = tenors[lo], T_hi = tenors[hi];
+      const w = (T_lo === T_hi) ? 0 :
+        (Math.log(tau) - Math.log(T_lo)) / (Math.log(T_hi) - Math.log(T_lo));
+      return moneyness.map((m, j) => {
+        const vLo = z[lo][j], vHi = z[hi][j];
+        if (vLo === null || vHi === null) return null;  // clipped if either edge missing
+        const sigLo = vLo / 100, sigHi = vHi / 100;
+        const tvLo = sigLo * sigLo * (T_lo / 365);
+        const tvHi = sigHi * sigHi * (T_hi / 365);
+        const tv = (1 - w) * tvLo + w * tvHi;
+        const sig = Math.sqrt(tv * 365 / tau);
+        return +(sig * 100).toFixed(2);
+      });
+    });
+  } else {
+    tFine = tenors; zFine = z;
+  }
+
   // Per-expiry highlight lines — the smile of each expiry traced on the surface.
   // Skip moneyness points outside the quoted strike range (z is null there).
   const SMILE_COLORS = ['#E8845A','#1F6FBF','#1D9E75','#7F77DD','#888780','#E8A838','#C84B8F','#4BA0C8','#9B59B6','#14AB66','#F7931A','#627EEA'];
@@ -773,10 +810,13 @@ async function renderSmile(){
     };
   });
 
-  // Market quote scatter (toggleable).
-  const mktX = [], mktY = [], mktZ = [], mktCustom = [];
-  valid.forEach(exp => {
+  // Market quote scatter (toggleable). Each dot colored to match its expiry's
+  // smile-line color so the visual pairing is obvious. Semi-transparent +
+  // white border so dots sit on the surface without blocking it.
+  const mktX = [], mktY = [], mktZ = [], mktCustom = [], mktColors = [];
+  valid.forEach((exp, expIdx) => {
     if (!exp.strikes || !exp.mkt_vol) return;
+    const color = SMILE_COLORS[expIdx % SMILE_COLORS.length];
     exp.strikes.forEach((K, i) => {
       const v = exp.mkt_vol[i];
       if (v == null || v <= 0 || !isFinite(v)) return;
@@ -786,6 +826,7 @@ async function renderSmile(){
       mktY.push(exp.tenor_days);
       mktZ.push(+v.toFixed(2));
       mktCustom.push([exp.expiry, K]);
+      mktColors.push(color);
     });
   });
   const mktTrace = {
@@ -794,7 +835,12 @@ async function renderSmile(){
     name: 'Market quotes',
     x: mktX, y: mktY, z: mktZ,
     customdata: mktCustom,
-    marker: { size: 4, color: '#1F6FBF', opacity: 0.95, line: { width: 1, color: '#ffffff' } },
+    marker: {
+      size: 4,
+      color: mktColors,
+      opacity: 0.75,
+      line: { width: 0.6, color: 'rgba(255,255,255,0.85)' },
+    },
     hovertemplate:
       '<b>%{customdata[0]}</b><br>' +
       'Tenor: %{y}D<br>' +
@@ -822,17 +868,12 @@ async function renderSmile(){
   const surfaceTrace = {
     type: 'surface',
     x: moneyness,
-    y: tenors,
-    z: z,
+    y: tFine,
+    z: zFine,
     colorscale: PARULA,
     opacity: 0.85,
-    showscale: true,
-    colorbar: {
-      title: { text: 'Vol (%)', font: { family: 'IBM Plex Mono', size: 10, color: '#6b7280' } },
-      tickfont: { family: 'IBM Plex Mono', size: 10, color: '#6b7280' },
-      thickness: 12, len: 0.7,
-    },
-    hoverinfo: 'skip',  // hover handled by smile-lines and market-dots; surface itself is silent
+    showscale: false,  // Z-axis already labels vol; colorbar would be redundant
+    hoverinfo: 'skip', // hover handled by smile lines + market dots; surface stays silent
     contours: { z: { show: false } },
     showlegend: false,
   };
