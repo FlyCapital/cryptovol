@@ -30,6 +30,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -314,10 +315,17 @@ r = requests.get(
 
   <div class="panel">
     <div class="panel-hd">
-      <div><div class="panel-title">Vol Smile by Expiry</div><div class="panel-sub">SABR-fitted vol · weekly · bi-weekly · monthly · quarterly · semi-annual · annual</div></div>
+      <div>
+        <div class="panel-title">Vol Surface (3D)</div>
+        <div class="panel-sub">SABR-fitted surface · drag to rotate · scroll to zoom · hover for details</div>
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);cursor:pointer;user-select:none;">
+        <input type="checkbox" id="smile-mkt-toggle" checked style="cursor:pointer;">
+        Show market quotes
+      </label>
     </div>
     <div class="panel-body">
-      <div style="position:relative;width:100%;height:360px;"><div class="chart-loading" id="smileLoading">LOADING DATA...</div><canvas id="smileChart" role="img" aria-label="Volatility smile by expiry date"></canvas></div>
+      <div style="position:relative;width:100%;height:480px;"><div class="chart-loading" id="smileLoading">LOADING DATA...</div><div id="smileChart" role="img" aria-label="3D implied volatility surface" style="width:100%;height:100%;"></div></div>
     </div>
   </div>
 
@@ -425,7 +433,7 @@ const ALL_CCYS = ['BTC','ETH','SOL','XRP','AVAX','TRX'];
 
 let ccy='BTC', sess='all', smileMode='all';
 let vixTenor='30D';  // selected tenor for multi-asset vol index chart
-let vixI=null, termI=null, smileI=null;
+let vixI=null, termI=null;
 let realData = {}; // cache: realData[ccy][tenor] = [{time,vi}]
 
 // ── Dummy data helpers (used for term structure & smile, still no API for these) ──
@@ -688,102 +696,150 @@ function sabrVol(F, K, T, alpha, beta, rho, nu) {
   return (isFinite(result) && result > 0 && result < 50) ? result : null;
 }
 
-// ── Smile (SABR smooth curves, click legend to toggle) ──
+// ── 3D Vol Surface (Plotly) ──
 async function renderSmile(){
   const allExpiries = await fetchSurface(ccy);
   if (!allExpiries.length) return;
 
-  // Pick canonical tenors: weekly, bi-weekly, monthly, quarterly, semi-annual, annual.
-  // For each target, find the listed expiry whose tenor_days is closest.
-  // Dedupe (multiple targets may map to the same listed expiry), then sort by tenor.
-  const TARGET_TENORS = [7, 14, 30, 90, 180, 365];  // weekly, bi-weekly, monthly, quarterly, semi-annual, annual
-  const valid = allExpiries.filter(e => e.tenor_days >= 1);
+  // Keep expiries with usable SABR; sort by tenor.
+  const valid = allExpiries
+    .filter(e => e.tenor_days >= 1 && e.sabr && e.sabr.alpha > 0 && e.sabr.nu > 0.01 && e.forward)
+    .sort((a, b) => a.tenor_days - b.tenor_days);
   if (!valid.length) return;
-  const pickedSet = new Set();
-  const picked = [];
-  TARGET_TENORS.forEach(target => {
-    let best = null, bestDiff = Infinity;
-    for (const e of valid) {
-      const d = Math.abs(e.tenor_days - target);
-      if (d < bestDiff) { best = e; bestDiff = d; }
+
+  // Log-moneyness grid: m = ln(K/F). Range covers ±40% strikes; 51 columns is plenty smooth.
+  const M_MIN = -0.4, M_MAX = 0.4, N_M = 51;
+  const moneyness = Array.from({length: N_M}, (_, i) => M_MIN + (M_MAX - M_MIN) * i / (N_M - 1));
+  const tenors    = valid.map(e => e.tenor_days);
+
+  // z[i][j] = SABR vol(%) at expiry i, moneyness j.
+  // strikesGrid[i][j] = absolute strike at that point, used in hover.
+  const z = [];
+  const strikesGrid = [];
+  for (const exp of valid) {
+    const {alpha, beta=1, rho, nu} = exp.sabr;
+    const F = exp.forward;
+    const T = exp.tenor_days / 365;
+    const row = [];
+    const sRow = [];
+    for (const m of moneyness) {
+      const K = F * Math.exp(m);
+      const v = sabrVol(F, K, T, alpha, beta, rho, nu);
+      row.push(v !== null ? +v.toFixed(2) : null);
+      sRow.push(+K.toFixed(6));
     }
-    if (best && !pickedSet.has(best.expiry)) {
-      pickedSet.add(best.expiry);
-      picked.push(best);
-    }
+    z.push(row);
+    strikesGrid.push(sRow);
+  }
+
+  // Per-expiry highlight lines — the smile of each expiry traced on the surface.
+  const SMILE_COLORS = ['#E8845A','#1F6FBF','#1D9E75','#7F77DD','#888780','#E8A838','#C84B8F','#4BA0C8','#9B59B6','#14AB66','#F7931A','#627EEA'];
+  const smileLines = valid.map((exp, i) => ({
+    type: 'scatter3d',
+    mode: 'lines',
+    name: `${exp.expiry} (${exp.tenor_days}D)`,
+    x: moneyness,
+    y: Array(N_M).fill(exp.tenor_days),
+    z: z[i],
+    customdata: strikesGrid[i].map(K => [exp.expiry, K]),
+    line: { color: SMILE_COLORS[i % SMILE_COLORS.length], width: 4 },
+    hovertemplate:
+      '<b>%{customdata[0]}</b><br>' +
+      `Tenor: ${exp.tenor_days}D<br>` +
+      'Strike: %{customdata[1]:.4f}<br>' +
+      'Vol: %{z:.2f}%<extra></extra>',
+    showlegend: true,
+  }));
+
+  // Market quote scatter (toggleable).
+  const mktX = [], mktY = [], mktZ = [], mktCustom = [];
+  valid.forEach(exp => {
+    if (!exp.strikes || !exp.mkt_vol) return;
+    exp.strikes.forEach((K, i) => {
+      const v = exp.mkt_vol[i];
+      if (v == null || v <= 0 || !isFinite(v)) return;
+      const m = Math.log(K / exp.forward);
+      if (m < M_MIN || m > M_MAX) return;
+      mktX.push(+m.toFixed(4));
+      mktY.push(exp.tenor_days);
+      mktZ.push(+v.toFixed(2));
+      mktCustom.push([exp.expiry, K]);
+    });
   });
-  const expiries = picked.sort((a, b) => a.tenor_days - b.tenor_days);
-  if (!expiries.length) return;
+  const mktTrace = {
+    type: 'scatter3d',
+    mode: 'markers',
+    name: 'Market quotes',
+    x: mktX, y: mktY, z: mktZ,
+    customdata: mktCustom,
+    marker: { size: 3.5, color: '#111827', opacity: 0.9, line: { width: 0.5, color: '#ffffff' } },
+    hovertemplate:
+      '<b>%{customdata[0]}</b><br>' +
+      'Tenor: %{y}D<br>' +
+      'Strike: %{customdata[1]:.4f}<br>' +
+      'Vol: %{z:.2f}%<extra></extra>',
+    visible: document.getElementById('smile-mkt-toggle')?.checked !== false,
+    showlegend: false,
+  };
 
-  const colors = ['#E8845A','#1F6FBF','#1D9E75','#7F77DD','#888780','#E8A838','#C84B8F','#4BA0C8'];
-
-  const chartDatasets = expiries.map((exp, idx) => {
-    const sabr = exp.sabr;
-    const useSabr = sabr && sabr.alpha && sabr.nu && sabr.nu > 0.01;
-
-    if (useSabr) {
-      const {alpha, beta=1, rho, nu} = sabr;
-      const F = exp.forward;
-      const T = exp.tenor_days / 365;
-      const sMin = Math.min(...exp.strikes);
-      const sMax = Math.max(...exp.strikes);
-      const nPts = 200;
-      const pts = [];
-      for (let i = 0; i < nPts; i++) {
-        const K = sMin + (sMax - sMin) * i / (nPts - 1);
-        const v = sabrVol(F, K, T, alpha, beta, rho, nu);
-        if (v !== null) pts.push({ x: Math.round(K*10000)/10000, y: Math.round(v*1000000)/10000 });
-      }
-      return {
-        label: exp.expiry + ' (' + exp.tenor_days + 'D)',
-        data: pts,
-        borderColor: colors[idx % colors.length],
-        borderWidth: 1.5,
-        pointRadius: 0,
-        tension: 0,
-        fill: false,
-      };
-    } else {
-      return {
-        label: exp.expiry + ' (' + exp.tenor_days + 'D)',
-        data: exp.strikes.map((s,i) => ({ x: s, y: +exp.mkt_vol[i].toFixed(2) })),
-        borderColor: colors[idx % colors.length],
-        borderWidth: 1.5,
-        pointRadius: 0,
-        tension: 0,
-        fill: false,
-      };
-    }
-  });
-
-  if(smileI)smileI.destroy();
-  document.getElementById('smileLoading').style.display='none';
-  smileI=new Chart(document.getElementById('smileChart'),{type:'line',data:{datasets:chartDatasets},options:{
-    responsive:true, maintainAspectRatio:false,
-    parsing: false,
-    plugins:{
-      legend:{display:true,position:'top',labels:{color:'#6b7280',font:{family:'IBM Plex Mono',size:11},boxWidth:12,boxHeight:2,padding:14},onClick:legendHighlightClick},
-      tooltip:{
-        mode:'nearest',intersect:false,
-        backgroundColor:'rgba(255,255,255,0.97)',borderColor:'rgba(0,0,0,0.1)',borderWidth:1,
-        titleColor:'#6b7280',bodyColor:'#111827',padding:10,
-        callbacks:{label: ctx=>{
-          const x = ctx.parsed.x;
-          const xStr = x >= 1000 ? x.toLocaleString() : x.toFixed(3).replace(/\.?0+$/,'');
-          return `Strike ${xStr}: ${ctx.parsed.y.toFixed(1)}%`;
-        }}
-      }
+  // SABR surface mesh.
+  const surfaceTrace = {
+    type: 'surface',
+    x: moneyness,
+    y: tenors,
+    z: z,
+    colorscale: 'Viridis',
+    opacity: 0.85,
+    showscale: true,
+    colorbar: {
+      title: { text: 'Vol (%)', font: { family: 'IBM Plex Mono', size: 10, color: '#6b7280' } },
+      tickfont: { family: 'IBM Plex Mono', size: 10, color: '#6b7280' },
+      thickness: 12, len: 0.7,
     },
-    scales:{
-      x:{type:'linear',
-         ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxTicksLimit:8,callback:v=> v>=1000 ? v.toLocaleString() : v},
-         grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'},
-         title:{display:true,text:'Strike',color:TC,font:{family:'IBM Plex Mono',size:10}}},
-      y:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},callback:v=>v.toFixed(0)+'%'},
-         grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'},
-         title:{display:true,text:'Implied vol (%)',color:TC,font:{family:'IBM Plex Mono',size:10}}},
-    }
-  }});
+    hoverinfo: 'skip',  // hover handled by smile-lines and market-dots; surface itself is silent
+    contours: { z: { show: false } },
+    showlegend: false,
+  };
+
+  const data = [surfaceTrace, ...smileLines, mktTrace];
+
+  const layout = {
+    autosize: true,
+    margin: { l: 0, r: 0, t: 0, b: 0 },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    font: { family: 'IBM Plex Mono', size: 10, color: '#6b7280' },
+    scene: {
+      xaxis: { title: { text: 'log-moneyness ln(K/F)', font: { size: 11 } }, gridcolor: '#e5e7eb', zerolinecolor: '#9ca3af' },
+      yaxis: { title: { text: 'Tenor (days)', font: { size: 11 } }, gridcolor: '#e5e7eb' },
+      zaxis: { title: { text: 'Implied vol (%)', font: { size: 11 } }, gridcolor: '#e5e7eb', ticksuffix: '%' },
+      camera: { eye: { x: 1.5, y: -1.5, z: 0.9 } },
+      aspectmode: 'auto',
+    },
+    legend: {
+      x: 0.02, y: 0.98, xanchor: 'left', yanchor: 'top',
+      bgcolor: 'rgba(255,255,255,0.85)',
+      bordercolor: 'rgba(0,0,0,0.07)', borderwidth: 1,
+      font: { family: 'IBM Plex Mono', size: 10 },
+    },
+  };
+
+  const config = {
+    displayModeBar: true,
+    responsive: true,
+    modeBarButtonsToRemove: ['toImage', 'tableRotation', 'resetCameraLastSave3d'],
+    displaylogo: false,
+  };
+
+  document.getElementById('smileLoading').style.display = 'none';
+  Plotly.react('smileChart', data, layout, config);
+
+  // Wire (or re-wire) the market-quote toggle.
+  const cb = document.getElementById('smile-mkt-toggle');
+  if (cb) {
+    cb.onchange = () => {
+      Plotly.restyle('smileChart', { visible: cb.checked }, [data.length - 1]);
+    };
+  }
 }
 
 
