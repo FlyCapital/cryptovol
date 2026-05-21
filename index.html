@@ -712,19 +712,31 @@ async function renderSmile(){
   const moneyness = Array.from({length: N_M}, (_, i) => M_MIN + (M_MAX - M_MIN) * i / (N_M - 1));
   const tenors    = valid.map(e => e.tenor_days);
 
-  // z[i][j] = SABR vol(%) at expiry i, moneyness j.
+  // Per-expiry log-moneyness bounds from actual market strikes — used to clip
+  // extrapolation so the surface only spans where we have quotes.
+  const expBounds = valid.map(exp => {
+    const ms = exp.strikes.map(K => Math.log(K / exp.forward));
+    return { min: Math.min(...ms), max: Math.max(...ms) };
+  });
+
+  // z[i][j] = SABR vol(%) at expiry i, moneyness j (null outside quoted strike range).
   // strikesGrid[i][j] = absolute strike at that point, used in hover.
   const z = [];
   const strikesGrid = [];
-  for (const exp of valid) {
+  for (let i = 0; i < valid.length; i++) {
+    const exp = valid[i];
     const {alpha, beta=1, rho, nu} = exp.sabr;
     const F = exp.forward;
     const T = exp.tenor_days / 365;
+    const {min: mMin, max: mMax} = expBounds[i];
     const row = [];
     const sRow = [];
     for (const m of moneyness) {
       const K = F * Math.exp(m);
-      const v = sabrVol(F, K, T, alpha, beta, rho, nu);
+      let v = null;
+      if (m >= mMin && m <= mMax) {
+        v = sabrVol(F, K, T, alpha, beta, rho, nu);
+      }
       // sabrVol returns decimal vol (e.g. 0.27); chart axis is percent
       row.push(v !== null ? +(v * 100).toFixed(2) : null);
       sRow.push(+K.toFixed(6));
@@ -734,23 +746,32 @@ async function renderSmile(){
   }
 
   // Per-expiry highlight lines — the smile of each expiry traced on the surface.
+  // Skip moneyness points outside the quoted strike range (z is null there).
   const SMILE_COLORS = ['#E8845A','#1F6FBF','#1D9E75','#7F77DD','#888780','#E8A838','#C84B8F','#4BA0C8','#9B59B6','#14AB66','#F7931A','#627EEA'];
-  const smileLines = valid.map((exp, i) => ({
-    type: 'scatter3d',
-    mode: 'lines',
-    name: `${exp.expiry} (${exp.tenor_days}D)`,
-    x: moneyness,
-    y: Array(N_M).fill(exp.tenor_days),
-    z: z[i],
-    customdata: strikesGrid[i].map(K => [exp.expiry, K]),
-    line: { color: SMILE_COLORS[i % SMILE_COLORS.length], width: 4 },
-    hovertemplate:
-      '<b>%{customdata[0]}</b><br>' +
-      `Tenor: ${exp.tenor_days}D<br>` +
-      'Strike: %{customdata[1]:.4f}<br>' +
-      'Vol: %{z:.2f}%<extra></extra>',
-    showlegend: true,
-  }));
+  const smileLines = valid.map((exp, i) => {
+    const xs = [], ys = [], zs = [], cd = [];
+    for (let j = 0; j < N_M; j++) {
+      if (z[i][j] === null) continue;
+      xs.push(moneyness[j]);
+      ys.push(exp.tenor_days);
+      zs.push(z[i][j]);
+      cd.push([exp.expiry, strikesGrid[i][j]]);
+    }
+    return {
+      type: 'scatter3d',
+      mode: 'lines',
+      name: `${exp.expiry} (${exp.tenor_days}D)`,
+      x: xs, y: ys, z: zs,
+      customdata: cd,
+      line: { color: SMILE_COLORS[i % SMILE_COLORS.length], width: 4 },
+      hovertemplate:
+        '<b>%{customdata[0]}</b><br>' +
+        `Tenor: ${exp.tenor_days}D<br>` +
+        'Strike: %{customdata[1]:.4f}<br>' +
+        'Vol: %{z:.2f}%<extra></extra>',
+      showlegend: true,
+    };
+  });
 
   // Market quote scatter (toggleable).
   const mktX = [], mktY = [], mktZ = [], mktCustom = [];
