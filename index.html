@@ -490,16 +490,23 @@ async function renderVix() {
   // Construct one dataset per asset using {x: date, y: vol} points so the
   // time axis places each observation at its actual calendar position,
   // independent of whether other series have a point on the same date.
-  const datasets = ALL_CCYS.map(c => ({
-    label:       c,
-    data:        (series[c] || []).map(d => ({ x: d.date, y: d.vol })),
-    borderColor: ASSET_COLORS[c],
-    borderWidth: 1.6,
-    pointRadius: 0,
-    tension:     0.3,
-    fill:        false,
-    spanGaps:    true,
-  }));
+  const DEFAULT_HIGHLIGHT = new Set(['BTC', 'ETH']);
+  const datasets = ALL_CCYS.map(c => {
+    const origColor = ASSET_COLORS[c];
+    const highlighted = DEFAULT_HIGHLIGHT.has(c);
+    return {
+      label:       c,
+      data:        (series[c] || []).map(d => ({ x: d.date, y: d.vol })),
+      borderColor: highlighted ? origColor : origColor + '33',
+      borderWidth: highlighted ? 1.6 : 0.8,
+      pointRadius: 0,
+      tension:     0.3,
+      fill:        false,
+      spanGaps:    true,
+      _origColor:  origColor,
+      _origWidth:  1.6,
+    };
+  });
 
   if (vixI) vixI.destroy();
   document.getElementById('vixLoading').style.display = 'none';
