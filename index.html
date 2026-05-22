@@ -287,19 +287,6 @@ r = requests.get(
     <span class="ts" id="ts"></span>
   </div>
 
-  <div class="panel">
-    <div class="panel-hd">
-      <div><div class="panel-title">Implied Volatility Index</div><div class="panel-sub">Click legend to isolate · last 6 months</div></div>
-      <div class="tenor-toggle" role="tablist" aria-label="Index tenor">
-        <button class="tenor-btn" data-tenor="7D" aria-selected="false">7D</button>
-        <button class="tenor-btn active" data-tenor="30D" aria-selected="true">30D</button>
-      </div>
-    </div>
-    <div class="panel-body">
-      <div style="position:relative;width:100%;height:300px;"><div class="chart-loading" id="vixLoading">LOADING DATA...</div><canvas id="vixChart" role="img" aria-label="Implied volatility index time series for all assets"></canvas></div>
-    </div>
-  </div>
-
   <div class="controls-bar">
     <span class="ctrl-label">ASSET</span>
     <div class="btn-group" id="ccy-grp">
@@ -325,7 +312,20 @@ r = requests.get(
       </label>
     </div>
     <div class="panel-body">
-      <div style="position:relative;width:100%;height:540px;"><div class="chart-loading" id="smileLoading">LOADING DATA...</div><div id="smileChart" role="img" aria-label="3D implied volatility surface" style="width:100%;height:100%;"></div></div>
+      <div style="position:relative;width:100%;height:760px;"><div class="chart-loading" id="smileLoading">LOADING DATA...</div><div id="smileChart" role="img" aria-label="3D implied volatility surface" style="width:100%;height:100%;"></div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hd">
+      <div><div class="panel-title">Implied Volatility Index</div><div class="panel-sub">Click legend to isolate · last 6 months</div></div>
+      <div class="tenor-toggle" role="tablist" aria-label="Index tenor">
+        <button class="tenor-btn" data-tenor="7D" aria-selected="false">7D</button>
+        <button class="tenor-btn active" data-tenor="30D" aria-selected="true">30D</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div style="position:relative;width:100%;height:300px;"><div class="chart-loading" id="vixLoading">LOADING DATA...</div><canvas id="vixChart" role="img" aria-label="Implied volatility index time series for all assets"></canvas></div>
     </div>
   </div>
 
