@@ -767,26 +767,20 @@ async function renderSmile(){
   // Skip moneyness points outside the quoted strike range (z is null there).
   const SMILE_COLORS = ['#E8845A','#1F6FBF','#1D9E75','#7F77DD','#888780','#E8A838','#C84B8F','#4BA0C8','#9B59B6','#14AB66','#F7931A','#627EEA'];
   const smileLines = valid.map((exp, i) => {
-    const xs = [], ys = [], zs = [], cd = [];
+    const xs = [], ys = [], zs = [];
     for (let j = 0; j < N_M; j++) {
       if (z[i][j] === null) continue;
       xs.push(moneyness[j]);
       ys.push(exp.tenor_days);
       zs.push(z[i][j]);
-      cd.push([exp.expiry, fmtStrike(strikesGrid[i][j])]);
     }
     return {
       type: 'scatter3d',
       mode: 'lines',
       name: `${exp.expiry} (${exp.tenor_days}D)`,
       x: xs, y: ys, z: zs,
-      customdata: cd,
       line: { color: SMILE_COLORS[i % SMILE_COLORS.length], width: 4 },
-      hovertemplate:
-        '<b>SABR · %{customdata[0]}</b><br>' +
-        `Tenor: ${exp.tenor_days}D<br>` +
-        'Strike (interp): %{customdata[1]}<br>' +
-        'Vol: %{z:.2f}%<extra></extra>',
+      hoverinfo: 'skip', // hover handled by market-dot scatter only
       showlegend: true,
     };
   });
