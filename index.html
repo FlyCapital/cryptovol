@@ -704,6 +704,16 @@ function sabrVol(F, K, T, alpha, beta, rho, nu) {
   return (isFinite(result) && result > 0 && result < 50) ? result : null;
 }
 
+// Format a strike adaptively by magnitude so BTC (~78,000), SOL (~150),
+// and TRX (~0.36) all read cleanly in the same UI.
+function fmtStrike(K) {
+  if (!isFinite(K)) return String(K);
+  if (K >= 100)  return K.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  if (K >= 1)    return K.toFixed(2);
+  if (K >= 0.01) return K.toFixed(4);
+  return K.toFixed(6);
+}
+
 // ── 3D Vol Surface (Plotly) ──
 async function renderSmile(){
   const allExpiries = await fetchSurface(ccy);
@@ -763,7 +773,7 @@ async function renderSmile(){
       xs.push(moneyness[j]);
       ys.push(exp.tenor_days);
       zs.push(z[i][j]);
-      cd.push([exp.expiry, strikesGrid[i][j]]);
+      cd.push([exp.expiry, fmtStrike(strikesGrid[i][j])]);
     }
     return {
       type: 'scatter3d',
@@ -773,9 +783,9 @@ async function renderSmile(){
       customdata: cd,
       line: { color: SMILE_COLORS[i % SMILE_COLORS.length], width: 4 },
       hovertemplate:
-        '<b>%{customdata[0]}</b><br>' +
+        '<b>SABR · %{customdata[0]}</b><br>' +
         `Tenor: ${exp.tenor_days}D<br>` +
-        'Strike: %{customdata[1]:.4f}<br>' +
+        'Strike (interp): %{customdata[1]}<br>' +
         'Vol: %{z:.2f}%<extra></extra>',
       showlegend: true,
     };
@@ -796,7 +806,7 @@ async function renderSmile(){
       mktX.push(+m.toFixed(4));
       mktY.push(exp.tenor_days);
       mktZ.push(+v.toFixed(2));
-      mktCustom.push([exp.expiry, K]);
+      mktCustom.push([exp.expiry, fmtStrike(K)]);
       mktColors.push(color);
     });
   });
@@ -813,9 +823,9 @@ async function renderSmile(){
       line: { width: 0.6, color: 'rgba(255,255,255,0.85)' },
     },
     hovertemplate:
-      '<b>%{customdata[0]}</b><br>' +
+      '<b>Market · %{customdata[0]}</b><br>' +
       'Tenor: %{y}D<br>' +
-      'Strike: %{customdata[1]:.4f}<br>' +
+      'Strike: %{customdata[1]}<br>' +
       'Vol: %{z:.2f}%<extra></extra>',
     visible: document.getElementById('smile-mkt-toggle')?.checked !== false,
     showlegend: false,
