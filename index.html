@@ -505,6 +505,7 @@ async function renderVix() {
       spanGaps:    true,
       _origColor:  origColor,
       _origWidth:  1.6,
+      _highlighted: highlighted,
     };
   });
 
@@ -530,7 +531,7 @@ async function renderVix() {
         legend: {
           display: true, position: 'top',
           labels: { color: '#6b7280', font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 20, boxHeight: 2, padding: 14 },
-          onClick: legendHighlightClick,
+          onClick: vixMultiHighlightClick,
         }
       }
     }
@@ -896,6 +897,32 @@ async function renderSmile(){
   }
 }
 
+
+function vixMultiHighlightClick(e, legendItem, legend) {
+  const chart = legend.chart;
+  const idx   = legendItem.datasetIndex;
+  const ds    = chart.data.datasets[idx];
+
+  // Toggle this dataset's highlight state
+  ds._highlighted = !ds._highlighted;
+
+  // Count how many are highlighted
+  const anyHighlighted = chart.data.datasets.some(d => d._highlighted);
+
+  // Re-style every dataset based on its highlight state.
+  // Special case: if nothing is highlighted, show all at full color (no fade).
+  chart.data.datasets.forEach(d => {
+    if (!d._origColor) d._origColor = d.borderColor;
+    if (!d._origWidth) d._origWidth = 1.6;
+    const showFull = !anyHighlighted || d._highlighted;
+    d.borderColor = showFull ? d._origColor : d._origColor + '33';
+    d.borderWidth = showFull ? d._origWidth : 0.8;
+    // never hide; keep all visible so legend toggle stays available
+    chart.getDatasetMeta(chart.data.datasets.indexOf(d)).hidden = false;
+  });
+
+  chart.update();
+}
 
 function legendHighlightClick(e, legendItem, legend) {
   const chart = legend.chart;
