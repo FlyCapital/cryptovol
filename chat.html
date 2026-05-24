@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CryptoVol Chat — Private Beta</title>
+<meta name="robots" content="noindex,nofollow">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+         margin: 0; background: #fafafa; color: #1a1a1a; line-height: 1.5; }
+  .container { max-width: 980px; margin: 0 auto; padding: 32px 24px; }
+  header { margin-bottom: 24px; }
+  .logo { font-family: 'IBM Plex Mono', monospace; font-weight: 500; font-size: 14px;
+          letter-spacing: 0.02em; color: #888; margin-bottom: 12px; }
+  .logo span { color: #1a1a1a; }
+  h1 { font-size: 22px; font-weight: 600; margin: 0 0 4px; }
+  .sub { font-size: 13px; color: #888; }
+  .chat { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
+  .msg { padding: 12px 16px; border-radius: 8px; max-width: 90%;
+         font-size: 14px; }
+  .msg.user { background: #1a1a1a; color: #fff; align-self: flex-end; max-width: 70%; }
+  .msg.bot  { background: #fff; border: 1px solid #e0e0e0; align-self: flex-start; }
+  .msg.err  { background: #ffeded; border: 1px solid #ffb3b3; color: #b30000;
+              align-self: flex-start; }
+  .meta { font-size: 11px; color: #999; margin-top: 6px;
+          font-family: 'IBM Plex Mono', monospace; }
+  .chart { width: 100%; max-width: 900px; min-height: 420px; margin-top: 12px;
+           background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 8px; }
+  .input-row { position: sticky; bottom: 0; background: #fafafa; padding: 16px 0;
+               margin-top: 24px; display: flex; gap: 8px; border-top: 1px solid #e8e8e8; }
+  input[type=text] { flex: 1; padding: 12px 14px; font-size: 14px;
+                     border: 1px solid #d0d0d0; border-radius: 8px;
+                     background: #fff; font-family: inherit; }
+  button { padding: 12px 20px; font-size: 14px; font-weight: 500; background: #1a1a1a;
+           color: #fff; border: none; border-radius: 8px; cursor: pointer;
+           font-family: inherit; }
+  button:disabled { background: #ccc; cursor: wait; }
+  .examples { font-size: 12px; color: #888; margin-top: 8px; }
+  .examples a { color: #555; cursor: pointer; text-decoration: underline;
+                margin-right: 12px; }
+  pre { white-space: pre-wrap; word-wrap: break-word; margin: 0;
+        font-family: inherit; }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo">crypto<span>vol</span> / chat (private beta)</div>
+    <h1>Analytics Assistant</h1>
+    <div class="sub">Vol smiles, term structure, time-series overlays — natural language → chart.</div>
+  </header>
+
+  <div id="app"></div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────
+const API_BASE = "https://cryptovol-api-nbakzshi6q-uc.a.run.app";
+const POST_URL = API_BASE + "/v1/chat/";
+
+const history = [];
+
+// ── Boot: render chat UI immediately (open beta — no token required) ──────
+window.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("app").innerHTML = `
+    <div id="chat" class="chat">
+      <div class="msg bot">
+        Ask me to plot a vol smile, risk reversal, term structure, IV history, RV, spot, or any overlay.
+        <div class="examples">
+          Try:
+          <a onclick="setQ(this)">Plot BTC 1M smile for last Friday vs today</a>
+          <a onclick="setQ(this)">Show ETH 25Δ risk reversal last 3 months</a>
+          <a onclick="setQ(this)">Compare BTC IV vs realized vol</a>
+        </div>
+      </div>
+    </div>
+    <div class="input-row">
+      <input type="text" id="input" placeholder="Ask about vol analytics..." autofocus
+             onkeydown="if(event.key==='Enter') send()">
+      <button id="send" onclick="send()">Send</button>
+    </div>`;
+  document.getElementById("input").focus();
+});
+
+function setQ(el) {
+  document.getElementById("input").value = el.textContent.trim();
+  document.getElementById("input").focus();
+}
+
+function addMsg(role, html, meta) {
+  const chat = document.getElementById("chat");
+  const div = document.createElement("div");
+  div.className = "msg " + role;
+  div.innerHTML = "<pre>" + html + "</pre>";
+  if (meta) {
+    const m = document.createElement("div");
+    m.className = "meta"; m.textContent = meta;
+    div.appendChild(m);
+  }
+  chat.appendChild(div);
+  window.scrollTo(0, document.body.scrollHeight);
+  return div;
+}
+
+function addChart(spec) {
+  const chat = document.getElementById("chat");
+  const div = document.createElement("div");
+  div.className = "chart";
+  chat.appendChild(div);
+  const hasY2 = spec.layout && spec.layout.yaxis2;
+  const defaults = {height: 400, margin: {t: 50, b: 50, l: 60, r: hasY2 ? 70 : 20}};
+  const layout = Object.assign(defaults, spec.layout);
+  Plotly.newPlot(div, spec.data, layout, {responsive: true, displaylogo: false});
+  window.scrollTo(0, document.body.scrollHeight);
+}
+
+async function send() {
+  const input = document.getElementById("input");
+  const btn   = document.getElementById("send");
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  addMsg("user", msg);
+  input.value = "";
+  btn.disabled = true;
+
+  const thinking = addMsg("bot", "thinking…");
+
+  try {
+    const r = await fetch(POST_URL, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({ message: msg, history: history }),
+    });
+
+    if (!r.ok) {
+      thinking.remove();
+      const err = await r.text();
+      addMsg("err", `HTTP ${r.status}: ${err}`);
+      return;
+    }
+
+    const data = await r.json();
+    thinking.remove();
+
+    let meta = data.tool_used ? `tool: ${data.tool_used}` : "no tool used";
+    if (data.usage) {
+      const u = data.usage;
+      const totalTok = (u.input_tokens || 0) + (u.output_tokens || 0)
+                     + (u.cache_read_input_tokens || 0)
+                     + (u.cache_creation_input_tokens || 0);
+      meta += `  ·  ${totalTok} tok (in ${u.input_tokens}, out ${u.output_tokens}`
+            + (u.cache_read_input_tokens     ? `, cache-r ${u.cache_read_input_tokens}`     : "")
+            + (u.cache_creation_input_tokens ? `, cache-w ${u.cache_creation_input_tokens}` : "")
+            + ")";
+    }
+    if (data.cost_usd != null) meta += `  ·  $${data.cost_usd.toFixed(5)}`;
+
+    addMsg("bot", data.text || "(no text)", meta);
+    if (data.chart_spec) addChart(data.chart_spec);
+
+    history.push({ role: "user", content: msg });
+    history.push({ role: "assistant", content: data.text || "" });
+  } catch (e) {
+    thinking.remove();
+    addMsg("err", "Network error: " + e.message);
+  } finally {
+    btn.disabled = false;
+    input.focus();
+  }
+}
+</script>
+</body>
+</html>

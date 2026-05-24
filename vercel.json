@@ -30,6 +30,10 @@
     {
       "source": "/openapi.json",
       "destination": "https://cryptovol-api-nbakzshi6q-uc.a.run.app/openapi.json"
+    },
+    {
+      "source": "/chat",
+      "destination": "/chat.html"
     }
   ]
 }
