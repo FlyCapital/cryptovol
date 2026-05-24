@@ -46,6 +46,11 @@
   .examples { font-size: 12px; color: #888; margin-top: 8px; }
   .examples a { color: #555; cursor: pointer; text-decoration: underline;
                 margin-right: 12px; }
+  .toolbar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+  button.link { background: none; color: #888; border: none; padding: 4px 8px;
+                font-size: 12px; cursor: pointer; text-decoration: underline;
+                font-family: inherit; }
+  button.link:hover { color: #1a1a1a; }
   pre { white-space: pre-wrap; word-wrap: break-word; margin: 0;
         font-family: inherit; }
 </style>
@@ -65,28 +70,84 @@
 // ── Config ────────────────────────────────────────────────────────────────
 const API_BASE = "https://cryptovol-api-nbakzshi6q-uc.a.run.app";
 const POST_URL = API_BASE + "/v1/chat/";
+const STORAGE_KEY = "cryptovol-chat-v1";
 
-const history = [];
+// `history` is the API-shape array sent in each request ({role, content}).
+// `messages` is the full transcript including chart specs, used for re-rendering on reload.
+let history  = [];
+let messages = [];
 
-// ── Boot: render chat UI immediately (open beta — no token required) ──────
+function persist() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ history, messages }));
+  } catch (e) {
+    console.warn("persist failed:", e);   // quota exceeded; ignore
+  }
+}
+
+function restore() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data || !Array.isArray(data.messages)) return false;
+    history  = Array.isArray(data.history) ? data.history : [];
+    messages = data.messages;
+    return true;
+  } catch (e) {
+    console.warn("restore failed:", e);
+    return false;
+  }
+}
+
+function clearHistory() {
+  if (!confirm("Clear chat history on this browser?")) return;
+  history = [];
+  messages = [];
+  localStorage.removeItem(STORAGE_KEY);
+  document.getElementById("chat").innerHTML = "";
+  renderGreeting();
+}
+
+function renderGreeting() {
+  const chat = document.getElementById("chat");
+  const div = document.createElement("div");
+  div.className = "msg bot";
+  div.innerHTML = `<pre>Ask me to plot a vol smile, risk reversal, term structure, IV history, RV, spot, or any overlay.</pre>
+    <div class="examples">
+      Try:
+      <a onclick="setQ(this)">Plot BTC 1M smile for last Friday vs today</a>
+      <a onclick="setQ(this)">Show ETH 25Δ risk reversal last 3 months</a>
+      <a onclick="setQ(this)">Compare BTC IV vs realized vol</a>
+    </div>`;
+  chat.appendChild(div);
+}
+
+function replayMessages() {
+  for (const m of messages) {
+    addMsg(m.role, m.text, m.meta);
+    if (m.chart_spec) addChart(m.chart_spec);
+  }
+}
+
+// ── Boot: render UI, then replay saved transcript (or show greeting) ──────
 window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("app").innerHTML = `
-    <div id="chat" class="chat">
-      <div class="msg bot">
-        Ask me to plot a vol smile, risk reversal, term structure, IV history, RV, spot, or any overlay.
-        <div class="examples">
-          Try:
-          <a onclick="setQ(this)">Plot BTC 1M smile for last Friday vs today</a>
-          <a onclick="setQ(this)">Show ETH 25Δ risk reversal last 3 months</a>
-          <a onclick="setQ(this)">Compare BTC IV vs realized vol</a>
-        </div>
-      </div>
+    <div class="toolbar">
+      <button class="link" onclick="clearHistory()">Clear history</button>
     </div>
+    <div id="chat" class="chat"></div>
     <div class="input-row">
       <input type="text" id="input" placeholder="Ask about vol analytics..." autofocus
              onkeydown="if(event.key==='Enter') send()">
       <button id="send" onclick="send()">Send</button>
     </div>`;
+
+  if (restore() && messages.length) {
+    replayMessages();
+  } else {
+    renderGreeting();
+  }
   document.getElementById("input").focus();
 });
 
@@ -164,11 +225,16 @@ async function send() {
     }
     if (data.cost_usd != null) meta += `  ·  $${data.cost_usd.toFixed(5)}`;
 
-    addMsg("bot", data.text || "(no text)", meta);
+    const botText = data.text || "(no text)";
+    addMsg("bot", botText, meta);
     if (data.chart_spec) addChart(data.chart_spec);
 
     history.push({ role: "user", content: msg });
-    history.push({ role: "assistant", content: data.text || "" });
+    history.push({ role: "assistant", content: botText });
+    messages.push({ role: "user", text: msg });
+    messages.push({ role: "bot",  text: botText, meta,
+                    chart_spec: data.chart_spec || null });
+    persist();
   } catch (e) {
     thinking.remove();
     addMsg("err", "Network error: " + e.message);
