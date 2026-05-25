@@ -53,6 +53,12 @@
   button.link:hover { color: #1a1a1a; }
   pre { white-space: pre-wrap; word-wrap: break-word; margin: 0;
         font-family: inherit; }
+  .data-table { margin-top: 10px; border-collapse: collapse; font-size: 13px;
+                font-family: 'IBM Plex Mono', monospace; }
+  .data-table th { text-align: left; padding: 6px 12px 6px 0; font-weight: 500;
+                   color: #888; border-bottom: 1px solid #ddd; }
+  .data-table td { padding: 6px 12px 6px 0; border-bottom: 1px solid #f0f0f0; }
+  .data-table tr:last-child td { border-bottom: none; }
 </style>
 </head>
 <body>
@@ -127,6 +133,7 @@ function replayMessages() {
   for (const m of messages) {
     addMsg(m.role, m.text, m.meta);
     if (m.chart_spec) addChart(m.chart_spec);
+    if (m.table)      addTable(m.table);
   }
 }
 
@@ -183,6 +190,23 @@ function addChart(spec) {
   window.scrollTo(0, document.body.scrollHeight);
 }
 
+function addTable(rows) {
+  if (!Array.isArray(rows) || !rows.length) return;
+  const chat = document.getElementById("chat");
+  const cols = Object.keys(rows[0]);
+  const html = `<table class="data-table">
+      <thead><tr>${cols.map(c => "<th>" + c + "</th>").join("")}</tr></thead>
+      <tbody>${rows.map(r =>
+        "<tr>" + cols.map(c => "<td>" + (r[c] ?? "") + "</td>").join("") + "</tr>"
+      ).join("")}</tbody>
+    </table>`;
+  const wrap = document.createElement("div");
+  wrap.className = "msg bot";
+  wrap.innerHTML = html;
+  chat.appendChild(wrap);
+  window.scrollTo(0, document.body.scrollHeight);
+}
+
 async function send() {
   const input = document.getElementById("input");
   const btn   = document.getElementById("send");
@@ -228,12 +252,14 @@ async function send() {
     const botText = data.text || "(no text)";
     addMsg("bot", botText, meta);
     if (data.chart_spec) addChart(data.chart_spec);
+    if (data.table)      addTable(data.table);
 
     history.push({ role: "user", content: msg });
     history.push({ role: "assistant", content: botText });
     messages.push({ role: "user", text: msg });
     messages.push({ role: "bot",  text: botText, meta,
-                    chart_spec: data.chart_spec || null });
+                    chart_spec: data.chart_spec || null,
+                    table:      data.table      || null });
     persist();
   } catch (e) {
     thinking.remove();
