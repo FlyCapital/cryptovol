@@ -10,25 +10,36 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f5f6f8; --card: #fff;
-      --text: #111827; --text2: #6b7280; --text3: #b0b8c4;
-      --blue: #1F6FBF; --border: #e3e7ed;
-      --sans: 'Inter', sans-serif; --mono: 'IBM Plex Mono', monospace;
+      --bg: #faf9f5;
+      --card: #ffffff;
+      --text: #0f172a;
+      --text2: #64748b;
+      --text3: #cbd5e1;
+      --border: rgba(15, 23, 42, 0.08);
+      --blue: #1F6FBF;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'Inter', sans-serif;
       --serif: 'Source Serif 4', Georgia, serif;
     }
     * { box-sizing: border-box; }
-    body { margin:0; background:var(--bg); color:var(--text); font-family:var(--mono); font-size:13px; min-height:100vh; }
-    .topbar { display:flex; align-items:center; justify-content:space-between; padding:20px 32px; }
-    .logo { font-family:var(--sans); font-size:17px; font-weight:800; letter-spacing:-0.3px; color:var(--text); text-decoration:none; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100vh; }
+    .topbar { padding:24px 36px; }
+    .logo { font-family:var(--sans); font-size:18px; font-weight:800; letter-spacing:-0.3px; color:var(--text); text-decoration:none; }
     .logo span { color:var(--blue); }
-    .nav-link { color:var(--text2); text-decoration:none; font-size:12px; letter-spacing:0.04em; margin-left:20px; }
-    .nav-link:hover { color:var(--text); }
-    main { max-width:440px; margin:48px auto 0; padding:0 20px; text-align:center; }
-    h1 { font-family:var(--serif); font-size:38px; font-weight:500; letter-spacing:-0.6px; line-height:1.1; margin:0 0 12px; }
-    .tagline { color:var(--text2); font-size:13px; margin:0 0 36px; }
-    .tagline a { color:var(--blue); text-decoration:none; }
-    .tagline a:hover { text-decoration:underline; }
-    #clerk-root { margin-top:8px; }
+    main { max-width:520px; margin:80px auto 0; padding:0 24px; text-align:center; }
+    h1 { font-family:var(--serif); font-size:54px; font-weight:500; letter-spacing:-1.5px; line-height:1.05; margin:0 0 14px; color:var(--text); }
+    .tagline { font-family:var(--serif); color:var(--text2); font-size:18px; line-height:1.4; margin:0 auto 36px; max-width:380px; }
+    .card-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px 28px 24px;
+      box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+    }
+    #clerk-root { width:100%; }
+    .below-card { margin-top:18px; font-size:13px; color:var(--text2); font-family:var(--sans); }
+    .below-card a { color:var(--text); font-weight:500; text-decoration:none; }
+    .below-card a:hover { text-decoration:underline; }
   </style>
 
   <script defer crossorigin="anonymous"
@@ -39,54 +50,74 @@
 <body>
   <div class="topbar">
     <a href="/" class="logo">crypto<span>vol</span></a>
-    <div>
-      <a href="/" class="nav-link">Home</a>
-      <a href="/api" class="nav-link">API</a>
-      <a href="/login" class="nav-link">Log in</a>
-    </div>
   </div>
 
   <main>
-    <h1>Create your account</h1>
-    <p class="tagline">Free BASIC tier — no card required.<br />
-       Already have an account? <a href="/login">Log in</a>.</p>
-    <div id="clerk-root"></div>
+    <h1>Sign up for CryptoVol</h1>
+    <p class="tagline">Institutional-grade crypto vol data. Free BASIC tier, no card required.</p>
+
+    <div class="card-wrap">
+      <div id="clerk-root"></div>
+    </div>
+
+    <p class="below-card">Already have an account? <a href="/login">Log in</a></p>
   </main>
 
   <script>
     const CLERK_APPEARANCE = {
       variables: {
-        colorPrimary: '#1F6FBF',
-        colorText: '#111827',
-        colorTextSecondary: '#6b7280',
-        colorBackground: '#f5f6f8',
+        colorPrimary: '#0f172a',
+        colorText: '#0f172a',
+        colorTextSecondary: '#64748b',
+        colorBackground: '#ffffff',
         colorInputBackground: '#ffffff',
-        colorInputText: '#111827',
-        fontFamily: '"IBM Plex Mono", monospace',
-        borderRadius: '4px',
-        spacingUnit: '0.95rem',
+        colorInputText: '#0f172a',
+        fontFamily: '"Inter", sans-serif',
+        fontSize: '14px',
+        borderRadius: '10px',
+        spacingUnit: '1rem',
       },
       elements: {
         rootBox: { width: '100%' },
+        cardBox: { boxShadow: 'none', border: 'none', background: 'transparent', width: '100%' },
         card: { boxShadow: 'none', border: 'none', padding: 0, background: 'transparent' },
-        header: { display: 'none' },           // we render our own
-        footer: { display: 'none' },           // we render our own
+        header: { display: 'none' },
+        footer: { display: 'none' },
+        formFieldRow__firstName: { display: 'none' },
+        formFieldRow__lastName: { display: 'none' },
         socialButtonsBlockButton: {
-          border: '1px solid #e3e7ed',
-          fontFamily: '"IBM Plex Mono", monospace',
-          fontSize: '13px',
+          border: '1px solid rgba(15, 23, 42, 0.12)',
+          background: '#ffffff',
+          fontFamily: '"Inter", sans-serif',
+          fontSize: '14px',
+          fontWeight: 500,
+          padding: '10px 14px',
+          '&:hover': { background: '#f8fafc' },
         },
-        formFieldLabel: { fontFamily: '"IBM Plex Mono", monospace', fontSize: '12px', color: '#6b7280' },
-        formFieldInput: { fontFamily: '"IBM Plex Mono", monospace', fontSize: '13px' },
+        socialButtonsBlockButtonText: { fontWeight: 500 },
+        formFieldLabel: { fontFamily: '"Inter", sans-serif', fontSize: '13px', color: '#64748b', fontWeight: 500 },
+        formFieldInput: {
+          fontFamily: '"Inter", sans-serif',
+          fontSize: '14px',
+          border: '1px solid rgba(15, 23, 42, 0.12)',
+          background: '#ffffff',
+          padding: '10px 12px',
+        },
         formButtonPrimary: {
-          background: '#1F6FBF',
-          fontFamily: '"IBM Plex Mono", monospace',
-          fontSize: '13px',
-          letterSpacing: '0.03em',
+          background: '#0f172a',
+          fontFamily: '"Inter", sans-serif',
+          fontSize: '14px',
+          fontWeight: 500,
+          letterSpacing: 0,
           textTransform: 'none',
+          padding: '11px 16px',
+          '&:hover': { background: '#1e293b' },
         },
-        dividerLine: { background: '#e3e7ed' },
-        dividerText: { fontFamily: '"IBM Plex Mono", monospace', fontSize: '11px', color: '#b0b8c4' },
+        dividerRow: { margin: '16px 0' },
+        dividerLine: { background: 'rgba(15, 23, 42, 0.08)' },
+        dividerText: { fontFamily: '"Inter", sans-serif', fontSize: '12px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' },
+        identityPreview: { fontFamily: '"Inter", sans-serif', fontSize: '13px' },
+        formResendCodeLink: { color: '#1F6FBF' },
       },
     };
 
