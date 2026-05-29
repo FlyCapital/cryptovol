@@ -17,15 +17,26 @@
     }
     * { box-sizing: border-box; }
     body { margin:0; background:var(--bg); color:var(--text); font-family:var(--mono); font-size:13px; min-height:100vh; }
-    .topbar { display:flex; align-items:center; justify-content:space-between; padding:20px 32px; background:rgba(255,255,255,0.9); border-bottom:1px solid var(--border); }
+    .topbar { display:flex; align-items:center; justify-content:space-between; padding:20px 32px; }
     .logo { font-family:var(--sans); font-size:17px; font-weight:800; letter-spacing:-0.3px; color:var(--text); text-decoration:none; }
     .logo span { color:var(--blue); }
     .nav-link { color:var(--text2); text-decoration:none; font-size:12px; letter-spacing:0.04em; margin-left:20px; }
     .nav-link:hover { color:var(--text); }
-    main { max-width:760px; margin:48px auto; padding:0 20px; }
-    h1 { font-family:var(--sans); font-size:28px; font-weight:700; letter-spacing:-0.6px; margin:0 0 24px; }
-    .card { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:24px 28px; margin-bottom:16px; }
-    .card-title { font-family:var(--sans); font-size:13px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:0.08em; margin:0 0 12px; }
+    main { max-width:680px; margin:48px auto 0; padding:0 24px; }
+    h1 {
+      font-family:var(--sans);
+      font-size:clamp(28px,4vw,44px);
+      font-weight:800;
+      letter-spacing:-1px;
+      line-height:1.1;
+      text-align:center;
+      margin:0 0 12px;
+      color:var(--text);
+    }
+    h1 em { font-style:normal; color:var(--blue); }
+    .tagline { color:var(--text2); font-size:13px; line-height:1.7; text-align:center; margin:0 0 36px; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:24px 28px; margin-bottom:14px; }
+    .card-title { font-family:var(--mono); font-size:11px; font-weight:400; color:var(--text2); text-transform:uppercase; letter-spacing:0.1em; margin:0 0 14px; }
     .row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); }
     .row:last-child { border-bottom:none; }
     .row-label { color:var(--text2); }
@@ -36,15 +47,30 @@
     .tier-ULTRA { background:rgba(31,111,191,0.18); color:var(--blue); font-weight:600; }
     .key-box { background:#f8fafc; border:1px solid var(--border); border-radius:4px; padding:12px 14px; font-size:12px; word-break:break-all; display:flex; justify-content:space-between; align-items:center; gap:12px; }
     .key-box code { font-family:var(--mono); color:var(--text); }
-    button { font-family:var(--mono); font-size:12px; background:var(--blue); color:#fff; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; letter-spacing:0.03em; }
-    button:hover { opacity:0.88; }
-    button.secondary { background:transparent; color:var(--blue); border:1px solid var(--blue); }
+    button {
+      font-family:var(--mono);
+      font-size:12px;
+      background:var(--blue);
+      color:#fff;
+      border:1px solid var(--blue);
+      padding:8px 16px;
+      border-radius:4px;
+      cursor:pointer;
+      letter-spacing:0.04em;
+      transition:background 0.15s;
+    }
+    button:hover { background:#1a5fa3; }
+    button.secondary { background:transparent; color:var(--blue); }
+    button.secondary:hover { background:rgba(31,111,191,0.06); }
+    button:disabled { background:var(--text3); border-color:var(--text3); color:#fff; cursor:not-allowed; }
+    button:disabled:hover { background:var(--text3); }
     .actions { margin-top:14px; display:flex; gap:10px; }
-    .empty { text-align:center; padding:60px 20px; color:var(--text2); }
-    .err { color:#b91c1c; font-size:12px; margin-top:8px; }
+    .empty { text-align:center; padding:80px 20px; color:var(--text2); }
+    .err { color:#b91c1c; font-size:12px; margin-top:8px; text-align:center; }
     .ok-flash { color:#15803d; font-size:11px; margin-left:8px; opacity:0; transition:opacity 0.2s; }
     .ok-flash.show { opacity:1; }
-    .upgrade-cta { color:var(--text2); font-size:11px; margin-top:4px; }
+    .upgrade-cta { color:var(--text2); font-size:11px; margin-top:8px; }
+    .upgrade-cta code { background:#f8fafc; border:1px solid var(--border); padding:1px 6px; border-radius:3px; }
   </style>
 
   <script defer crossorigin="anonymous"
@@ -109,7 +135,8 @@
       }
 
       content.innerHTML = `
-        <h1>Account</h1>
+        <h1>Your <em>account</em></h1>
+        <p class="tagline">Manage your API key and subscription.</p>
 
         <div class="card">
           <p class="card-title">Profile</p>
@@ -150,7 +177,7 @@
           </div>
           <p class="upgrade-cta">Upgrade flow (Stripe Checkout) ships in Phase 3.</p>
           <div class="actions">
-            <button disabled style="opacity:0.5;cursor:not-allowed;">Upgrade plan (coming soon)</button>
+            <button disabled>Upgrade plan (coming soon)</button>
           </div>
         </div>
       `;
