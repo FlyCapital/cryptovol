@@ -7,28 +7,28 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #f5f6f8; --card: #fff;
       --text: #111827; --text2: #6b7280; --text3: #b0b8c4;
       --blue: #1F6FBF; --border: #e3e7ed;
       --sans: 'Inter', sans-serif; --mono: 'IBM Plex Mono', monospace;
+      --serif: 'Source Serif 4', Georgia, serif;
     }
     * { box-sizing: border-box; }
     body { margin:0; background:var(--bg); color:var(--text); font-family:var(--mono); font-size:13px; min-height:100vh; }
-    .topbar { display:flex; align-items:center; justify-content:space-between; padding:20px 32px; background:rgba(255,255,255,0.9); border-bottom:1px solid var(--border); }
+    .topbar { display:flex; align-items:center; justify-content:space-between; padding:20px 32px; }
     .logo { font-family:var(--sans); font-size:17px; font-weight:800; letter-spacing:-0.3px; color:var(--text); text-decoration:none; }
     .logo span { color:var(--blue); }
     .nav-link { color:var(--text2); text-decoration:none; font-size:12px; letter-spacing:0.04em; margin-left:20px; }
     .nav-link:hover { color:var(--text); }
-    main { display:flex; justify-content:center; align-items:flex-start; padding:60px 20px; }
-    .card { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:40px; max-width:440px; width:100%; }
-    h1 { font-family:var(--sans); font-size:24px; font-weight:700; letter-spacing:-0.5px; margin:0 0 8px; }
-    .sub { color:var(--text2); margin:0 0 24px; font-size:12px; }
-    .sub a { color:var(--blue); text-decoration:none; }
-    .sub a:hover { text-decoration:underline; }
-    #clerk-root { min-height:400px; }
+    main { max-width:440px; margin:48px auto 0; padding:0 20px; text-align:center; }
+    h1 { font-family:var(--serif); font-size:38px; font-weight:500; letter-spacing:-0.6px; line-height:1.1; margin:0 0 12px; }
+    .tagline { color:var(--text2); font-size:13px; margin:0 0 36px; }
+    .tagline a { color:var(--blue); text-decoration:none; }
+    .tagline a:hover { text-decoration:underline; }
+    #clerk-root { margin-top:8px; }
   </style>
 
   <script defer crossorigin="anonymous"
@@ -47,19 +47,55 @@
   </div>
 
   <main>
-    <div class="card">
-      <h1>Welcome back</h1>
-      <p class="sub">Log in to view your API key and manage your subscription. Don't have an account? <a href="/signup">Sign up</a>.</p>
-      <div id="clerk-root"></div>
-    </div>
+    <h1>Welcome back</h1>
+    <p class="tagline">Log in to view your API key and manage your subscription.<br />
+       New here? <a href="/signup">Create an account</a>.</p>
+    <div id="clerk-root"></div>
   </main>
 
   <script>
+    const CLERK_APPEARANCE = {
+      variables: {
+        colorPrimary: '#1F6FBF',
+        colorText: '#111827',
+        colorTextSecondary: '#6b7280',
+        colorBackground: '#f5f6f8',
+        colorInputBackground: '#ffffff',
+        colorInputText: '#111827',
+        fontFamily: '"IBM Plex Mono", monospace',
+        borderRadius: '4px',
+        spacingUnit: '0.95rem',
+      },
+      elements: {
+        rootBox: { width: '100%' },
+        card: { boxShadow: 'none', border: 'none', padding: 0, background: 'transparent' },
+        header: { display: 'none' },
+        footer: { display: 'none' },
+        socialButtonsBlockButton: {
+          border: '1px solid #e3e7ed',
+          fontFamily: '"IBM Plex Mono", monospace',
+          fontSize: '13px',
+        },
+        formFieldLabel: { fontFamily: '"IBM Plex Mono", monospace', fontSize: '12px', color: '#6b7280' },
+        formFieldInput: { fontFamily: '"IBM Plex Mono", monospace', fontSize: '13px' },
+        formButtonPrimary: {
+          background: '#1F6FBF',
+          fontFamily: '"IBM Plex Mono", monospace',
+          fontSize: '13px',
+          letterSpacing: '0.03em',
+          textTransform: 'none',
+        },
+        dividerLine: { background: '#e3e7ed' },
+        dividerText: { fontFamily: '"IBM Plex Mono", monospace', fontSize: '11px', color: '#b0b8c4' },
+      },
+    };
+
     window.addEventListener('load', async () => {
       await window.Clerk.load();
       window.Clerk.mountSignIn(document.getElementById('clerk-root'), {
         signUpUrl: '/signup',
         afterSignInUrl: '/account',
+        appearance: CLERK_APPEARANCE,
       });
     });
   </script>
