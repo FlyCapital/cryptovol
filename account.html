@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Account — CryptoVol</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f6f8; --card: #fff;
+      --text: #111827; --text2: #6b7280; --text3: #b0b8c4;
+      --blue: #1F6FBF; --border: #e3e7ed;
+      --sans: 'Inter', sans-serif; --mono: 'IBM Plex Mono', monospace;
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:var(--mono); font-size:13px; min-height:100vh; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; padding:20px 32px; background:rgba(255,255,255,0.9); border-bottom:1px solid var(--border); }
+    .logo { font-family:var(--sans); font-size:17px; font-weight:800; letter-spacing:-0.3px; color:var(--text); text-decoration:none; }
+    .logo span { color:var(--blue); }
+    .nav-link { color:var(--text2); text-decoration:none; font-size:12px; letter-spacing:0.04em; margin-left:20px; }
+    .nav-link:hover { color:var(--text); }
+    main { max-width:760px; margin:48px auto; padding:0 20px; }
+    h1 { font-family:var(--sans); font-size:28px; font-weight:700; letter-spacing:-0.6px; margin:0 0 24px; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:24px 28px; margin-bottom:16px; }
+    .card-title { font-family:var(--sans); font-size:13px; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:0.08em; margin:0 0 12px; }
+    .row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); }
+    .row:last-child { border-bottom:none; }
+    .row-label { color:var(--text2); }
+    .row-val   { color:var(--text); font-weight:500; }
+    .tier-badge { display:inline-block; padding:3px 10px; border-radius:3px; font-size:11px; letter-spacing:0.08em; }
+    .tier-BASIC { background:rgba(107,114,128,0.12); color:var(--text2); }
+    .tier-PRO   { background:rgba(31,111,191,0.12); color:var(--blue); }
+    .tier-ULTRA { background:rgba(31,111,191,0.18); color:var(--blue); font-weight:600; }
+    .key-box { background:#f8fafc; border:1px solid var(--border); border-radius:4px; padding:12px 14px; font-size:12px; word-break:break-all; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .key-box code { font-family:var(--mono); color:var(--text); }
+    button { font-family:var(--mono); font-size:12px; background:var(--blue); color:#fff; border:none; padding:6px 14px; border-radius:4px; cursor:pointer; letter-spacing:0.03em; }
+    button:hover { opacity:0.88; }
+    button.secondary { background:transparent; color:var(--blue); border:1px solid var(--blue); }
+    .actions { margin-top:14px; display:flex; gap:10px; }
+    .empty { text-align:center; padding:60px 20px; color:var(--text2); }
+    .err { color:#b91c1c; font-size:12px; margin-top:8px; }
+    .ok-flash { color:#15803d; font-size:11px; margin-left:8px; opacity:0; transition:opacity 0.2s; }
+    .ok-flash.show { opacity:1; }
+    .upgrade-cta { color:var(--text2); font-size:11px; margin-top:4px; }
+  </style>
+
+  <script defer crossorigin="anonymous"
+    src="https://direct-bug-7.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js"
+    type="text/javascript"></script>
+  <script defer crossorigin="anonymous"
+    data-clerk-publishable-key="pk_test_ZGlyZWN0LWJ1Zy03LmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://direct-bug-7.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js"
+    type="text/javascript"></script>
+</head>
+<body>
+  <div class="topbar">
+    <a href="/" class="logo">crypto<span>vol</span></a>
+    <div id="topbar-right">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/api" class="nav-link">API</a>
+      <a href="/chat" class="nav-link">Chat</a>
+      <span id="user-button-slot"></span>
+    </div>
+  </div>
+
+  <main>
+    <div id="content" class="empty">Loading…</div>
+  </main>
+
+  <script>
+    const API_BASE = "https://cryptovol-api-nbakzshi6q-uc.a.run.app";
+
+    window.addEventListener('load', async () => {
+      await window.Clerk.load();
+
+      const content = document.getElementById('content');
+
+      if (!window.Clerk.user) {
+        // Not logged in → redirect to login
+        window.location.href = '/login';
+        return;
+      }
+
+      // Mount the user button (signs out)
+      window.Clerk.mountUserButton(document.getElementById('user-button-slot'));
+
+      const token = await window.Clerk.session.getToken();
+      let user;
+      try {
+        const resp = await fetch(`${API_BASE}/v1/account/me`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (resp.status === 404) {
+          // Webhook race — retry once after 2s
+          await new Promise(r => setTimeout(r, 2000));
+          const retry = await fetch(`${API_BASE}/v1/account/me`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          if (!retry.ok) throw new Error('Account not provisioned. Please refresh in a moment.');
+          user = await retry.json();
+        } else if (!resp.ok) {
+          throw new Error(`Server returned ${resp.status}`);
+        } else {
+          user = await resp.json();
+        }
+      } catch (e) {
+        content.innerHTML = `<div class="err">${e.message}</div>`;
+        return;
+      }
+
+      content.innerHTML = `
+        <h1>Account</h1>
+
+        <div class="card">
+          <p class="card-title">Profile</p>
+          <div class="row">
+            <span class="row-label">Email</span>
+            <span class="row-val">${user.email}</span>
+          </div>
+          <div class="row">
+            <span class="row-label">Plan</span>
+            <span class="row-val"><span class="tier-badge tier-${user.tier}">${user.tier}</span></span>
+          </div>
+          <div class="row">
+            <span class="row-label">Member since</span>
+            <span class="row-val">${user.created_at ? user.created_at.slice(0,10) : '—'}</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <p class="card-title">API key</p>
+          <div class="key-box">
+            <code id="api-key">${user.api_key}</code>
+            <div>
+              <button id="copy-btn">Copy</button>
+              <span id="copy-ok" class="ok-flash">copied</span>
+            </div>
+          </div>
+          <p class="upgrade-cta">Send as <code>X-CryptoVol-Key</code> header on API requests.</p>
+          <div class="actions">
+            <button id="rotate-btn" class="secondary">Rotate key</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <p class="card-title">Subscription</p>
+          <div class="row">
+            <span class="row-label">Tier</span>
+            <span class="row-val">${user.tier}</span>
+          </div>
+          <p class="upgrade-cta">Upgrade flow (Stripe Checkout) ships in Phase 3.</p>
+          <div class="actions">
+            <button disabled style="opacity:0.5;cursor:not-allowed;">Upgrade plan (coming soon)</button>
+          </div>
+        </div>
+      `;
+
+      // Copy-to-clipboard
+      document.getElementById('copy-btn').addEventListener('click', async () => {
+        await navigator.clipboard.writeText(user.api_key);
+        const flash = document.getElementById('copy-ok');
+        flash.classList.add('show');
+        setTimeout(() => flash.classList.remove('show'), 1500);
+      });
+
+      // Rotate key
+      document.getElementById('rotate-btn').addEventListener('click', async () => {
+        if (!confirm('Rotate your API key? The current key will stop working immediately.')) return;
+        const t = await window.Clerk.session.getToken();
+        const resp = await fetch(`${API_BASE}/v1/account/rotate-key`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${t}` },
+        });
+        if (!resp.ok) { alert('Failed to rotate key'); return; }
+        const j = await resp.json();
+        document.getElementById('api-key').textContent = j.api_key;
+        user.api_key = j.api_key;
+      });
+    });
+  </script>
+</body>
+</html>
