@@ -165,7 +165,9 @@ window.addEventListener("load", async () => {
     return;
   }
 
-  window.Clerk.mountUserButton(document.getElementById("user-button-slot"));
+  window.Clerk.mountUserButton(document.getElementById("user-button-slot"), {
+    afterSignOutUrl: "/login",
+  });
 
   document.getElementById("app").innerHTML = `
     <div class="toolbar">

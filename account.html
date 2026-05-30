@@ -113,7 +113,9 @@
       }
 
       // Mount the user button (signs out)
-      window.Clerk.mountUserButton(document.getElementById('user-button-slot'));
+      window.Clerk.mountUserButton(document.getElementById('user-button-slot'), {
+        afterSignOutUrl: '/login',
+      });
 
       const token = await window.Clerk.session.getToken();
       let user;
