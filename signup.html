@@ -79,6 +79,11 @@
     .below-card { margin-top: 18px; font-size: 14px; color: var(--text2); }
     .below-card a { color: var(--blue); text-decoration: none; font-weight: 500; }
     .below-card a:hover { text-decoration: underline; }
+
+    /* Hide Clerk "Last used" indicator that overflows the social button */
+    .cl-socialButtonsBlockButton__lastUsed,
+    [class*="lastUsed" i],
+    [data-localization-key$="lastUsed"] { display: none !important; }
   </style>
 
   <script defer crossorigin="anonymous"
