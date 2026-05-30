@@ -76,6 +76,16 @@
     .usage-bar.warn  > div { background:#d97706; }
     .usage-bar.crit  > div { background:#b91c1c; }
     .usage-meta { display:flex; justify-content:space-between; font-size:11px; color:var(--text2); margin-top:6px; }
+    .card.danger { border-color:rgba(185,28,28,0.25); }
+    .card.danger .card-title { color:#b91c1c; }
+    button.danger {
+      background:#b91c1c; border-color:#b91c1c; color:#fff;
+    }
+    button.danger:hover { background:#991b1b; border-color:#991b1b; }
+    button.danger-secondary {
+      background:transparent; border:1px solid #b91c1c; color:#b91c1c;
+    }
+    button.danger-secondary:hover { background:rgba(185,28,28,0.08); }
   </style>
 
   <script defer crossorigin="anonymous"
@@ -219,6 +229,18 @@
           </div>
         </div>
 
+        <div class="card danger" style="margin-top:32px;">
+          <p class="card-title">Danger zone</p>
+          <p style="color:var(--text2); font-size:12px; margin:0 0 12px;">
+            Permanently delete your account, revoke your API key, and cancel your subscription.
+            Stripe payment records are retained for accounting compliance but anonymized.
+            <strong>This cannot be undone.</strong>
+          </p>
+          <div class="actions">
+            <button id="delete-btn" class="danger-secondary">Delete my account</button>
+          </div>
+        </div>
+
         <div class="card">
           <p class="card-title">Subscription</p>
           <div class="row">
@@ -282,6 +304,34 @@
             btn.textContent = `Upgrade to ${btn.dataset.tier}`;
           }
         });
+      });
+
+      // Danger zone → delete account
+      document.getElementById('delete-btn').addEventListener('click', async () => {
+        const typed = prompt(
+          "This permanently deletes your account, cancels your subscription, " +
+          "and revokes your API key. Stripe payment records will be retained " +
+          "but anonymized.\n\n" +
+          "Type DELETE to confirm:"
+        );
+        if (typed !== 'DELETE') return;
+
+        const t = await window.Clerk.session.getToken();
+        try {
+          const resp = await fetch(`${API_BASE}/v1/account/delete-me`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${t}` },
+          });
+          if (!resp.ok) {
+            const err = await resp.text();
+            throw new Error(`Server returned ${resp.status}: ${err.slice(0, 200)}`);
+          }
+          // Sign out locally and redirect home. The Clerk identity is already deleted server-side,
+          // so the session is invalid — Clerk.signOut() just clears the local state.
+          await window.Clerk.signOut({ redirectUrl: '/' });
+        } catch (e) {
+          alert('Could not delete account: ' + e.message);
+        }
       });
 
       // Manage billing → Stripe Customer Portal
