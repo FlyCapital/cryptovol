@@ -527,49 +527,6 @@ pt = cv.<span class="c-fn">vol_surface</span>(
   </div>
 </section>
 
-<!-- ─── Features ─────────────────────────────────────────────────────── -->
-<section class="sect">
-  <div class="wrap">
-    <div class="sect-hd">
-      <span class="eyebrow">What you get</span>
-      <h2>One API for the entire vol surface.</h2>
-      <p>Query implied vol at any tenor, strike, moneyness or delta. Pull constant-maturity history. Get Greeks, forwards, and rates — all from one endpoint.</p>
-    </div>
-    <div class="features">
-      <div class="feature">
-        <div class="feature-icon">{ }</div>
-        <h3>Vol surface, any strike</h3>
-        <p>Single-point or bulk SABR-interpolated quotes. Specify strike, moneyness, or delta — the API solves for the right point and returns vol, price, and Greeks.</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">↬</div>
-        <h3>Constant-maturity history</h3>
-        <p>Daily time series at any fixed tenor and strike. Built for backtesting — one call returns the full date range. No more day-by-day loops.</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">σ</div>
-        <h3>Realized vol + spot</h3>
-        <p>Rolling realized vol (√365 annualized), daily spot prices per session, IV-RV gap analysis. Drop-in inputs for vol-risk-premium strategies.</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">⌖</div>
-        <h3>3 sessions per day</h3>
-        <p>Asia close (05:00 UTC), London close (12:00 UTC), US close (16:00 UTC). Same surface across sessions, so you can see how skew evolves intra-day.</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">⌬</div>
-        <h3>Arbitrage-free fits</h3>
-        <p>SABR-calibrated with multi-seed restart and degenerate-fit rejection. No butterfly violations. Same calibration pipeline that drives the live dashboard.</p>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">π</div>
-        <h3>Python SDK + REST</h3>
-        <p><code style="font-family:var(--mono); font-size:13px; background:var(--surface2); padding:1px 6px; border-radius:4px;">pip install cryptovol</code>. Typed responses, retry/backoff, plan-aware errors, optional pandas. Or curl directly if you prefer.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ─── Chat preview ─────────────────────────────────────────────────── -->
 <section class="chat-section">
   <div class="wrap" style="padding-top:80px; padding-bottom:80px;">
@@ -622,6 +579,49 @@ pt = cv.<span class="c-fn">vol_surface</span>(
         <div style="font-family:var(--mono); font-size:11px; color:var(--text3); text-align:right;">
           ▸ ▸ API requests (1)
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Features ─────────────────────────────────────────────────────── -->
+<section class="sect">
+  <div class="wrap">
+    <div class="sect-hd">
+      <span class="eyebrow">What you get</span>
+      <h2>One API for the entire vol surface.</h2>
+      <p>Query implied vol at any tenor, strike, moneyness or delta. Pull constant-maturity history. Get Greeks, forwards, and rates — all from one endpoint.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">{ }</div>
+        <h3>Vol surface, any strike</h3>
+        <p>Single-point or bulk SABR-interpolated quotes. Specify strike, moneyness, or delta — the API solves for the right point and returns vol, price, and Greeks.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">↬</div>
+        <h3>Constant-maturity history</h3>
+        <p>Daily time series at any fixed tenor and strike. Built for backtesting — one call returns the full date range. No more day-by-day loops.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">σ</div>
+        <h3>Realized vol + spot</h3>
+        <p>Rolling realized vol (√365 annualized), daily spot prices per session, IV-RV gap analysis. Drop-in inputs for vol-risk-premium strategies.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">⌖</div>
+        <h3>3 sessions per day</h3>
+        <p>Asia close (05:00 UTC), London close (12:00 UTC), US close (16:00 UTC). Same surface across sessions, so you can see how skew evolves intra-day.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">⌬</div>
+        <h3>Arbitrage-free fits</h3>
+        <p>SABR-calibrated with multi-seed restart and degenerate-fit rejection. No butterfly violations. Same calibration pipeline that drives the live dashboard.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">π</div>
+        <h3>Python SDK + REST</h3>
+        <p><code style="font-family:var(--mono); font-size:13px; background:var(--surface2); padding:1px 6px; border-radius:4px;">pip install cryptovol</code>. Typed responses, retry/backoff, plan-aware errors, optional pandas. Or curl directly if you prefer.</p>
       </div>
     </div>
   </div>
