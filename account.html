@@ -134,12 +134,24 @@
         return;
       }
 
-      // Show success banner if user just returned from Stripe Checkout.
+      // Show success banner only when the user just returned from Stripe Checkout
+      // AND the tier hasn't updated yet (webhook still in flight). Once tier reflects
+      // the upgrade, suppress the banner and strip ?upgraded=true so a refresh stays clean.
       const params = new URLSearchParams(window.location.search);
-      const upgradedBanner = params.get('upgraded') === 'true' ? `
+      const justReturned   = params.get('upgraded') === 'true';
+      const upgradePending = justReturned && user.tier === 'BASIC';
+      const upgradedBanner = upgradePending ? `
         <div style="background:rgba(31,111,191,0.08); border:1px solid rgba(31,111,191,0.2); color:var(--blue); padding:10px 14px; border-radius:4px; margin-bottom:18px; font-size:12px;">
-          &check; Subscription confirmed. Tier updates within a few seconds — refresh if you don't see it yet.
+          &check; Payment received. Tier updating &mdash; this page will refresh automatically in a few seconds.
         </div>` : '';
+      if (justReturned && !upgradePending) {
+        // Upgrade has landed; remove the query param so refreshes don't keep showing it.
+        history.replaceState({}, '', '/account');
+      }
+      if (upgradePending) {
+        // Poll for the tier change so we don't make the user refresh manually.
+        setTimeout(() => window.location.reload(), 3000);
+      }
 
       const showManageBilling = user.tier !== 'BASIC';
       const showUpgradePro    = user.tier === 'BASIC';
