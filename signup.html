@@ -152,6 +152,8 @@
       await window.Clerk.load();
       window.Clerk.mountSignUp(document.getElementById('clerk-root'), {
         signInUrl: '/login',
+        signUpForceRedirectUrl: '/account',
+        signUpFallbackRedirectUrl: '/account',
         forceRedirectUrl: '/account',
         fallbackRedirectUrl: '/account',
         appearance: CLERK_APPEARANCE,
