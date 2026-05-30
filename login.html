@@ -7,48 +7,78 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f5f6f8;
-      --card: #ffffff;
-      --text: #111827;
-      --text2: #6b7280;
-      --text3: #b0b8c4;
-      --border: #e3e7ed;
-      --blue: #1F6FBF;
-      --sans: 'Inter', sans-serif;
-      --mono: 'IBM Plex Mono', monospace;
+      --bg:        #faf9f5;
+      --surface:   #ffffff;
+      --surface2:  #f5f4ef;
+      --text:      #0f172a;
+      --text2:     #475569;
+      --text3:     #94a3b8;
+      --border:    rgba(15, 23, 42, 0.08);
+      --border2:   rgba(15, 23, 42, 0.14);
+      --blue:      #1F6FBF;
+      --black:     #0f172a;
+      --sans:      'Inter', sans-serif;
+      --mono:      'IBM Plex Mono', monospace;
+      --serif:     'Source Serif 4', Georgia, serif;
     }
-    * { box-sizing: border-box; }
-    body { margin:0; background:var(--bg); color:var(--text); font-family:var(--mono); font-size:13px; min-height:100vh; }
-    .topbar { display:flex; align-items:center; justify-content:space-between; padding:20px 32px; }
-    .logo { font-family:var(--sans); font-size:17px; font-weight:800; letter-spacing:-0.3px; color:var(--text); text-decoration:none; }
-    .logo span { color:var(--blue); }
-    .nav-link { color:var(--text2); text-decoration:none; font-size:12px; letter-spacing:0.04em; margin-left:20px; }
-    .nav-link:hover { color:var(--text); }
-    main { max-width:440px; margin:64px auto 0; padding:0 24px; text-align:center; }
+    * { margin:0; padding:0; box-sizing: border-box; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--sans); font-size: 15px; line-height: 1.6;
+      min-height: 100vh; -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+
+    nav {
+      background: rgba(250, 249, 245, 0.85);
+      backdrop-filter: saturate(180%) blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-inner {
+      max-width: 1180px; margin: 0 auto; padding: 0 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    .logo {
+      font-family: var(--sans); font-size: 19px; font-weight: 800;
+      letter-spacing: -0.4px; color: var(--text); text-decoration: none;
+    }
+    .logo span { color: var(--blue); }
+    .nav-aux {
+      color: var(--text2); font-family: var(--sans); font-size: 14px;
+      font-weight: 500; text-decoration: none;
+    }
+    .nav-aux:hover { color: var(--text); }
+
+    main {
+      max-width: 440px; margin: 64px auto 0; padding: 0 24px 64px;
+      text-align: center;
+    }
     h1 {
-      font-family:var(--sans);
-      font-size:clamp(28px,4vw,44px);
-      font-weight:800;
-      letter-spacing:-1px;
-      line-height:1.1;
-      margin:0 0 12px;
-      color:var(--text);
+      font-family: var(--serif);
+      font-size: clamp(32px, 4.5vw, 44px);
+      font-weight: 500; letter-spacing: -1px; line-height: 1.08;
+      margin: 0 0 14px; color: var(--text);
     }
-    h1 em { font-style:normal; color:var(--blue); }
-    .tagline { color:var(--text2); font-size:13px; line-height:1.7; margin:0 0 32px; }
+    h1 em { font-style: normal; color: var(--blue); }
+    .tagline {
+      color: var(--text2); font-size: 15px; line-height: 1.6; margin: 0 0 32px;
+    }
     .card-wrap {
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:6px;
-      padding:28px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     }
     #clerk-root { width:100%; }
-    .below-card { margin-top:18px; font-size:12px; color:var(--text2); }
-    .below-card a { color:var(--blue); text-decoration:none; }
-    .below-card a:hover { text-decoration:underline; }
+    .below-card { margin-top: 22px; font-size: 14px; color: var(--text2); }
+    .below-card a { color: var(--blue); text-decoration: none; font-weight: 500; }
+    .below-card a:hover { text-decoration: underline; }
   </style>
 
   <script defer crossorigin="anonymous"
@@ -57,18 +87,16 @@
     type="text/javascript"></script>
 </head>
 <body>
-  <div class="topbar">
-    <a href="/" class="logo">crypto<span>vol</span></a>
-    <div>
-      <a href="/" class="nav-link">Home</a>
-      <a href="/api" class="nav-link">API</a>
-      <a href="/signup" class="nav-link">Sign up</a>
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="logo">crypto<span>vol</span></a>
+      <a href="/" class="nav-aux">← Home</a>
     </div>
-  </div>
+  </nav>
 
   <main>
     <h1>Welcome <em>back</em></h1>
-    <p class="tagline">Log in to view your API key<br/>and manage your subscription.</p>
+    <p class="tagline">Log in to view your API key and manage your subscription.</p>
 
     <div class="card-wrap">
       <div id="clerk-root"></div>
@@ -81,15 +109,15 @@
     const CLERK_APPEARANCE = {
       variables: {
         colorPrimary: '#1F6FBF',
-        colorText: '#111827',
-        colorTextSecondary: '#6b7280',
+        colorText: '#0f172a',
+        colorTextSecondary: '#475569',
         colorBackground: '#ffffff',
         colorInputBackground: '#ffffff',
-        colorInputText: '#111827',
-        fontFamily: '"IBM Plex Mono", monospace',
-        fontSize: '13px',
-        borderRadius: '4px',
-        spacingUnit: '0.9rem',
+        colorInputText: '#0f172a',
+        fontFamily: '"Inter", sans-serif',
+        fontSize: '14px',
+        borderRadius: '8px',
+        spacingUnit: '1rem',
       },
       elements: {
         rootBox: { width: '100%' },
@@ -98,53 +126,50 @@
         header: { display: 'none' },
         footer: { display: 'none' },
         socialButtonsBlockButton: {
-          border: '1px solid #e3e7ed',
+          border: '1px solid rgba(15, 23, 42, 0.14)',
           background: '#ffffff',
-          fontFamily: '"IBM Plex Mono", monospace',
-          fontSize: '13px',
-          fontWeight: 400,
-          letterSpacing: '0.02em',
-          padding: '9px 14px',
-          '&:hover': { background: '#f8fafc' },
+          fontFamily: '"Inter", sans-serif',
+          fontSize: '14px',
+          fontWeight: 500,
+          padding: '10px 14px',
+          '&:hover': { background: '#f5f4ef' },
         },
-        socialButtonsBlockButtonText: { fontWeight: 400 },
+        socialButtonsBlockButtonText: { fontWeight: 500 },
         formFieldLabel: {
-          fontFamily: '"IBM Plex Mono", monospace',
-          fontSize: '11px',
-          color: '#6b7280',
-          fontWeight: 400,
-          letterSpacing: '0.04em',
-          textTransform: 'uppercase',
+          fontFamily: '"Inter", sans-serif',
+          fontSize: '12px',
+          color: '#475569',
+          fontWeight: 500,
+          letterSpacing: '0.02em',
         },
         formFieldInput: {
-          fontFamily: '"IBM Plex Mono", monospace',
-          fontSize: '13px',
-          border: '1px solid #e3e7ed',
+          fontFamily: '"Inter", sans-serif',
+          fontSize: '14px',
+          border: '1px solid rgba(15, 23, 42, 0.14)',
           background: '#ffffff',
-          padding: '9px 12px',
-          color: '#111827',
+          padding: '10px 12px',
+          color: '#0f172a',
         },
         formButtonPrimary: {
-          background: '#1F6FBF',
-          fontFamily: '"IBM Plex Mono", monospace',
-          fontSize: '12px',
-          fontWeight: 400,
-          letterSpacing: '0.04em',
+          background: '#0f172a',
+          fontFamily: '"Inter", sans-serif',
+          fontSize: '14px',
+          fontWeight: 500,
           textTransform: 'none',
-          padding: '10px 16px',
-          '&:hover': { background: '#1a5fa3' },
+          padding: '11px 16px',
+          '&:hover': { background: '#1e293b' },
         },
-        dividerRow: { margin: '14px 0' },
-        dividerLine: { background: '#e3e7ed' },
+        dividerRow: { margin: '16px 0' },
+        dividerLine: { background: 'rgba(15, 23, 42, 0.08)' },
         dividerText: {
-          fontFamily: '"IBM Plex Mono", monospace',
-          fontSize: '10px',
-          color: '#b0b8c4',
+          fontFamily: '"Inter", sans-serif',
+          fontSize: '11px',
+          color: '#94a3b8',
           textTransform: 'uppercase',
-          letterSpacing: '0.1em',
+          letterSpacing: '0.08em',
         },
-        identityPreview: { fontFamily: '"IBM Plex Mono", monospace', fontSize: '12px' },
-        formResendCodeLink: { color: '#1F6FBF', fontFamily: '"IBM Plex Mono", monospace' },
+        identityPreview: { fontFamily: '"Inter", sans-serif', fontSize: '13px' },
+        formResendCodeLink: { color: '#1F6FBF', fontFamily: '"Inter", sans-serif' },
       },
     };
 
