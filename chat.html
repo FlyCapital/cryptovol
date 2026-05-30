@@ -71,7 +71,7 @@
                           background: #f5f5f5; padding: 10px; border-radius: 6px;
                           margin-top: 6px; max-height: 360px; overflow: auto;
                           color: #333; line-height: 1.45; }
-  .feedback { display:flex; gap:6px; margin-top:8px; font-size:11px; color:#888; }
+  .feedback { display:flex; gap:6px; font-size:11px; color:#888; }
   .feedback button {
     background:transparent; border:1px solid #d0d0d0; color:#888;
     padding:2px 8px; font-size:12px; border-radius:4px; cursor:pointer;
@@ -80,6 +80,16 @@
   .feedback button:hover { background:#f5f5f5; color:#1a1a1a; }
   .feedback button.selected.up   { background:#dcfce7; border-color:#86efac; color:#15803d; }
   .feedback button.selected.down { background:#fee2e2; border-color:#fca5a5; color:#b91c1c; }
+  /* When feedback is folded into the same row as the API requests collapser */
+  .msg.bot.with-feedback {
+    display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
+  }
+  .msg.bot.with-feedback > details.api-calls { flex:1; min-width:0; }
+  /* Standalone feedback row (when the assistant message had no API calls) */
+  .msg.bot.feedback-row {
+    background:transparent; border:none; padding:4px 0;
+    display:flex; justify-content:flex-end;
+  }
 </style>
 </head>
 <body>
@@ -227,19 +237,21 @@ function replayMessages() {
   }
 }
 
-// Append 👍 / 👎 buttons under the most recent bot message. Clicking sends the
-// vote to the server (POST /v1/chat/messages/{id}/feedback); clicking the
-// already-selected button clears it.
+// Append 👍 / 👎 buttons for an assistant message. If the most recent block
+// in the chat is the API-requests collapser for the same message, fold the
+// buttons into that block (right-aligned) so we don't add a separate row.
+// Otherwise (no API calls were made), put the buttons in their own subtle row.
 function addFeedback(messageId, current) {
   const chat = document.getElementById("chat");
-  const wrap = document.createElement("div");
-  wrap.className = "feedback";
-  wrap.dataset.messageId = String(messageId);
-  wrap.innerHTML = `
+
+  const fb = document.createElement("div");
+  fb.className = "feedback";
+  fb.dataset.messageId = String(messageId);
+  fb.innerHTML = `
     <button data-value="up"   class="up${current === "up"   ? " selected" : ""}">👍</button>
     <button data-value="down" class="down${current === "down" ? " selected" : ""}">👎</button>
   `;
-  wrap.querySelectorAll("button").forEach(b => {
+  fb.querySelectorAll("button").forEach(b => {
     b.addEventListener("click", async () => {
       const wasSelected = b.classList.contains("selected");
       const newValue = wasSelected ? "clear" : b.dataset.value;
@@ -251,15 +263,27 @@ function addFeedback(messageId, current) {
           body: JSON.stringify({ value: newValue }),
         });
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        // Update visual state: clear both, then set the active one (if any).
-        wrap.querySelectorAll("button").forEach(x => x.classList.remove("selected"));
+        fb.querySelectorAll("button").forEach(x => x.classList.remove("selected"));
         if (newValue !== "clear") b.classList.add("selected");
       } catch (e) {
         console.warn("feedback failed:", e);
       }
     });
   });
-  chat.appendChild(wrap);
+
+  // Fold into the trailing API-requests block when present.
+  const last = chat.lastElementChild;
+  if (last && last.classList.contains("msg") && last.classList.contains("bot")
+      && last.querySelector("details.api-calls")) {
+    last.classList.add("with-feedback");
+    last.appendChild(fb);
+  } else {
+    const row = document.createElement("div");
+    row.className = "msg bot feedback-row";
+    row.appendChild(fb);
+    chat.appendChild(row);
+  }
+  window.scrollTo(0, document.body.scrollHeight);
 }
 
 // ── Boot: wait for Clerk, gate on signed-in, then render UI ───────────────
