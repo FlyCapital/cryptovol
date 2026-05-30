@@ -71,6 +71,11 @@
     .ok-flash.show { opacity:1; }
     .upgrade-cta { color:var(--text2); font-size:11px; margin-top:8px; }
     .upgrade-cta code { background:#f8fafc; border:1px solid var(--border); padding:1px 6px; border-radius:3px; }
+    .usage-bar { height:6px; background:#f1f5f9; border-radius:3px; overflow:hidden; margin-top:10px; }
+    .usage-bar > div { height:100%; background:var(--blue); transition:width 0.3s; }
+    .usage-bar.warn  > div { background:#d97706; }
+    .usage-bar.crit  > div { background:#b91c1c; }
+    .usage-meta { display:flex; justify-content:space-between; font-size:11px; color:var(--text2); margin-top:6px; }
   </style>
 
   <script defer crossorigin="anonymous"
@@ -178,6 +183,24 @@
             <span class="row-val">${user.created_at ? user.created_at.slice(0,10) : '—'}</span>
           </div>
         </div>
+
+        ${user.usage ? `
+        <div class="card">
+          <p class="card-title">Usage &mdash; this ${user.usage.period}</p>
+          <div class="row">
+            <span class="row-label">Requests</span>
+            <span class="row-val">${user.usage.used.toLocaleString()} / ${user.usage.limit.toLocaleString()}</span>
+          </div>
+          ${(() => {
+            const pct = Math.min(100, (user.usage.used / user.usage.limit) * 100);
+            const cls = pct >= 90 ? 'crit' : pct >= 75 ? 'warn' : '';
+            return `<div class="usage-bar ${cls}"><div style="width:${pct}%"></div></div>
+                    <div class="usage-meta">
+                      <span>${pct.toFixed(1)}% used</span>
+                      <span>Resets at start of next ${user.usage.period}</span>
+                    </div>`;
+          })()}
+        </div>` : ''}
 
         <div class="card">
           <p class="card-title">API key</p>
