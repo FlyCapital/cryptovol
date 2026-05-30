@@ -334,16 +334,12 @@ function setQ(el) {
   document.getElementById("input").focus();
 }
 
-function addMsg(role, html, meta) {
+function addMsg(role, html, _meta) {
+  // _meta (tool/token/cost diagnostic) is intentionally not rendered to users.
   const chat = document.getElementById("chat");
   const div = document.createElement("div");
   div.className = "msg " + role;
   div.innerHTML = "<pre>" + html + "</pre>";
-  if (meta) {
-    const m = document.createElement("div");
-    m.className = "meta"; m.textContent = meta;
-    div.appendChild(m);
-  }
   chat.appendChild(div);
   window.scrollTo(0, document.body.scrollHeight);
   return div;
