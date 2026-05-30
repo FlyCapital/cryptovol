@@ -64,7 +64,7 @@
       font-weight: 500; letter-spacing: -1px; line-height: 1.08;
       margin: 0 0 10px; color: var(--text);
     }
-    h1 em { font-style: normal; color: var(--blue); }
+    h1 em { font-style: normal; color: var(--blue); font-family: inherit; font-weight: inherit; }
     .tagline {
       color: var(--text2); font-size: 14px; line-height: 1.55; margin: 0 0 22px;
     }
@@ -80,10 +80,16 @@
     .below-card a { color: var(--blue); text-decoration: none; font-weight: 500; }
     .below-card a:hover { text-decoration: underline; }
 
-    /* Hide Clerk "Last used" indicator that overflows the social button */
+    /* Hide every Clerk variant of the "Last used" indicator */
     .cl-socialButtonsBlockButton__lastUsed,
+    .cl-socialButtonsBlockButtonText__lastUsed,
+    .cl-internal-lastUsed,
+    .cl-socialButtonsBlockButton [class*="lastUsed" i],
+    .cl-providerInfo,
     [class*="lastUsed" i],
     [data-localization-key$="lastUsed"] { display: none !important; }
+    /* Give the social button a clean container so nothing leaks above */
+    .cl-socialButtonsBlockButton { overflow: hidden; }
   </style>
 
   <script defer crossorigin="anonymous"
@@ -165,7 +171,7 @@
           padding: '10px 16px',
           '&:hover': { background: '#1e293b' },
         },
-        dividerRow: { margin: '10px 0' },
+        dividerRow: { margin: '14px 0 20px' },
         dividerLine: { background: 'rgba(15, 23, 42, 0.08)' },
         dividerText: {
           fontFamily: '"Inter", sans-serif',
