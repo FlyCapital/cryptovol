@@ -99,6 +99,15 @@ nav {
 }
 .nav-cta:hover  { background: #1e293b; }
 .nav-cta:active { transform: translateY(1px); }
+.nav-login {
+  display: inline-flex; align-items: center;
+  color: var(--text); text-decoration: none;
+  font-family: var(--sans); font-size: 14px; font-weight: 500;
+  padding: 7px 16px; border-radius: 8px;
+  border: 1px solid var(--text);
+  transition: background 0.15s, color 0.15s;
+}
+.nav-login:hover { background: var(--text); color: var(--surface); }
 
 /* Nav dropdowns */
 .nav-dropdown { position: relative; }
@@ -487,8 +496,7 @@ footer {
         </div>
       </div>
       <a href="#pricing" class="nav-link">Pricing</a>
-      <a href="/login" class="nav-link">Sign in</a>
-      <a href="/signup" class="nav-cta">Try free →</a>
+      <a href="/login" class="nav-login">Log in</a>
     </div>
   </div>
 </nav>
