@@ -134,9 +134,22 @@
         return;
       }
 
+      // Show success banner if user just returned from Stripe Checkout.
+      const params = new URLSearchParams(window.location.search);
+      const upgradedBanner = params.get('upgraded') === 'true' ? `
+        <div style="background:rgba(31,111,191,0.08); border:1px solid rgba(31,111,191,0.2); color:var(--blue); padding:10px 14px; border-radius:4px; margin-bottom:18px; font-size:12px;">
+          &check; Subscription confirmed. Tier updates within a few seconds — refresh if you don't see it yet.
+        </div>` : '';
+
+      const showManageBilling = user.tier !== 'BASIC';
+      const showUpgradePro    = user.tier === 'BASIC';
+      const showUpgradeUltra  = user.tier !== 'ULTRA';
+
       content.innerHTML = `
         <h1>Your <em>account</em></h1>
         <p class="tagline">Manage your API key and subscription.</p>
+
+        ${upgradedBanner}
 
         <div class="card">
           <p class="card-title">Profile</p>
@@ -175,9 +188,10 @@
             <span class="row-label">Tier</span>
             <span class="row-val">${user.tier}</span>
           </div>
-          <p class="upgrade-cta">Upgrade flow (Stripe Checkout) ships in Phase 3.</p>
           <div class="actions">
-            <button disabled>Upgrade plan (coming soon)</button>
+            ${showUpgradePro   ? `<button data-tier="PRO"   class="upgrade-btn">Upgrade to PRO &mdash; $49/mo</button>`   : ''}
+            ${showUpgradeUltra ? `<button data-tier="ULTRA" class="upgrade-btn ${showUpgradePro ? 'secondary' : ''}">Upgrade to ULTRA &mdash; $99/mo</button>` : ''}
+            ${showManageBilling ? `<button id="portal-btn" class="secondary">Manage billing</button>` : ''}
           </div>
         </div>
       `;
@@ -203,6 +217,61 @@
         document.getElementById('api-key').textContent = j.api_key;
         user.api_key = j.api_key;
       });
+
+      // Upgrade buttons → Stripe Checkout
+      document.querySelectorAll('.upgrade-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          btn.textContent = 'Redirecting...';
+          try {
+            const t = await window.Clerk.session.getToken();
+            const resp = await fetch(`${API_BASE}/v1/account/checkout`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${t}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ tier: btn.dataset.tier }),
+            });
+            if (!resp.ok) {
+              const err = await resp.text();
+              throw new Error(`Server returned ${resp.status}: ${err.slice(0, 200)}`);
+            }
+            const { url } = await resp.json();
+            window.location.href = url;
+          } catch (e) {
+            alert('Could not start checkout: ' + e.message);
+            btn.disabled = false;
+            btn.textContent = `Upgrade to ${btn.dataset.tier}`;
+          }
+        });
+      });
+
+      // Manage billing → Stripe Customer Portal
+      const portalBtn = document.getElementById('portal-btn');
+      if (portalBtn) {
+        portalBtn.addEventListener('click', async () => {
+          portalBtn.disabled = true;
+          portalBtn.textContent = 'Loading...';
+          try {
+            const t = await window.Clerk.session.getToken();
+            const resp = await fetch(`${API_BASE}/v1/account/portal`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${t}` },
+            });
+            if (!resp.ok) {
+              const err = await resp.text();
+              throw new Error(`Server returned ${resp.status}: ${err.slice(0, 200)}`);
+            }
+            const { url } = await resp.json();
+            window.location.href = url;
+          } catch (e) {
+            alert('Could not open billing portal: ' + e.message);
+            portalBtn.disabled = false;
+            portalBtn.textContent = 'Manage billing';
+          }
+        });
+      }
     });
   </script>
 </body>
