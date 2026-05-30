@@ -36,6 +36,10 @@
       "destination": "/chat.html"
     },
     {
+      "source": "/dashboard",
+      "destination": "/dashboard.html"
+    },
+    {
       "source": "/signup",
       "destination": "/signup.html"
     },

@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — CryptoVol</title>
+<meta name="description" content="Live implied volatility surfaces, CryptoVIX-style index, term structure, and session smile comparison for BTC, ETH, SOL, XRP, AVAX, TRX — free public dashboard.">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph -->
+<meta property="og:title" content="CryptoVol Dashboard — Live IV Surfaces">
+<meta property="og:description" content="Live crypto volatility surfaces and CryptoVIX-style index across Asia, London and US sessions. Free to view.">
+<meta property="og:url" content="https://www.cryptovol.io/dashboard">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CryptoVol">
+
+<meta name="google-site-verification" content="wq5s-jCg0_bbxgMyhjLo8dQ6vHpp6mk5XKILXkSW2mg" />
+<link rel="canonical" href="https://www.cryptovol.io/dashboard">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg:      #f5f6f8;
+  --surface: #ffffff;
+  --surface2:#f0f2f5;
+  --border:  rgba(0,0,0,0.07);
+  --border2: rgba(0,0,0,0.12);
+  --text:    #111827;
+  --text2:   #6b7280;
+  --text3:   #b0b8c4;
+  --blue:    #1F6FBF;
+  --red:     #E8845A;
+  --green:   #1D9E75;
+  --purple:  #7F77DD;
+  --amber:   #888780;
+  --sans:    'Inter', sans-serif;
+  --mono:    'IBM Plex Mono', monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+nav {
+  background: rgba(255,255,255,0.9);
+  backdrop-filter: blur(10px);
+  border-bottom: 0.5px solid var(--border2);
+  position: sticky; top:0; z-index:100;
+}
+.nav-inner {
+  max-width: 1100px; margin:0 auto; padding:0 24px;
+  display:flex; align-items:center; justify-content:space-between; height:52px;
+}
+.logo { font-family:var(--sans); font-size:17px; font-weight:800; letter-spacing:-0.3px; color:var(--text); }
+.logo span { color:var(--blue); }
+.nav-links { display:flex; align-items:center; gap:20px; }
+.nav-link { color:var(--text2); text-decoration:none; font-size:12px; letter-spacing:0.04em; transition:color 0.15s; }
+.nav-link:hover { color:var(--text); }
+.nav-cta { background:var(--blue); color:#fff; border:none; padding:6px 16px; border-radius:4px; font-family:var(--mono); font-size:12px; cursor:pointer; text-decoration:none; letter-spacing:0.03em; transition:opacity 0.15s; }
+.nav-cta:hover { opacity:0.85; }
+
+.wrap { max-width:1100px; margin:0 auto; padding:0 24px; }
+
+.hero { padding:48px 0 32px; border-bottom:0.5px solid var(--border2); }
+.hero-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:40px; align-items:start; }
+.hero-left { min-width:0; }
+.hero-right { min-width:0; }
+@media (max-width:900px) { .hero-grid { grid-template-columns:1fr; gap:24px; } }
+.live-tag { display:inline-flex; align-items:center; gap:6px; background:rgba(55,138,221,0.08); border:1px solid rgba(55,138,221,0.2); color:var(--blue); font-size:11px; letter-spacing:0.08em; padding:3px 10px; border-radius:2px; margin-bottom:16px; }
+.live-dot { width:6px;height:6px;background:var(--blue);border-radius:50%;animation:blink 2s infinite; }
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.25}}
+.hero h1 { font-family:var(--sans); font-size:clamp(28px,4vw,44px); font-weight:800; letter-spacing:-1px; line-height:1.1; color:var(--text); margin-bottom:12px; }
+.hero h1 em { font-style:normal; color:var(--blue); }
+.hero-sub { color:var(--text2); font-size:13px; line-height:1.7; margin-bottom:18px; }
+.hero-bullets { list-style:none; padding:0; margin:0 0 24px; }
+.hero-bullets li { color:#374151; font-size:14px; line-height:1.7; padding:4px 0 4px 22px; position:relative; }
+.hero-bullets li::before { content:'✓'; position:absolute; left:0; top:4px; color:var(--blue); font-weight:600; font-size:13px; }
+.hero-actions { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:22px; }
+.hero-code { border:0.5px solid var(--border2); border-radius:8px; overflow:hidden; background:#0f1419; }
+.hero-code-hd { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; background:#1a1f2e; border-bottom:0.5px solid rgba(255,255,255,0.06); }
+.hero-code-tab { font-family:var(--mono); font-size:11px; color:#9ca3af; letter-spacing:0.04em; padding:3px 8px; border-radius:3px; }
+.hero-code-tab.active { background:rgba(55,138,221,0.12); color:#7ec3ff; }
+.hero-code-hint { font-family:var(--mono); font-size:10.5px; color:#6b7280; letter-spacing:0.02em; }
+.hero-code-body { margin:0; padding:14px 16px; font-family:var(--mono); font-size:11.5px; line-height:1.6; color:#e5e7eb; overflow-x:auto; }
+.hero-code-body code { font-family:inherit; color:inherit; }
+.hero-code-body .c-kw  { color:#c084fc; }
+.hero-code-body .c-str { color:#7ec3ff; }
+.hero-code-body .c-bi  { color:#fbbf24; }
+.hero-code-body .c-cm  { color:#6b7280; font-style:italic; }
+.hero-methlink { font-family:var(--mono); font-size:13px; color:var(--text3); }
+.hero-methlink a { color:var(--blue); text-decoration:none; border-bottom:1px solid rgba(55,138,221,0.3); }
+.hero-methlink a:hover { border-bottom-color:var(--blue); }
+.hero-sdk { font-family:var(--mono); font-size:13px; color:var(--text3); margin-top:14px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.hero-sdk .pip { font-family:var(--mono); font-size:13px; color:#374151; }
+.hero-sdk .pip .prompt { color:var(--blue); user-select:none; margin-right:4px; }
+.hero-sdk a { color:var(--blue); text-decoration:none; border-bottom:1px solid rgba(55,138,221,0.3); }
+.hero-sdk a:hover { border-bottom-color:var(--blue); }
+.hero-support { font-family:var(--mono); font-size:12px; color:var(--text3); margin-top:16px; }
+.hero-support a { color:var(--blue); text-decoration:none; border-bottom:1px solid rgba(55,138,221,0.3); }
+.hero-support a:hover { border-bottom-color:var(--blue); }
+
+.controls-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:14px 0; border-bottom:0.5px solid var(--border); }
+.ctrl-label { font-size:10px; letter-spacing:0.1em; color:var(--text3); }
+.btn-group { display:flex; }
+.ctrl-btn { background:transparent; border:0.5px solid var(--border2); color:var(--text2); font-family:var(--mono); font-size:12px; padding:4px 12px; cursor:pointer; transition:all 0.12s; border-right:none; }
+.btn-group .ctrl-btn:first-child { border-radius:3px 0 0 3px; }
+.btn-group .ctrl-btn:last-child  { border-radius:0 3px 3px 0; border-right:0.5px solid var(--border2); }
+.ctrl-btn:hover { background:var(--surface2); color:var(--text); }
+.ctrl-btn.active { background:rgba(55,138,221,0.1); border-color:rgba(55,138,221,0.3); color:var(--blue); }
+.ctrl-sep { width:1px; height:18px; background:var(--border2); }
+.ctrl-hint { font-family:var(--mono); font-size:10px; color:var(--text3); letter-spacing:0.02em; margin-left:8px; }
+.ts { font-size:11px; color:var(--text3); margin-left:auto; }
+
+
+.panel { background:var(--surface); border:0.5px solid var(--border2); border-radius:8px; overflow:hidden; margin-bottom:14px; }
+.panel-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.panel-row .panel { margin-bottom:14px; }
+@media (max-width:860px) { .panel-row { grid-template-columns:1fr; gap:0; } }
+.panel-hd { display:flex; align-items:center; justify-content:space-between; padding:12px 18px; border-bottom:0.5px solid var(--border); flex-wrap:wrap; gap:8px; }
+.panel-title { font-family:var(--sans); font-size:13px; font-weight:700; color:var(--text); }
+.panel-sub   { font-size:11px; color:var(--text3); margin-top:1px; }
+.legend { display:flex; gap:14px; flex-wrap:wrap; }
+.leg { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text2); }
+.leg-bar  { width:18px; height:2px; border-radius:1px; }
+.leg-dash { width:18px; height:0; border-top:2px dashed; }
+.panel-body { padding:14px 18px 18px; }
+.tenor-toggle { display:inline-flex; gap:2px; padding:2px; background:var(--surface2); border-radius:5px; }
+.tenor-btn { font-family:var(--mono); font-size:11px; padding:4px 10px; border:none; background:transparent; color:var(--text2); cursor:pointer; border-radius:3px; letter-spacing:0.04em; transition:background 0.15s, color 0.15s; }
+.tenor-btn:hover { color:var(--text); }
+.tenor-btn.active { background:var(--surface); color:var(--text); box-shadow:0 1px 2px rgba(0,0,0,0.06); }
+
+.exp-row { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:12px; }
+.exp-btn { background:transparent; border:0.5px solid var(--border2); color:var(--text2); font-family:var(--mono); font-size:11px; padding:3px 10px; border-radius:3px; cursor:pointer; transition:all 0.12s; }
+.exp-btn:hover { background:var(--surface2); color:var(--text); }
+.exp-btn.active { background:rgba(55,138,221,0.08); border-color:rgba(55,138,221,0.25); color:var(--blue); }
+.smile-note { font-size:11px; color:var(--text3); margin-top:10px; padding-top:10px; border-top:0.5px solid var(--border); }
+
+.pricing-wrap { margin:20px 0 48px; }
+.pricing-header { margin-bottom:24px; }
+.pricing-title { font-family:var(--sans); font-size:24px; font-weight:700; color:var(--text); letter-spacing:-0.3px; margin:0; }
+.cta-tag { font-size:10px; letter-spacing:0.1em; color:var(--blue); text-transform:uppercase; margin-bottom:6px; }
+.btn-pri { background:var(--blue); color:#fff; border:none; padding:10px 24px; border-radius:4px; font-family:var(--mono); font-size:13px; cursor:pointer; text-decoration:none; white-space:nowrap; transition:opacity 0.15s; display:inline-block; }
+.btn-pri:hover { opacity:0.85; }
+.btn-sec { background:transparent; color:var(--text2); border:0.5px solid var(--border2); padding:9px 24px; border-radius:4px; font-family:var(--mono); font-size:13px; cursor:pointer; text-decoration:none; white-space:nowrap; display:inline-block; text-align:center; transition:all 0.15s; }
+.btn-sec:hover { color:var(--text); background:var(--surface2); }
+
+.tiers { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.tier  { background:var(--surface); border:0.5px solid var(--border2); border-radius:8px; padding:20px; position:relative; }
+.tier.hot { border-color:rgba(55,138,221,0.3); background:rgba(55,138,221,0.03); }
+.tier-badge { position:absolute; top:14px; right:14px; background:rgba(55,138,221,0.1); color:var(--blue); font-size:10px; letter-spacing:0.07em; padding:2px 8px; border-radius:2px; }
+.tier-name  { font-family:var(--sans); font-size:14px; font-weight:700; color:var(--text); margin-bottom:4px; }
+.tier-price { font-family:var(--sans); font-size:22px; font-weight:700; color:var(--blue); margin:6px 0; }
+.tier-price span { font-size:12px; color:var(--text3); font-family:var(--mono); font-weight:400; }
+.tier-feats { list-style:none; margin-top:10px; display:flex; flex-direction:column; gap:5px; }
+.tier-feats li { font-size:12px; color:var(--text2); display:flex; gap:7px; }
+.tier-feats li::before { content:'—'; color:var(--blue); flex-shrink:0; }
+
+footer { border-top:0.5px solid var(--border2); padding:22px 0; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+.ft-logo { font-family:var(--sans); font-size:14px; font-weight:700; color:var(--text2); }
+.ft-logo span { color:var(--blue); }
+.ft-note { font-size:11px; color:var(--text3); }
+.ft-note a { color:var(--blue); text-decoration:none; }
+.ft-note a:hover { text-decoration:underline; }
+
+@media(max-width:680px){
+  .tiers{grid-template-columns:1fr;}
+}
+
+.chart-loading {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:12px; color:var(--text3); letter-spacing:0.05em;
+  background:var(--surface); z-index:10;
+}
+</style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-3W1WWECEBL"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-3W1WWECEBL');
+</script>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">crypto<span>vol</span></a>
+    <div class="nav-links">
+      <a href="/dashboard" class="nav-link" style="color:var(--text);">DASHBOARD</a>
+      <a href="/methodology" class="nav-link">METHODOLOGY</a>
+      <a href="/blog" class="nav-link">RESEARCH</a>
+      <a href="/docs" class="nav-link">API DOCS</a>
+      <a href="/login" class="nav-link">SIGN IN</a>
+      <a href="/signup" class="nav-cta">TRY FREE →</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <section style="padding:40px 0 24px; border-bottom:0.5px solid var(--border2);">
+    <h1 style="font-family:var(--sans); font-size:clamp(26px,3.5vw,36px); font-weight:800; letter-spacing:-0.8px; line-height:1.1; margin-bottom:8px;">
+      Live <em style="font-style:normal; color:var(--blue);">vol dashboard</em>
+    </h1>
+    <p style="color:var(--text2); font-size:13px; line-height:1.7; max-width:680px;">
+      Live snapshots of every surface CryptoVol publishes — CryptoVIX-style IV index,
+      SABR-fitted 3D surfaces, term structure, and session-by-session smile comparison.
+      Free to view, no signup required. Data updates daily at Asia, London, and US closes.
+      <a href="/signup" style="color:var(--blue);">Sign up free</a> to query the underlying API.
+    </p>
+  </section>
+
+  <div class="controls-bar">
+    <span class="ts" id="ts"></span>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hd">
+      <div><div class="panel-title">Implied Volatility Index</div><div class="panel-sub">Click legend to isolate · last 6 months</div></div>
+      <div class="tenor-toggle" role="tablist" aria-label="Index tenor">
+        <button class="tenor-btn" data-tenor="7D" aria-selected="false">7D</button>
+        <button class="tenor-btn active" data-tenor="30D" aria-selected="true">30D</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div style="position:relative;width:100%;height:300px;"><div class="chart-loading" id="vixLoading">LOADING DATA...</div><canvas id="vixChart" role="img" aria-label="Implied volatility index time series for all assets"></canvas></div>
+    </div>
+  </div>
+
+  <div class="controls-bar">
+    <span class="ctrl-label">ASSET</span>
+    <div class="btn-group" id="ccy-grp">
+      <button class="ctrl-btn active" onclick="setCcy('BTC')">BTC</button>
+      <button class="ctrl-btn" onclick="setCcy('ETH')">ETH</button>
+      <button class="ctrl-btn" onclick="setCcy('SOL')">SOL</button>
+      <button class="ctrl-btn" onclick="setCcy('XRP')">XRP</button>
+      <button class="ctrl-btn" onclick="setCcy('AVAX')">AVAX</button>
+      <button class="ctrl-btn" onclick="setCcy('TRX')">TRX</button>
+    </div>
+    <span class="ctrl-hint">Controls the smile, term structure, and session charts below</span>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hd">
+      <div>
+        <div class="panel-title">Vol Surface (3D)</div>
+        <div class="panel-sub">SABR-fitted surface · drag to rotate · scroll to zoom · hover for details</div>
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);cursor:pointer;user-select:none;">
+        <input type="checkbox" id="smile-mkt-toggle" checked style="cursor:pointer;">
+        Show market quotes
+      </label>
+    </div>
+    <div class="panel-body">
+      <div style="position:relative;width:100%;height:760px;"><div class="chart-loading" id="smileLoading">LOADING DATA...</div><div id="smileChart" role="img" aria-label="3D implied volatility surface" style="width:100%;height:100%;"></div></div>
+    </div>
+  </div>
+
+  <div class="panel-row">
+    <div class="panel">
+      <div class="panel-hd">
+        <div><div class="panel-title">Vol Term Structure</div><div class="panel-sub">Latest ATM vol across tenors by session</div></div>
+      </div>
+      <div class="panel-body">
+        <div class="exp-row" id="exp-row" style="display:none"></div>
+        <div style="position:relative;width:100%;height:320px;"><div class="chart-loading" id="termLoading">LOADING DATA...</div><canvas id="termChart" role="img" aria-label="Volatility term structure by session"></canvas></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-hd">
+        <div>
+          <div class="panel-title">Session Smile Comparison</div>
+          <div class="panel-sub">Across Asia, London and US sessions · lines = fitted · dots = market quotes</div>
+        </div>
+        <div>
+          <select id="expiry-select" style="font-family:var(--mono);font-size:12px;padding:4px 8px;border:0.5px solid var(--border2);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;">
+            <option value="">Loading expiries...</option>
+          </select>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div style="position:relative;width:100%;height:320px;"><div class="chart-loading" id="sessionSmileLoading">LOADING DATA...</div><canvas id="sessionSmileChart" role="img" aria-label="Vol smile by session for selected expiry"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <section style="margin-top:24px; padding:32px; background:var(--surface); border:0.5px solid var(--border2); border-radius:8px;">
+    <h2 style="font-family:var(--sans); font-size:18px; font-weight:700; margin-bottom:8px;">Want to query this data from your code?</h2>
+    <p style="color:var(--text2); font-size:13px; line-height:1.7; margin-bottom:18px;">
+      Everything you see above is built on top of the public CryptoVol API. Sign up for a free
+      BASIC account (no card) and pull the same numbers into your backtester, dashboard, or trading bot.
+    </p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <a href="/signup" class="btn-pri">Try free →</a>
+      <a href="/docs" class="btn-sec">API docs</a>
+      <a href="https://github.com/FlyCapital/cryptovol-python" target="_blank" rel="noopener" class="btn-sec">Python SDK</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="ft-logo">crypto<span>vol</span></div>
+    <div class="ft-note">Support: <a href="mailto:support@cryptovol.io">support@cryptovol.io</a> · Data for informational purposes only. Not financial advice. © 2026 CryptoVol.</div>
+  </footer>
+
+</div>
+
+<script>
+const API = 'https://cryptovol-api-nbakzshi6q-uc.a.run.app';
+const SCOL  = {'7D':'#E8845A','14D':'#1F6FBF','30D':'#1D9E75','60D':'#7F77DD','90D':'#888780'};
+const DLBL  = ['10Δp','15Δp','25Δp','35Δp','ATM','35Δc','25Δc','15Δc','10Δc'];
+const TENORS= ['7D','14D','21D','30D','60D','90D'];
+const SCOL3 = {asia:'#1D9E75',london:'#1F6FBF',us:'#E8845A'};
+const BASE  = {BTC:65,ETH:72,SOL:88,XRP:58,AVAX:92,TRX:55};
+
+// Color palette for multi-asset vol index chart — prioritizes visual distinguishability
+const ASSET_COLORS = {
+  BTC:  '#F7931A',   // BTC orange
+  ETH:  '#627EEA',   // ETH purple
+  SOL:  '#14AB66',   // SOL green (darker than brand for readability)
+  XRP:  '#3a9bdc',   // light blue
+  AVAX: '#E84142',   // AVAX red
+  TRX:  '#9B59B6',   // purple (TRX brand red too close to AVAX)
+};
+const ALL_CCYS = ['BTC','ETH','SOL','XRP','AVAX','TRX'];
+
+let ccy='BTC', sess='all', smileMode='all';
+let vixTenor='30D';  // selected tenor for multi-asset vol index chart
+let vixI=null, termI=null;
+let realData = {}; // cache: realData[ccy][tenor] = [{time,vi}]
+
+// ── Dummy data helpers (used for term structure & smile, still no API for these) ──
+function rng(seed){
+  let h=0; for(let c of String(seed)){h=(Math.imul(31,h)+c.charCodeAt(0))|0;}
+  return()=>{h^=h<<13;h^=h>>17;h^=h<<5;return(h>>>0)/4294967296;};
+}
+function smile(atm,sk,cv,wg,key){
+  const r=rng(key+ccy+sess);
+  return DLBL.map((_,i)=>{
+    const x=(i-4)/4;
+    return +(atm+(x<0?-sk*x:sk*0.35*x)+cv*x*x+(i===0||i===8?wg:0)+(r()-0.5)*1.2).toFixed(1);
+  });
+}
+
+const GC='rgba(0,0,0,0.05)', TC='#b0b8c4';
+const BASE_OPTS={
+  responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false,
+    backgroundColor:'rgba(255,255,255,0.97)',borderColor:'rgba(0,0,0,0.1)',borderWidth:1,
+    titleColor:'#6b7280',bodyColor:'#111827',padding:10,
+  }},
+  scales:{
+    x:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxTicksLimit:8,autoSkip:true},grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'}},
+    y:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},callback:v=>v.toFixed(0)+'%'},grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'}},
+  }
+};
+
+// ── Fetch real VIX data from API ──
+async function fetchVix(c, tenor) {
+  const key = c+'_'+tenor;
+  if (realData[key]) return realData[key];
+  try {
+    const end   = new Date();
+    const start = new Date(); start.setMonth(start.getMonth() - 6);
+    const fmt   = d => d.toISOString().slice(0,10);
+    const res = await fetch(`${API}/v1/vol-index?ccy=${c}&tenor=${tenor}&start_date=${fmt(start)}&end_date=${fmt(end)}`);
+    const json = await res.json();
+    realData[key] = json.data || [];
+    return realData[key];
+  } catch(e) {
+    return [];
+  }
+}
+
+// ── Metrics ──
+// ── VIX chart with real data ──
+async function renderVix() {
+  // Fetch the selected tenor for all 6 assets in parallel
+  const tenor = vixTenor;
+  const seriesArr = await Promise.all(ALL_CCYS.map(c => fetchVix(c, tenor)));
+  const series = Object.fromEntries(ALL_CCYS.map((c, i) => [c, seriesArr[i]]));
+
+  // Construct one dataset per asset using {x: date, y: vol} points so the
+  // time axis places each observation at its actual calendar position,
+  // independent of whether other series have a point on the same date.
+  const DEFAULT_HIGHLIGHT = new Set(['BTC', 'ETH']);
+  const datasets = ALL_CCYS.map(c => {
+    const origColor = ASSET_COLORS[c];
+    const highlighted = DEFAULT_HIGHLIGHT.has(c);
+    return {
+      label:       c,
+      data:        (series[c] || []).map(d => ({ x: d.date, y: d.vol })),
+      borderColor: highlighted ? origColor : origColor + '33',
+      borderWidth: highlighted ? 1.6 : 0.8,
+      pointRadius: 0,
+      tension:     0.3,
+      fill:        false,
+      spanGaps:    true,
+      _origColor:  origColor,
+      _origWidth:  1.6,
+      _highlighted: highlighted,
+    };
+  });
+
+  if (vixI) vixI.destroy();
+  document.getElementById('vixLoading').style.display = 'none';
+  vixI = new Chart(document.getElementById('vixChart'), {
+    type: 'line',
+    data: { datasets },
+    options: {
+      ...BASE_OPTS,
+      scales: {
+        ...BASE_OPTS.scales,
+        x: {
+          type: 'time',
+          time: { unit: 'month', tooltipFormat: 'yyyy-MM-dd' },
+          ticks: { color: TC, font: { family: 'IBM Plex Mono', size: 10 }, maxTicksLimit: 8, autoSkip: true },
+          grid: { color: GC },
+          border: { color: 'rgba(0,0,0,0.08)' },
+        },
+      },
+      plugins: {
+        ...BASE_OPTS.plugins,
+        legend: {
+          display: true, position: 'top',
+          labels: { color: '#6b7280', font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 20, boxHeight: 2, padding: 14 },
+          onClick: vixMultiHighlightClick,
+        }
+      }
+    }
+  });
+}
+
+// Wire up tenor toggle buttons
+function initVixTenorToggle() {
+  document.querySelectorAll('.tenor-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const newTenor = btn.dataset.tenor;
+      if (newTenor === vixTenor) return;
+      vixTenor = newTenor;
+      // Update active class
+      document.querySelectorAll('.tenor-btn').forEach(b => {
+        const isActive = b.dataset.tenor === newTenor;
+        b.classList.toggle('active', isActive);
+        b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+      // Show loading state and re-render
+      const ld = document.getElementById('vixLoading');
+      if (ld) ld.style.display = 'flex';
+      renderVix();
+    });
+  });
+}
+
+// ── Fetch vol surface from API ──
+async function fetchSurface(c) {
+  try {
+    const sessionParam = sess === 'all' ? '' : `&session=${sess}`;
+    const res = await fetch(`${API}/v1/vol-surface/full?ccy=${c}${sessionParam}`);
+    const json = await res.json();
+    return json.expiries || [];
+  } catch(e) { return []; }
+}
+
+// ── Term structure — 3 sessions, click legend to toggle ──
+async function renderTerm(){
+  const sessions = [
+    { key: 'asia',   label: 'Asia',   color: '#1D9E75' },
+    { key: 'london', label: 'London', color: '#1F6FBF' },
+    { key: 'us',     label: 'US',     color: '#E8845A' },
+  ];
+
+  // Fetch all 3 sessions in parallel
+  const results = await Promise.all(
+    sessions.map(s =>
+      fetch(`${API}/v1/vol-surface/full?ccy=${ccy}&session=${s.key}`)
+        .then(r => r.json())
+        .then(j => ({ ...s, expiries: j.expiries || [], datetime: j.datetime }))
+        .catch(() => ({ ...s, expiries: [], datetime: null }))
+    )
+  );
+
+  // Build ATM vol per session
+  function getAtmPts(expiries) {
+    const pts = [];
+    for (const exp of expiries) {
+      if (!exp.strikes || !exp.mkt_vol || !exp.forward) continue;
+      const fwd = exp.forward;
+      let bestIdx = 0, bestDist = Infinity;
+      exp.strikes.forEach((s,i) => { const d=Math.abs(s-fwd); if(d<bestDist){bestDist=d;bestIdx=i;} });
+      const atmVol = exp.mkt_vol[bestIdx];
+      if (atmVol == null) continue;
+      pts.push({ expiry: exp.expiry, vol: +atmVol.toFixed(2) });
+    }
+    return pts;
+  }
+
+  // Union of all expiry dates
+  const allExpiries = [...new Set(results.flatMap(r => getAtmPts(r.expiries).map(p => p.expiry)))].sort();
+
+  const datasets = results.map(r => {
+    const pts = getAtmPts(r.expiries);
+    const volMap = Object.fromEntries(pts.map(p => [p.expiry, p.vol]));
+    const timeStr = r.datetime ? r.datetime.slice(0,16) : '';
+    return {
+      label: `${r.label} · ${timeStr || 'n/a'}`,
+      data: allExpiries.map(e => volMap[e] ?? null),
+      borderColor: r.color,
+      borderWidth: 1.5,
+      pointRadius: 0,
+      tension: 0,
+      fill: false,
+      spanGaps: false,
+    };
+  });
+
+  if(termI)termI.destroy();
+  document.getElementById('termLoading').style.display='none';
+  termI=new Chart(document.getElementById('termChart'),{type:'line',data:{
+    labels: allExpiries,
+    datasets,
+  },options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{
+        display:true, position:'top',
+        labels:{color:'#6b7280',font:{family:'IBM Plex Mono',size:11},boxWidth:20,boxHeight:2,padding:12},
+        onClick: legendHighlightClick
+      },
+      tooltip:{mode:'index',intersect:false,
+        backgroundColor:'rgba(255,255,255,0.97)',borderColor:'rgba(0,0,0,0.1)',borderWidth:1,
+        titleColor:'#6b7280',bodyColor:'#111827',padding:10,
+        callbacks:{label: ctx=> ctx.parsed.y != null ? `${ctx.dataset.label.split(' ·')[0]}: ${ctx.parsed.y.toFixed(1)}%` : null}
+      }
+    },
+    scales:{
+      x:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxRotation:30,autoSkip:true,maxTicksLimit:8},
+         grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'}},
+      y:{ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},callback:v=>v.toFixed(0)+'%'},
+         grid:{color:GC},border:{color:'rgba(0,0,0,0.08)'},
+         title:{display:true,text:'ATM vol (%)',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+    }
+  }});
+}
+
+// ── Build expiry buttons dynamically ──
+function buildExpiryButtons(expiries) {
+  const row = document.getElementById('exp-row');
+  while (row.children.length > 1) row.removeChild(row.lastChild);
+  expiries.forEach(exp => {
+    const btn = document.createElement('button');
+    btn.className = 'exp-btn';
+    btn.textContent = exp.expiry;
+    btn.onclick = () => setSmile(exp.expiry);
+    row.appendChild(btn);
+  });
+}
+
+// ── SABR vol — exact port of QLib m_sabr_sigma (lognormal) ──
+function sabrVol(F, K, T, alpha, beta, rho, nu) {
+  if (!alpha || alpha <= 0 || !F || !K || T <= 0) return null;
+  beta = (beta != null) ? beta : 1;
+
+  function z_over_chi(z, rho) {
+    // Return z/χ(z) directly; Taylor-expand near z=0 to avoid 0/0.
+    if (Math.abs(z) < 1e-6) {
+      return 1.0 - rho*z/2.0 + (1.0/3.0 + rho*rho/4.0) * z*z;
+    }
+    const num = Math.sqrt(1 - 2*rho*z + z*z) + z - rho;
+    const den = 1 - rho;
+    if (num/den <= 0) return null;
+    const chi = Math.log(num/den);
+    if (Math.abs(chi) < 1e-15) return null;
+    return z / chi;
+  }
+
+  let result;
+  if (Math.abs(F - K) < 1e-10) {
+    // ATM
+    const f_term = Math.pow(F, 1-beta);
+    const B = 1 + (((1-beta)**2/24)*alpha*alpha/Math.pow(F,2-2*beta)
+              + 0.25*alpha*beta*rho*nu/Math.pow(F,1-beta)
+              + (2-3*rho*rho)/24*nu*nu) * T;
+    result = alpha / f_term * B;
+  } else {
+    const log_fk = Math.log(F/K);
+    const fk_avg = Math.pow(F*K, (1-beta)/2);
+    const A = alpha / (fk_avg * (1 + Math.pow(1-beta,2)/24*log_fk*log_fk + Math.pow(1-beta,4)/1920*Math.pow(log_fk,4)));
+    const B = 1 + (Math.pow(1-beta,2)/24*alpha*alpha/(fk_avg*fk_avg)
+              + 0.25*alpha*beta*rho*nu/fk_avg
+              + (2-3*rho*rho)/24*nu*nu) * T;
+    const z = nu/alpha * fk_avg * log_fk;
+    const zoc = z_over_chi(z, rho);
+    if (zoc === null) return null;
+    result = A * zoc * B;
+  }
+  return (isFinite(result) && result > 0 && result < 50) ? result : null;
+}
+
+// Format a strike adaptively by magnitude so BTC (~78,000), SOL (~150),
+// and TRX (~0.36) all read cleanly in the same UI.
+function fmtStrike(K) {
+  if (!isFinite(K)) return String(K);
+  if (K >= 100)  return K.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  if (K >= 1)    return K.toFixed(2);
+  if (K >= 0.01) return K.toFixed(4);
+  return K.toFixed(6);
+}
+
+// ── 3D Vol Surface (Plotly) ──
+async function renderSmile(){
+  const allExpiries = await fetchSurface(ccy);
+  if (!allExpiries.length) return;
+
+  // Keep expiries with usable SABR; sort by tenor.
+  const valid = allExpiries
+    .filter(e => e.tenor_days >= 1 && e.sabr && e.sabr.alpha > 0 && e.sabr.nu > 0.01 && e.forward)
+    .sort((a, b) => a.tenor_days - b.tenor_days);
+  if (!valid.length) return;
+
+  // Log-moneyness grid: m = ln(K/F). Range covers ±40% strikes; 51 columns is plenty smooth.
+  const M_MIN = -0.4, M_MAX = 0.4, N_M = 51;
+  const moneyness = Array.from({length: N_M}, (_, i) => M_MIN + (M_MAX - M_MIN) * i / (N_M - 1));
+  const tenors    = valid.map(e => e.tenor_days);
+
+  // Per-expiry log-moneyness bounds from actual market strikes — used to clip
+  // extrapolation so the surface only spans where we have quotes.
+  const expBounds = valid.map(exp => {
+    const ms = exp.strikes.map(K => Math.log(K / exp.forward));
+    return { min: Math.min(...ms), max: Math.max(...ms) };
+  });
+
+  // z[i][j] = SABR vol(%) at expiry i, moneyness j (null outside quoted strike range).
+  // strikesGrid[i][j] = absolute strike at that point, used in hover.
+  const z = [];
+  const strikesGrid = [];
+  for (let i = 0; i < valid.length; i++) {
+    const exp = valid[i];
+    const {alpha, beta=1, rho, nu} = exp.sabr;
+    const F = exp.forward;
+    const T = exp.tenor_days / 365;
+    const {min: mMin, max: mMax} = expBounds[i];
+    const row = [];
+    const sRow = [];
+    for (const m of moneyness) {
+      const K = F * Math.exp(m);
+      let v = null;
+      if (m >= mMin && m <= mMax) {
+        v = sabrVol(F, K, T, alpha, beta, rho, nu);
+      }
+      // sabrVol returns decimal vol (e.g. 0.27); chart axis is percent
+      row.push(v !== null ? +(v * 100).toFixed(2) : null);
+      sRow.push(+K.toFixed(6));
+    }
+    z.push(row);
+    strikesGrid.push(sRow);
+  }
+
+  // Per-expiry highlight lines — the smile of each expiry traced on the surface.
+  // Skip moneyness points outside the quoted strike range (z is null there).
+  const SMILE_COLORS = ['#E8845A','#1F6FBF','#1D9E75','#7F77DD','#888780','#E8A838','#C84B8F','#4BA0C8','#9B59B6','#14AB66','#F7931A','#627EEA'];
+  const smileLines = valid.map((exp, i) => {
+    const xs = [], ys = [], zs = [];
+    for (let j = 0; j < N_M; j++) {
+      if (z[i][j] === null) continue;
+      xs.push(moneyness[j]);
+      ys.push(exp.tenor_days);
+      zs.push(z[i][j]);
+    }
+    return {
+      type: 'scatter3d',
+      mode: 'lines',
+      name: `${exp.expiry} (${exp.tenor_days}D)`,
+      x: xs, y: ys, z: zs,
+      line: { color: SMILE_COLORS[i % SMILE_COLORS.length], width: 4 },
+      opacity: 0.65, // translucent so opaque market dots punch through when they overlap
+      hoverinfo: 'skip', // hover handled by market-dot scatter only
+      showlegend: true,
+    };
+  });
+
+  // Market quote scatter (toggleable). Each dot colored to match its expiry's
+  // smile-line color so the visual pairing is obvious. Semi-transparent +
+  // white border so dots sit on the surface without blocking it.
+  const mktX = [], mktY = [], mktZ = [], mktCustom = [], mktColors = [];
+  valid.forEach((exp, expIdx) => {
+    if (!exp.strikes || !exp.mkt_vol) return;
+    const color = SMILE_COLORS[expIdx % SMILE_COLORS.length];
+    exp.strikes.forEach((K, i) => {
+      const v = exp.mkt_vol[i];
+      if (v == null || v <= 0 || !isFinite(v)) return;
+      const m = Math.log(K / exp.forward);
+      if (m < M_MIN || m > M_MAX) return;
+      mktX.push(+m.toFixed(4));
+      mktY.push(exp.tenor_days);
+      mktZ.push(+v.toFixed(2));
+      mktCustom.push([exp.expiry, fmtStrike(K)]);
+      mktColors.push(color);
+    });
+  });
+  const mktTrace = {
+    type: 'scatter3d',
+    mode: 'markers',
+    name: 'Market quotes',
+    x: mktX, y: mktY, z: mktZ,
+    customdata: mktCustom,
+    marker: {
+      size: 4,
+      color: mktColors,
+      opacity: 1.0,
+      line: { width: 0.6, color: 'rgba(255,255,255,0.85)' },
+    },
+    hovertemplate:
+      '<b>Market · %{customdata[0]}</b><br>' +
+      'Tenor: %{y}D<br>' +
+      'Strike: %{customdata[1]}<br>' +
+      'Vol: %{z:.2f}%<extra></extra>',
+    visible: document.getElementById('smile-mkt-toggle')?.checked !== false,
+    showlegend: false,
+  };
+
+  // SABR surface mesh.
+  // Matlab parula colorscale (approximated 11-stop) — Matlab's default since R2014b.
+  const PARULA = [
+    [0.0,  '#352a87'],
+    [0.1,  '#3a4baf'],
+    [0.2,  '#2c6bbf'],
+    [0.3,  '#1d8acd'],
+    [0.4,  '#1ba2c2'],
+    [0.5,  '#38b9a8'],
+    [0.6,  '#7ccd66'],
+    [0.7,  '#bdce30'],
+    [0.8,  '#f1ca35'],
+    [0.9,  '#fab625'],
+    [1.0,  '#f9fb15'],
+  ];
+  const surfaceTrace = {
+    type: 'surface',
+    x: moneyness,
+    y: tenors,
+    z: z,
+    colorscale: PARULA,
+    opacity: 0.85,
+    showscale: false,  // Z-axis already labels vol; colorbar would be redundant
+    hoverinfo: 'skip', // hover handled by smile lines + market dots; surface stays silent
+    contours: { z: { show: false } },
+    showlegend: false,
+  };
+
+  const data = [surfaceTrace, ...smileLines, mktTrace];
+
+  const layout = {
+    autosize: true,
+    margin: { l: 10, r: 10, t: 10, b: 20 },
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    font: { family: 'IBM Plex Mono', size: 10, color: '#6b7280' },
+    scene: {
+      domain: { x: [0, 1], y: [0.06, 1] },  // lift scene up so x/y axis labels aren't clipped
+      xaxis: { title: { text: 'log-moneyness ln(K/F)', font: { size: 11 } }, gridcolor: '#e5e7eb', zerolinecolor: '#9ca3af' },
+      yaxis: {
+        title: { text: 'Tenor (days)', font: { size: 11 } },
+        gridcolor: '#e5e7eb',
+        type: 'log',
+        tickvals: [1, 2, 7, 14, 30, 60, 90, 180, 365],
+        ticktext: ['1', '2', '7', '14', '30', '60', '90', '180', '365'],
+      },
+      zaxis: { title: { text: 'Implied vol (%)', font: { size: 11 } }, gridcolor: '#e5e7eb', ticksuffix: '%' },
+      camera: { eye: { x: 1.6, y: -1.6, z: 0.85 } },
+      aspectmode: 'auto',
+    },
+    legend: {
+      x: 0.02, y: 0.98, xanchor: 'left', yanchor: 'top',
+      bgcolor: 'rgba(255,255,255,0.85)',
+      bordercolor: 'rgba(0,0,0,0.07)', borderwidth: 1,
+      font: { family: 'IBM Plex Mono', size: 10 },
+    },
+  };
+
+  const config = {
+    displayModeBar: true,
+    responsive: true,
+    modeBarButtonsToRemove: ['toImage', 'tableRotation', 'resetCameraLastSave3d'],
+    displaylogo: false,
+  };
+
+  document.getElementById('smileLoading').style.display = 'none';
+  Plotly.react('smileChart', data, layout, config);
+
+  // Wire (or re-wire) the market-quote toggle.
+  const cb = document.getElementById('smile-mkt-toggle');
+  if (cb) {
+    cb.onchange = () => {
+      Plotly.restyle('smileChart', { visible: cb.checked }, [data.length - 1]);
+    };
+  }
+}
+
+
+function vixMultiHighlightClick(e, legendItem, legend) {
+  const chart = legend.chart;
+  const idx   = legendItem.datasetIndex;
+  const ds    = chart.data.datasets[idx];
+
+  // Toggle this dataset's highlight state
+  ds._highlighted = !ds._highlighted;
+
+  // Count how many are highlighted
+  const anyHighlighted = chart.data.datasets.some(d => d._highlighted);
+
+  // Re-style every dataset based on its highlight state.
+  // Special case: if nothing is highlighted, show all at full color (no fade).
+  chart.data.datasets.forEach(d => {
+    if (!d._origColor) d._origColor = d.borderColor;
+    if (!d._origWidth) d._origWidth = 1.6;
+    const showFull = !anyHighlighted || d._highlighted;
+    d.borderColor = showFull ? d._origColor : d._origColor + '33';
+    d.borderWidth = showFull ? d._origWidth : 0.8;
+    // never hide; keep all visible so legend toggle stays available
+    chart.getDatasetMeta(chart.data.datasets.indexOf(d)).hidden = false;
+  });
+
+  chart.update();
+}
+
+function legendHighlightClick(e, legendItem, legend) {
+  const chart = legend.chart;
+  const clickedIdx = legendItem.datasetIndex;
+
+  // Check if we're already in highlight mode (any dataset is faded)
+  const isFaded = chart.data.datasets.some((ds, i) =>
+    i !== clickedIdx && ds._origColor && ds.borderColor === ds._origColor + '33'
+  );
+
+  if (isFaded) {
+    // Restore all to original
+    chart.data.datasets.forEach((ds, i) => {
+      if (ds._origColor) ds.borderColor = ds._origColor;
+      if (ds._origWidth) ds.borderWidth = ds._origWidth;
+      chart.getDatasetMeta(i).hidden = false;
+    });
+  } else {
+    // Highlight clicked, fade others
+    chart.data.datasets.forEach((ds, i) => {
+      if (!ds._origColor) ds._origColor = ds.borderColor;
+      if (!ds._origWidth) ds._origWidth = ds.borderWidth;
+      if (i === clickedIdx) {
+        ds.borderColor = ds._origColor;
+        ds.borderWidth = ds._origWidth;
+        chart.getDatasetMeta(i).hidden = false;
+      } else {
+        ds.borderColor = ds._origColor + '33';
+        ds.borderWidth = 0.8;
+        chart.getDatasetMeta(i).hidden = false;
+      }
+    });
+  }
+  chart.update();
+}
+
+
+let sessionSmileI = null;
+let sessionSmileExpiry = null;
+
+// ── Session Smile Comparison ──
+async function renderSessionSmile() {
+  const sessions = [
+    { key: 'asia',   label: 'Asia',   color: '#1D9E75' },
+    { key: 'london', label: 'London', color: '#1F6FBF' },
+    { key: 'us',     label: 'US',     color: '#E8845A' },
+  ];
+
+  // Fetch all 3 sessions in parallel
+  const results = await Promise.all(
+    sessions.map(s =>
+      fetch(`${API}/v1/vol-surface/full?ccy=${ccy}&session=${s.key}`)
+        .then(r => r.json())
+        .then(j => ({ ...s, expiries: j.expiries || [], datetime: j.datetime }))
+        .catch(() => ({ ...s, expiries: [], datetime: null }))
+    )
+  );
+
+  // Populate expiry dropdown from US session (most complete)
+  const usExpiries = results.find(r => r.key === 'us')?.expiries || [];
+  const validExpiries = usExpiries.filter(e => e.tenor_days >= 1);
+
+  const select = document.getElementById('expiry-select');
+  if (select.options.length <= 1 || select.options[0].value === '') {
+    select.innerHTML = validExpiries.map(e =>
+      `<option value="${e.expiry}">${e.expiry} (${e.tenor_days}D)</option>`
+    ).join('');
+    select.onchange = () => { sessionSmileExpiry = select.value; renderSessionSmile(); };
+    if (!sessionSmileExpiry && validExpiries.length > 0) {
+      // Default selection logic:
+      //   1. Find the "month-end" expiry of the current month (last expiry within the current calendar month).
+      //   2. If it's at least 14 days away, use it.
+      //   3. Otherwise use the month-end expiry of the next month.
+      //   4. Fall back to the longest available if neither exists.
+      const today = new Date();
+      const monthEndExpiry = (year, monthIdx) => {  // monthIdx is 0-based
+        const inMonth = validExpiries.filter(e => {
+          const d = new Date(e.expiry);
+          return d.getFullYear() === year && d.getMonth() === monthIdx;
+        });
+        if (inMonth.length === 0) return null;
+        // Pick the latest expiry within that month
+        return inMonth.reduce((a, b) => new Date(a.expiry) > new Date(b.expiry) ? a : b);
+      };
+      const curEnd  = monthEndExpiry(today.getFullYear(), today.getMonth());
+      const nextDt  = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+      const nextEnd = monthEndExpiry(nextDt.getFullYear(), nextDt.getMonth());
+      let pick = null;
+      if (curEnd && curEnd.tenor_days >= 14) pick = curEnd;
+      else if (nextEnd)                       pick = nextEnd;
+      else                                    pick = validExpiries[validExpiries.length - 1];
+      sessionSmileExpiry = pick.expiry;
+      select.value = sessionSmileExpiry;
+    }
+  }
+
+  if (!sessionSmileExpiry) return;
+
+  const useSabr = true;
+
+  const chartDatasets = [];
+  results.forEach(r => {
+    const exp = r.expiries.find(e => e.expiry === sessionSmileExpiry);
+    if (!exp) return;
+
+    const timeStr = r.datetime ? r.datetime.slice(0,16) : '';
+    const label = `${r.label} · ${timeStr}`;
+    const mktPts = exp.strikes.map((s,i) => ({ x: s, y: +exp.mkt_vol[i].toFixed(2) }));
+
+    if (useSabr && exp.sabr && exp.sabr.alpha && exp.sabr.nu) {
+      const {alpha, beta=1, rho, nu} = exp.sabr;
+      const F = exp.forward;
+      const T = exp.tenor_days / 365;
+      const sMin = Math.min(...exp.strikes);
+      const sMax = Math.max(...exp.strikes);
+      const nPts = 200;
+      const sabrPts = [];
+      for (let i = 0; i < nPts; i++) {
+        const K = sMin + (sMax - sMin) * i / (nPts - 1);
+        const v = sabrVol(F, K, T, alpha, beta, rho, nu);
+        if (v !== null) sabrPts.push({ x: Math.round(K*10000)/10000, y: Math.round(v*1000000)/10000 });
+      }
+      // SABR line
+      chartDatasets.push({ label, data: sabrPts, borderColor: r.color, borderWidth: 1.5, pointRadius: 0, tension: 0, fill: false, _sessionKey: r.key });
+      // Market dots — no label (explained in subtitle)
+      chartDatasets.push({ label: '', data: mktPts, borderColor: r.color, backgroundColor: r.color, borderWidth: 0, pointRadius: 3, showLine: false, fill: false, _sessionKey: r.key });
+    } else {
+      chartDatasets.push({ label, data: mktPts, borderColor: r.color, borderWidth: 1.5, pointRadius: 2, tension: 0, fill: false, _sessionKey: r.key });
+    }
+  });
+
+  if (sessionSmileI) sessionSmileI.destroy();
+  document.getElementById('sessionSmileLoading').style.display='none';
+  sessionSmileI = new Chart(document.getElementById('sessionSmileChart'), {
+    type: 'line',
+    data: { datasets: chartDatasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      parsing: false,
+      plugins: {
+        legend: {
+          display: true, position: 'top',
+          labels: { color:'#6b7280', font:{family:'IBM Plex Mono',size:11}, boxWidth:20, boxHeight:2, padding:14,
+            filter: item => item.text !== '' },
+          onClick: (e, legendItem, legend) => {
+            const chart = legend.chart;
+            const clickedIdx = legendItem.datasetIndex;
+            const clickedKey = chart.data.datasets[clickedIdx]._sessionKey;
+
+            const isFaded = chart.data.datasets.some((ds, i) =>
+              i !== clickedIdx && ds._origColor && ds.borderColor === ds._origColor + '33'
+            );
+
+            if (isFaded) {
+              // Restore all
+              chart.data.datasets.forEach((ds, i) => {
+                if (ds._origColor) ds.borderColor = ds._origColor;
+                if (ds._origBgColor) ds.backgroundColor = ds._origBgColor;
+                if (ds._origWidth) ds.borderWidth = ds._origWidth;
+                chart.getDatasetMeta(i).hidden = false;
+              });
+            } else {
+              // Highlight clicked session (both line and dots), fade others
+              chart.data.datasets.forEach((ds, i) => {
+                if (!ds._origColor) ds._origColor = ds.borderColor;
+                if (!ds._origBgColor) ds._origBgColor = ds.backgroundColor;
+                if (!ds._origWidth) ds._origWidth = ds.borderWidth;
+                if (ds._sessionKey === clickedKey) {
+                  ds.borderColor = ds._origColor;
+                  ds.backgroundColor = ds._origBgColor;
+                  ds.borderWidth = ds._origWidth;
+                  chart.getDatasetMeta(i).hidden = false;
+                } else {
+                  ds.borderColor = ds._origColor + '33';
+                  ds.backgroundColor = ds._origColor + '33';
+                  ds.borderWidth = 0.8;
+                  chart.getDatasetMeta(i).hidden = false;
+                }
+              });
+            }
+            chart.update();
+          },
+        },
+        tooltip: {
+          mode:'nearest', intersect:false,
+          backgroundColor:'rgba(255,255,255,0.97)', borderColor:'rgba(0,0,0,0.1)', borderWidth:1,
+          titleColor:'#6b7280', bodyColor:'#111827', padding:10,
+          callbacks: { label: ctx => {
+            const x = ctx.parsed.x;
+            const xStr = x >= 1000 ? x.toLocaleString() : x.toFixed(3).replace(/\.?0+$/,'');
+            return `Strike ${xStr}: ${ctx.parsed.y.toFixed(1)}%`;
+          }}
+        }
+      },
+      scales: {
+        x: { type:'linear',
+             ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},maxTicksLimit:8,callback:v=>v>=1000?v.toLocaleString():v},
+             grid:{color:GC}, border:{color:'rgba(0,0,0,0.08)'},
+             title:{display:true,text:'Strike',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+        y: { ticks:{color:TC,font:{family:'IBM Plex Mono',size:10},callback:v=>v.toFixed(0)+'%'},
+             grid:{color:GC}, border:{color:'rgba(0,0,0,0.08)'},
+             title:{display:true,text:'Implied vol (%)',color:TC,font:{family:'IBM Plex Mono',size:10}}},
+      }
+    }
+  });
+}
+
+function setCcy(c){
+  ccy=c;
+  delete realData['surface_'+c];
+  // Only show loading for the asset-dependent charts (not the multi-asset vix index)
+  ['smileLoading','termLoading','sessionSmileLoading'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display='flex';
+  });
+  document.querySelectorAll('#ccy-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===c));
+  updateAssetCharts();
+}
+function setSess(s){
+  sess=s;
+  document.querySelectorAll('#sess-grp .ctrl-btn').forEach(b=>b.classList.toggle('active',b.textContent===s.toUpperCase()));
+  updateAssetCharts();
+}
+function setSmile(m){}
+
+// Re-renders only the per-asset charts (not the multi-asset vol index above)
+async function updateAssetCharts(){
+  await renderTerm();
+  await renderSmile();
+  sessionSmileExpiry = null;
+  document.getElementById('expiry-select').innerHTML = '<option value="">Loading...</option>';
+  await renderSessionSmile();
+}
+
+// Full re-render — used at page load
+async function update(){
+  await renderVix();
+  await renderTerm();
+  await renderSmile();
+  sessionSmileExpiry = null;
+  document.getElementById('expiry-select').innerHTML = '<option value="">Loading...</option>';
+  await renderSessionSmile();
+}
+
+document.getElementById('ts').textContent=''+new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+' EST';
+initVixTenorToggle();
+update();
+</script>
+
+</body>
+</html>
