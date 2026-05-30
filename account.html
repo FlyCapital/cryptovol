@@ -326,9 +326,9 @@
             const err = await resp.text();
             throw new Error(`Server returned ${resp.status}: ${err.slice(0, 200)}`);
           }
-          // Sign out locally and redirect home. The Clerk identity is already deleted server-side,
-          // so the session is invalid — Clerk.signOut() just clears the local state.
-          await window.Clerk.signOut({ redirectUrl: '/' });
+          // Sign out locally and redirect to login. The Clerk identity is already deleted
+          // server-side, so the session is invalid — Clerk.signOut() just clears the local state.
+          await window.Clerk.signOut({ redirectUrl: '/login' });
         } catch (e) {
           alert('Could not delete account: ' + e.message);
         }
