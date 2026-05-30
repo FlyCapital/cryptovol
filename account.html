@@ -7,85 +7,304 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+
     :root {
-      --bg: #f5f6f8; --card: #fff;
-      --text: #111827; --text2: #6b7280; --text3: #b0b8c4;
-      --blue: #1F6FBF; --border: #e3e7ed;
-      --sans: 'Inter', sans-serif; --mono: 'IBM Plex Mono', monospace;
+      --bg:        #faf9f5;
+      --surface:   #ffffff;
+      --surface2:  #f5f4ef;
+      --border:    rgba(15, 23, 42, 0.08);
+      --border2:   rgba(15, 23, 42, 0.14);
+      --text:      #0f172a;
+      --text2:     #475569;
+      --text3:     #94a3b8;
+      --blue:      #1F6FBF;
+      --black:     #0f172a;
+      --sans:      'Inter', sans-serif;
+      --mono:      'IBM Plex Mono', monospace;
+      --serif:     'Source Serif 4', Georgia, serif;
     }
-    * { box-sizing: border-box; }
-    body { margin:0; background:var(--bg); color:var(--text); font-family:var(--mono); font-size:13px; min-height:100vh; }
-    .topbar { display:flex; align-items:center; justify-content:space-between; padding:20px 32px; }
-    .logo { font-family:var(--sans); font-size:17px; font-weight:800; letter-spacing:-0.3px; color:var(--text); text-decoration:none; }
-    .logo span { color:var(--blue); }
-    .nav-link { color:var(--text2); text-decoration:none; font-size:12px; letter-spacing:0.04em; margin-left:20px; }
-    .nav-link:hover { color:var(--text); }
-    main { max-width:680px; margin:48px auto 0; padding:0 24px; }
-    h1 {
-      font-family:var(--sans);
-      font-size:clamp(28px,4vw,44px);
-      font-weight:800;
-      letter-spacing:-1px;
-      line-height:1.1;
-      text-align:center;
-      margin:0 0 12px;
-      color:var(--text);
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
     }
-    h1 em { font-style:normal; color:var(--blue); }
-    .tagline { color:var(--text2); font-size:13px; line-height:1.7; text-align:center; margin:0 0 36px; }
-    .card { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:24px 28px; margin-bottom:14px; }
-    .card-title { font-family:var(--mono); font-size:11px; font-weight:400; color:var(--text2); text-transform:uppercase; letter-spacing:0.1em; margin:0 0 14px; }
-    .row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border); }
-    .row:last-child { border-bottom:none; }
-    .row-label { color:var(--text2); }
-    .row-val   { color:var(--text); font-weight:500; }
-    .tier-badge { display:inline-block; padding:3px 10px; border-radius:3px; font-size:11px; letter-spacing:0.08em; }
-    .tier-BASIC { background:rgba(107,114,128,0.12); color:var(--text2); }
-    .tier-PRO   { background:rgba(31,111,191,0.12); color:var(--blue); }
-    .tier-ULTRA { background:rgba(31,111,191,0.18); color:var(--blue); font-weight:600; }
-    .key-box { background:#f8fafc; border:1px solid var(--border); border-radius:4px; padding:12px 14px; font-size:12px; word-break:break-all; display:flex; justify-content:space-between; align-items:center; gap:12px; }
-    .key-box code { font-family:var(--mono); color:var(--text); }
+    a { color: inherit; }
+
+    /* ─── Nav ─────────────────────────────────────────────────────────────── */
+    nav {
+      background: rgba(250, 249, 245, 0.85);
+      backdrop-filter: saturate(180%) blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-inner {
+      max-width: 1180px; margin: 0 auto; padding: 0 32px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    .logo {
+      font-family: var(--sans); font-size: 19px; font-weight: 800;
+      letter-spacing: -0.4px; color: var(--text); text-decoration: none;
+    }
+    .logo span { color: var(--blue); }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-link {
+      color: var(--text2); text-decoration: none; font-size: 14px;
+      font-weight: 500; transition: color 0.15s;
+    }
+    .nav-link:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--black); color: #fff; border: none;
+      padding: 9px 18px; border-radius: 8px;
+      font-family: var(--sans); font-size: 14px; font-weight: 500;
+      cursor: pointer; text-decoration: none;
+      transition: background 0.15s, transform 0.06s;
+    }
+    .nav-cta:hover  { background: #1e293b; }
+    .nav-cta:active { transform: translateY(1px); }
+    .nav-login {
+      display: inline-flex; align-items: center;
+      color: var(--text); text-decoration: none;
+      font-family: var(--sans); font-size: 14px; font-weight: 500;
+      padding: 7px 16px; border-radius: 8px;
+      border: 1px solid var(--text);
+      transition: background 0.15s, color 0.15s;
+    }
+    .nav-login:hover { background: var(--text); color: var(--surface); }
+
+    /* Nav dropdowns */
+    .nav-dropdown { position: relative; }
+    .nav-dropdown-trigger {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: none; border: none; padding: 0;
+      font-family: var(--sans); font-size: 14px; font-weight: 500;
+      color: var(--text2); cursor: pointer;
+      transition: color 0.15s;
+    }
+    .nav-dropdown-trigger:hover { color: var(--text); }
+    .nav-dropdown-trigger svg {
+      width: 10px; height: 10px; opacity: 0.6;
+      transition: transform 0.15s;
+    }
+    .nav-dropdown:hover .nav-dropdown-trigger svg,
+    .nav-dropdown:focus-within .nav-dropdown-trigger svg {
+      transform: rotate(180deg);
+    }
+    .nav-dropdown-menu {
+      position: absolute; top: calc(100% + 6px); left: -14px;
+      min-width: 200px; background: #fff;
+      border: 1px solid var(--border); border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+      padding: 8px;
+      opacity: 0; visibility: hidden; transform: translateY(-4px);
+      transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
+    }
+    .nav-dropdown-menu::before {
+      content: ""; position: absolute; top: -10px; left: 0; right: 0; height: 10px;
+    }
+    .nav-dropdown:hover .nav-dropdown-menu,
+    .nav-dropdown:focus-within .nav-dropdown-menu {
+      opacity: 1; visibility: visible; transform: translateY(0);
+    }
+    .nav-dropdown-item {
+      display: block; padding: 8px 12px;
+      font-family: var(--sans); font-size: 14px; color: var(--text);
+      text-decoration: none; border-radius: 6px;
+      transition: background 0.1s;
+    }
+    .nav-dropdown-item:hover { background: var(--surface2); }
+
+    /* ─── Section helpers ─────────────────────────────────────────────────── */
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+
+    .eyebrow {
+      display: inline-block;
+      font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
+      color: var(--blue); text-transform: uppercase;
+      margin-bottom: 18px;
+    }
+
+    /* ─── Account page layout ─────────────────────────────────────────────── */
+    main { max-width: 720px; margin: 0 auto; padding: 64px 32px 80px; }
+    @media (max-width: 720px) { main { padding: 48px 24px 64px; } }
+
+    .page-header { text-align: center; margin-bottom: 40px; }
+    .page-header h1 {
+      font-family: var(--serif);
+      font-size: clamp(36px, 5vw, 52px);
+      font-weight: 500;
+      letter-spacing: -1px;
+      line-height: 1.08;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    .page-header h1 em { font-style: normal; color: var(--blue); }
+    .tagline {
+      color: var(--text2); font-size: 17px; line-height: 1.55;
+      max-width: 480px; margin: 0 auto;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-family: var(--mono); font-size: 12px; font-weight: 500;
+      color: var(--blue); text-transform: uppercase; letter-spacing: 0.08em;
+      margin: 0 0 16px;
+    }
+    .row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .row:last-child { border-bottom: none; }
+    .row-label { color: var(--text2); }
+    .row-val   { color: var(--text); font-weight: 500; }
+
+    .tier-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 4px;
+      font-family: var(--sans); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.06em;
+    }
+    .tier-BASIC { background: rgba(15, 23, 42, 0.06); color: var(--text2); }
+    .tier-PRO   { background: rgba(31, 111, 191, 0.10); color: var(--blue); }
+    .tier-ULTRA { background: rgba(31, 111, 191, 0.18); color: var(--blue); }
+
+    .key-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 13px; word-break: break-all;
+      display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    }
+    .key-box code {
+      font-family: var(--mono); color: var(--text); font-size: 12px;
+    }
+
     button {
-      font-family:var(--mono);
-      font-size:12px;
-      background:var(--blue);
-      color:#fff;
-      border:1px solid var(--blue);
-      padding:8px 16px;
-      border-radius:4px;
-      cursor:pointer;
-      letter-spacing:0.04em;
-      transition:background 0.15s;
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 500;
+      background: var(--black);
+      color: #fff;
+      border: 1px solid var(--black);
+      padding: 9px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.06s, border-color 0.15s, color 0.15s;
     }
-    button:hover { background:#1a5fa3; }
-    button.secondary { background:transparent; color:var(--blue); }
-    button.secondary:hover { background:rgba(31,111,191,0.06); }
-    button:disabled { background:var(--text3); border-color:var(--text3); color:#fff; cursor:not-allowed; }
-    button:disabled:hover { background:var(--text3); }
-    .actions { margin-top:14px; display:flex; gap:10px; }
-    .empty { text-align:center; padding:80px 20px; color:var(--text2); }
-    .err { color:#b91c1c; font-size:12px; margin-top:8px; text-align:center; }
-    .ok-flash { color:#15803d; font-size:11px; margin-left:8px; opacity:0; transition:opacity 0.2s; }
-    .ok-flash.show { opacity:1; }
-    .upgrade-cta { color:var(--text2); font-size:11px; margin-top:8px; }
-    .upgrade-cta code { background:#f8fafc; border:1px solid var(--border); padding:1px 6px; border-radius:3px; }
-    .usage-bar { height:6px; background:#f1f5f9; border-radius:3px; overflow:hidden; margin-top:10px; }
-    .usage-bar > div { height:100%; background:var(--blue); transition:width 0.3s; }
-    .usage-bar.warn  > div { background:#d97706; }
-    .usage-bar.crit  > div { background:#b91c1c; }
-    .usage-meta { display:flex; justify-content:space-between; font-size:11px; color:var(--text2); margin-top:6px; }
-    .card.danger { border-color:rgba(185,28,28,0.25); }
-    .card.danger .card-title { color:#b91c1c; }
+    button:hover  { background: #1e293b; }
+    button:active { transform: translateY(1px); }
+    button.secondary {
+      background: transparent; color: var(--text); border: 1px solid var(--border2);
+    }
+    button.secondary:hover {
+      background: rgba(15, 23, 42, 0.04); border-color: var(--text2);
+    }
+    button:disabled {
+      background: var(--text3); border-color: var(--text3); color: #fff;
+      cursor: not-allowed;
+    }
+    button:disabled:hover { background: var(--text3); }
+
+    .actions { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .empty { text-align: center; padding: 80px 20px; color: var(--text2); font-size: 15px; }
+    .err { color: #b91c1c; font-size: 13px; margin-top: 8px; text-align: center; }
+    .ok-flash {
+      color: #15803d; font-size: 12px; margin-left: 8px;
+      opacity: 0; transition: opacity 0.2s;
+      font-family: var(--mono);
+    }
+    .ok-flash.show { opacity: 1; }
+
+    .upgrade-cta { color: var(--text2); font-size: 13px; margin-top: 10px; line-height: 1.55; }
+    .upgrade-cta code {
+      font-family: var(--mono);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .usage-bar {
+      height: 6px; background: var(--surface2); border-radius: 3px;
+      overflow: hidden; margin-top: 12px;
+    }
+    .usage-bar > div { height: 100%; background: var(--blue); transition: width 0.3s; }
+    .usage-bar.warn  > div { background: #d97706; }
+    .usage-bar.crit  > div { background: #b91c1c; }
+    .usage-meta {
+      display: flex; justify-content: space-between;
+      font-size: 12px; color: var(--text2); margin-top: 8px;
+      font-family: var(--mono);
+    }
+
+    /* Danger zone */
+    .card.danger { border-color: rgba(185, 28, 28, 0.25); }
+    .card.danger .card-title { color: #b91c1c; }
     button.danger {
-      background:#b91c1c; border-color:#b91c1c; color:#fff;
+      background: #b91c1c; border-color: #b91c1c; color: #fff;
     }
-    button.danger:hover { background:#991b1b; border-color:#991b1b; }
+    button.danger:hover { background: #991b1b; border-color: #991b1b; }
     button.danger-secondary {
-      background:transparent; border:1px solid #b91c1c; color:#b91c1c;
+      background: transparent; border: 1px solid #b91c1c; color: #b91c1c;
     }
-    button.danger-secondary:hover { background:rgba(185,28,28,0.08); }
+    button.danger-secondary:hover { background: rgba(185, 28, 28, 0.08); }
+
+    /* Upgrade banner (rendered inline in JS) */
+    .upgrade-banner {
+      background: rgba(31, 111, 191, 0.06);
+      border: 1px solid rgba(31, 111, 191, 0.2);
+      color: var(--blue);
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    /* ─── Footer ──────────────────────────────────────────────────────────── */
+    footer {
+      padding: 40px 0 56px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .foot-grid {
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 32px; padding: 8px 0 28px;
+    }
+    @media (max-width: 720px) { .foot-grid { grid-template-columns: 1fr 1fr; } }
+    .foot-col h4 {
+      font-family: var(--sans); font-size: 13px; font-weight: 600;
+      color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 14px;
+    }
+    .foot-col a {
+      display: block; color: var(--text); font-size: 14px;
+      text-decoration: none; padding: 4px 0;
+    }
+    .foot-col a:hover { color: var(--blue); }
+    .foot-brand .logo { display: inline-block; margin-bottom: 12px; font-size: 18px; }
+    .foot-brand p { color: var(--text2); font-size: 13px; line-height: 1.6; max-width: 320px; }
+    .foot-note {
+      border-top: 1px solid var(--border); padding-top: 20px;
+      color: var(--text3); font-size: 12px; line-height: 1.6;
+    }
   </style>
 
   <script defer crossorigin="anonymous"
@@ -94,277 +313,342 @@
     type="text/javascript"></script>
 </head>
 <body>
-  <div class="topbar">
+
+<nav>
+  <div class="nav-inner">
     <a href="/" class="logo">crypto<span>vol</span></a>
-    <div id="topbar-right">
-      <a href="/" class="nav-link">Home</a>
-      <a href="/api" class="nav-link">API</a>
-      <a href="/chat" class="nav-link">Chat</a>
-      <span id="user-button-slot"></span>
+    <div class="nav-links">
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-trigger" type="button">
+          Developer
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/dashboard" class="nav-dropdown-item" role="menuitem">Dashboard</a>
+          <a href="/docs" class="nav-dropdown-item" role="menuitem">Docs</a>
+          <a href="https://github.com/FlyCapital/cryptovol-python" target="_blank" rel="noopener" class="nav-dropdown-item" role="menuitem">SDK</a>
+        </div>
+      </div>
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-trigger" type="button">
+          Research
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/methodology" class="nav-dropdown-item" role="menuitem">Methodology</a>
+          <a href="/blog" class="nav-dropdown-item" role="menuitem">Blog</a>
+        </div>
+      </div>
+      <a href="/chat" class="nav-link">Ask Quanta</a>
+      <a href="/#pricing" class="nav-link">Pricing</a>
+      <a href="/login" class="nav-login" id="nav-login-link">Log in</a>
+      <span id="user-button-slot" style="display:inline-flex; align-items:center;"></span>
     </div>
   </div>
+</nav>
 
-  <main>
-    <div id="content" class="empty">Loading…</div>
-  </main>
+<main>
+  <div id="content" class="empty">Loading…</div>
+</main>
 
-  <script>
-    const API_BASE = "https://cryptovol-api-nbakzshi6q-uc.a.run.app";
+<!-- ─── Footer ───────────────────────────────────────────────────────── -->
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a href="/" class="logo">crypto<span>vol</span></a>
+        <p>Institutional-grade crypto volatility data. Built for traders, quants and researchers.</p>
+      </div>
+      <div class="foot-col">
+        <h4>Product</h4>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/chat">Quanta</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="/signup">Sign up</a>
+      </div>
+      <div class="foot-col">
+        <h4>Developers</h4>
+        <a href="/docs">API docs</a>
+        <a href="https://github.com/FlyCapital/cryptovol-python" target="_blank" rel="noopener">Python SDK</a>
+        <a href="/methodology">Methodology</a>
+      </div>
+      <div class="foot-col">
+        <h4>Company</h4>
+        <a href="/blog">Research</a>
+        <a href="mailto:support@cryptovol.io">Support</a>
+      </div>
+    </div>
+    <div class="foot-note">
+      © 2026 CryptoVol · Data for informational purposes only. Not financial advice. ·
+      Support: <a href="mailto:support@cryptovol.io" style="color:var(--text);">support@cryptovol.io</a>
+    </div>
+  </div>
+</footer>
 
-    window.addEventListener('load', async () => {
-      await window.Clerk.load();
+<script>
+  const API_BASE = "https://cryptovol-api-nbakzshi6q-uc.a.run.app";
 
-      const content = document.getElementById('content');
+  window.addEventListener('load', async () => {
+    await window.Clerk.load();
 
-      if (!window.Clerk.user) {
-        // Not logged in → redirect to login
-        window.location.href = '/login';
-        return;
-      }
+    const content = document.getElementById('content');
 
-      // Mount the user button (signs out)
-      window.Clerk.mountUserButton(document.getElementById('user-button-slot'), {
-        afterSignOutUrl: '/login',
+    if (!window.Clerk.user) {
+      // Not logged in → redirect to login
+      window.location.href = '/login';
+      return;
+    }
+
+    // Signed in: hide the nav "Log in" link, show UserButton slot
+    const navLogin = document.getElementById('nav-login-link');
+    if (navLogin) navLogin.style.display = 'none';
+
+    // Mount the user button (signs out)
+    window.Clerk.mountUserButton(document.getElementById('user-button-slot'), {
+      afterSignOutUrl: '/login',
+    });
+
+    const token = await window.Clerk.session.getToken();
+    let user;
+    try {
+      const resp = await fetch(`${API_BASE}/v1/account/me`, {
+        headers: { 'Authorization': `Bearer ${token}` },
       });
-
-      const token = await window.Clerk.session.getToken();
-      let user;
-      try {
-        const resp = await fetch(`${API_BASE}/v1/account/me`, {
+      if (resp.status === 404) {
+        // Webhook race — retry once after 2s
+        await new Promise(r => setTimeout(r, 2000));
+        const retry = await fetch(`${API_BASE}/v1/account/me`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
-        if (resp.status === 404) {
-          // Webhook race — retry once after 2s
-          await new Promise(r => setTimeout(r, 2000));
-          const retry = await fetch(`${API_BASE}/v1/account/me`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-          });
-          if (!retry.ok) throw new Error('Account not provisioned. Please refresh in a moment.');
-          user = await retry.json();
-        } else if (!resp.ok) {
-          throw new Error(`Server returned ${resp.status}`);
-        } else {
-          user = await resp.json();
-        }
-      } catch (e) {
-        content.innerHTML = `<div class="err">${e.message}</div>`;
-        return;
+        if (!retry.ok) throw new Error('Account not provisioned. Please refresh in a moment.');
+        user = await retry.json();
+      } else if (!resp.ok) {
+        throw new Error(`Server returned ${resp.status}`);
+      } else {
+        user = await resp.json();
       }
+    } catch (e) {
+      content.innerHTML = `<div class="err">${e.message}</div>`;
+      return;
+    }
 
-      // Show success banner only when the user just returned from Stripe Checkout
-      // AND the tier hasn't updated yet (webhook still in flight). Once tier reflects
-      // the upgrade, suppress the banner and strip ?upgraded=true so a refresh stays clean.
-      const params = new URLSearchParams(window.location.search);
-      const justReturned   = params.get('upgraded') === 'true';
-      const upgradePending = justReturned && user.tier === 'BASIC';
-      const upgradedBanner = upgradePending ? `
-        <div style="background:rgba(31,111,191,0.08); border:1px solid rgba(31,111,191,0.2); color:var(--blue); padding:10px 14px; border-radius:4px; margin-bottom:18px; font-size:12px;">
-          &check; Payment received. Tier updating &mdash; this page will refresh automatically in a few seconds.
-        </div>` : '';
-      if (justReturned && !upgradePending) {
-        // Upgrade has landed; remove the query param so refreshes don't keep showing it.
-        history.replaceState({}, '', '/account');
-      }
-      if (upgradePending) {
-        // Poll for the tier change so we don't make the user refresh manually.
-        setTimeout(() => window.location.reload(), 3000);
-      }
+    // Show success banner only when the user just returned from Stripe Checkout
+    // AND the tier hasn't updated yet (webhook still in flight). Once tier reflects
+    // the upgrade, suppress the banner and strip ?upgraded=true so a refresh stays clean.
+    const params = new URLSearchParams(window.location.search);
+    const justReturned   = params.get('upgraded') === 'true';
+    const upgradePending = justReturned && user.tier === 'BASIC';
+    const upgradedBanner = upgradePending ? `
+      <div class="upgrade-banner">
+        &check; Payment received. Tier updating &mdash; this page will refresh automatically in a few seconds.
+      </div>` : '';
+    if (justReturned && !upgradePending) {
+      // Upgrade has landed; remove the query param so refreshes don't keep showing it.
+      history.replaceState({}, '', '/account');
+    }
+    if (upgradePending) {
+      // Poll for the tier change so we don't make the user refresh manually.
+      setTimeout(() => window.location.reload(), 3000);
+    }
 
-      const showManageBilling = user.tier !== 'BASIC';
-      const showUpgradePro    = user.tier === 'BASIC';
-      const showUpgradeUltra  = user.tier !== 'ULTRA';
+    const showManageBilling = user.tier !== 'BASIC';
+    const showUpgradePro    = user.tier === 'BASIC';
+    const showUpgradeUltra  = user.tier !== 'ULTRA';
 
-      content.innerHTML = `
-        <h1>Your <em>account</em></h1>
+    content.innerHTML = `
+      <div class="page-header">
+        <span class="eyebrow">Account</span>
+        <h1>Your <em>account</em>.</h1>
         <p class="tagline">Manage your API key and subscription.</p>
+      </div>
 
-        ${upgradedBanner}
+      ${upgradedBanner}
 
-        <div class="card">
-          <p class="card-title">Profile</p>
-          <div class="row">
-            <span class="row-label">Email</span>
-            <span class="row-val">${user.email}</span>
-          </div>
-          <div class="row">
-            <span class="row-label">Plan</span>
-            <span class="row-val"><span class="tier-badge tier-${user.tier}">${user.tier}</span></span>
-          </div>
-          <div class="row">
-            <span class="row-label">Member since</span>
-            <span class="row-val">${user.created_at ? user.created_at.slice(0,10) : '—'}</span>
+      <div class="card">
+        <p class="card-title">Profile</p>
+        <div class="row">
+          <span class="row-label">Email</span>
+          <span class="row-val">${user.email}</span>
+        </div>
+        <div class="row">
+          <span class="row-label">Plan</span>
+          <span class="row-val"><span class="tier-badge tier-${user.tier}">${user.tier}</span></span>
+        </div>
+        <div class="row">
+          <span class="row-label">Member since</span>
+          <span class="row-val">${user.created_at ? user.created_at.slice(0,10) : '—'}</span>
+        </div>
+      </div>
+
+      ${(() => {
+        // Render one usage card for each non-null bucket on the user (api + chat).
+        const usageCard = (label, u) => {
+          if (!u) return '';
+          const pct = Math.min(100, (u.used / u.limit) * 100);
+          const cls = pct >= 90 ? 'crit' : pct >= 75 ? 'warn' : '';
+          return `
+            <div class="card">
+              <p class="card-title">${label} &mdash; this ${u.period}</p>
+              <div class="row">
+                <span class="row-label">${label === 'Chat' ? 'Messages' : 'Requests'}</span>
+                <span class="row-val">${u.used.toLocaleString()} / ${u.limit.toLocaleString()}</span>
+              </div>
+              <div class="usage-bar ${cls}"><div style="width:${pct}%"></div></div>
+              <div class="usage-meta">
+                <span>${pct.toFixed(1)}% used</span>
+                <span>Resets at start of next ${u.period}</span>
+              </div>
+            </div>`;
+        };
+        return usageCard('API usage',  user.usage) + usageCard('Chat', user.chat_usage);
+      })()}
+
+      <div class="card">
+        <p class="card-title">API key</p>
+        <div class="key-box">
+          <code id="api-key">${user.api_key}</code>
+          <div style="display:flex; align-items:center; flex-shrink:0;">
+            <button id="copy-btn" class="secondary">Copy</button>
+            <span id="copy-ok" class="ok-flash">copied</span>
           </div>
         </div>
-
-        ${(() => {
-          // Render one usage card for each non-null bucket on the user (api + chat).
-          const usageCard = (label, u) => {
-            if (!u) return '';
-            const pct = Math.min(100, (u.used / u.limit) * 100);
-            const cls = pct >= 90 ? 'crit' : pct >= 75 ? 'warn' : '';
-            return `
-              <div class="card">
-                <p class="card-title">${label} &mdash; this ${u.period}</p>
-                <div class="row">
-                  <span class="row-label">${label === 'Chat' ? 'Messages' : 'Requests'}</span>
-                  <span class="row-val">${u.used.toLocaleString()} / ${u.limit.toLocaleString()}</span>
-                </div>
-                <div class="usage-bar ${cls}"><div style="width:${pct}%"></div></div>
-                <div class="usage-meta">
-                  <span>${pct.toFixed(1)}% used</span>
-                  <span>Resets at start of next ${u.period}</span>
-                </div>
-              </div>`;
-          };
-          return usageCard('API usage',  user.usage) + usageCard('Chat', user.chat_usage);
-        })()}
-
-        <div class="card">
-          <p class="card-title">API key</p>
-          <div class="key-box">
-            <code id="api-key">${user.api_key}</code>
-            <div>
-              <button id="copy-btn">Copy</button>
-              <span id="copy-ok" class="ok-flash">copied</span>
-            </div>
-          </div>
-          <p class="upgrade-cta">Send as <code>X-CryptoVol-Key</code> header on API requests.</p>
-          <div class="actions">
-            <button id="rotate-btn" class="secondary">Rotate key</button>
-          </div>
+        <p class="upgrade-cta">Send as <code>X-CryptoVol-Key</code> header on API requests.</p>
+        <div class="actions">
+          <button id="rotate-btn" class="secondary">Rotate key</button>
         </div>
+      </div>
 
-        <div class="card danger" style="margin-top:32px;">
-          <p class="card-title">Danger zone</p>
-          <p style="color:var(--text2); font-size:12px; margin:0 0 12px;">
-            Permanently delete your account, revoke your API key, and cancel your subscription.
-            Stripe payment records are retained for accounting compliance but anonymized.
-            <strong>This cannot be undone.</strong>
-          </p>
-          <div class="actions">
-            <button id="delete-btn" class="danger-secondary">Delete my account</button>
-          </div>
+      <div class="card">
+        <p class="card-title">Subscription</p>
+        <div class="row">
+          <span class="row-label">Tier</span>
+          <span class="row-val">${user.tier}</span>
         </div>
-
-        <div class="card">
-          <p class="card-title">Subscription</p>
-          <div class="row">
-            <span class="row-label">Tier</span>
-            <span class="row-val">${user.tier}</span>
-          </div>
-          <div class="actions">
-            ${showUpgradePro   ? `<button data-tier="PRO"   class="upgrade-btn">Upgrade to PRO &mdash; $49/mo</button>`   : ''}
-            ${showUpgradeUltra ? `<button data-tier="ULTRA" class="upgrade-btn ${showUpgradePro ? 'secondary' : ''}">Upgrade to ULTRA &mdash; $99/mo</button>` : ''}
-            ${showManageBilling ? `<button id="portal-btn" class="secondary">Manage billing</button>` : ''}
-          </div>
+        <div class="actions">
+          ${showUpgradePro   ? `<button data-tier="PRO"   class="upgrade-btn">Upgrade to PRO &mdash; $49/mo</button>`   : ''}
+          ${showUpgradeUltra ? `<button data-tier="ULTRA" class="upgrade-btn ${showUpgradePro ? 'secondary' : ''}">Upgrade to ULTRA &mdash; $99/mo</button>` : ''}
+          ${showManageBilling ? `<button id="portal-btn" class="secondary">Manage billing</button>` : ''}
         </div>
-      `;
+      </div>
 
-      // Copy-to-clipboard
-      document.getElementById('copy-btn').addEventListener('click', async () => {
-        await navigator.clipboard.writeText(user.api_key);
-        const flash = document.getElementById('copy-ok');
-        flash.classList.add('show');
-        setTimeout(() => flash.classList.remove('show'), 1500);
+      <div class="card danger" style="margin-top:32px;">
+        <p class="card-title">Danger zone</p>
+        <p style="color:var(--text2); font-size:14px; line-height:1.55; margin:0 0 12px;">
+          Permanently delete your account, revoke your API key, and cancel your subscription.
+          Stripe payment records are retained for accounting compliance but anonymized.
+          <strong>This cannot be undone.</strong>
+        </p>
+        <div class="actions">
+          <button id="delete-btn" class="danger-secondary">Delete my account</button>
+        </div>
+      </div>
+    `;
+
+    // Copy-to-clipboard
+    document.getElementById('copy-btn').addEventListener('click', async () => {
+      await navigator.clipboard.writeText(user.api_key);
+      const flash = document.getElementById('copy-ok');
+      flash.classList.add('show');
+      setTimeout(() => flash.classList.remove('show'), 1500);
+    });
+
+    // Rotate key
+    document.getElementById('rotate-btn').addEventListener('click', async () => {
+      if (!confirm('Rotate your API key? The current key will stop working immediately.')) return;
+      const t = await window.Clerk.session.getToken();
+      const resp = await fetch(`${API_BASE}/v1/account/rotate-key`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${t}` },
       });
+      if (!resp.ok) { alert('Failed to rotate key'); return; }
+      const j = await resp.json();
+      document.getElementById('api-key').textContent = j.api_key;
+      user.api_key = j.api_key;
+    });
 
-      // Rotate key
-      document.getElementById('rotate-btn').addEventListener('click', async () => {
-        if (!confirm('Rotate your API key? The current key will stop working immediately.')) return;
-        const t = await window.Clerk.session.getToken();
-        const resp = await fetch(`${API_BASE}/v1/account/rotate-key`, {
-          method: 'POST',
+    // Upgrade buttons → Stripe Checkout
+    document.querySelectorAll('.upgrade-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        btn.textContent = 'Redirecting...';
+        try {
+          const t = await window.Clerk.session.getToken();
+          const resp = await fetch(`${API_BASE}/v1/account/checkout`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${t}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ tier: btn.dataset.tier }),
+          });
+          if (!resp.ok) {
+            const err = await resp.text();
+            throw new Error(`Server returned ${resp.status}: ${err.slice(0, 200)}`);
+          }
+          const { url } = await resp.json();
+          window.location.href = url;
+        } catch (e) {
+          alert('Could not start checkout: ' + e.message);
+          btn.disabled = false;
+          btn.textContent = `Upgrade to ${btn.dataset.tier}`;
+        }
+      });
+    });
+
+    // Danger zone → delete account
+    document.getElementById('delete-btn').addEventListener('click', async () => {
+      const typed = prompt(
+        "This permanently deletes your account, cancels your subscription, " +
+        "and revokes your API key. Stripe payment records will be retained " +
+        "but anonymized.\n\n" +
+        "Type DELETE to confirm:"
+      );
+      if (typed !== 'DELETE') return;
+
+      const t = await window.Clerk.session.getToken();
+      try {
+        const resp = await fetch(`${API_BASE}/v1/account/delete-me`, {
+          method: 'DELETE',
           headers: { 'Authorization': `Bearer ${t}` },
         });
-        if (!resp.ok) { alert('Failed to rotate key'); return; }
-        const j = await resp.json();
-        document.getElementById('api-key').textContent = j.api_key;
-        user.api_key = j.api_key;
-      });
+        if (!resp.ok) {
+          const err = await resp.text();
+          throw new Error(`Server returned ${resp.status}: ${err.slice(0, 200)}`);
+        }
+        // Sign out locally and redirect to login. The Clerk identity is already deleted
+        // server-side, so the session is invalid — Clerk.signOut() just clears the local state.
+        await window.Clerk.signOut({ redirectUrl: '/login' });
+      } catch (e) {
+        alert('Could not delete account: ' + e.message);
+      }
+    });
 
-      // Upgrade buttons → Stripe Checkout
-      document.querySelectorAll('.upgrade-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          btn.disabled = true;
-          btn.textContent = 'Redirecting...';
-          try {
-            const t = await window.Clerk.session.getToken();
-            const resp = await fetch(`${API_BASE}/v1/account/checkout`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${t}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ tier: btn.dataset.tier }),
-            });
-            if (!resp.ok) {
-              const err = await resp.text();
-              throw new Error(`Server returned ${resp.status}: ${err.slice(0, 200)}`);
-            }
-            const { url } = await resp.json();
-            window.location.href = url;
-          } catch (e) {
-            alert('Could not start checkout: ' + e.message);
-            btn.disabled = false;
-            btn.textContent = `Upgrade to ${btn.dataset.tier}`;
-          }
-        });
-      });
-
-      // Danger zone → delete account
-      document.getElementById('delete-btn').addEventListener('click', async () => {
-        const typed = prompt(
-          "This permanently deletes your account, cancels your subscription, " +
-          "and revokes your API key. Stripe payment records will be retained " +
-          "but anonymized.\n\n" +
-          "Type DELETE to confirm:"
-        );
-        if (typed !== 'DELETE') return;
-
-        const t = await window.Clerk.session.getToken();
+    // Manage billing → Stripe Customer Portal
+    const portalBtn = document.getElementById('portal-btn');
+    if (portalBtn) {
+      portalBtn.addEventListener('click', async () => {
+        portalBtn.disabled = true;
+        portalBtn.textContent = 'Loading...';
         try {
-          const resp = await fetch(`${API_BASE}/v1/account/delete-me`, {
-            method: 'DELETE',
+          const t = await window.Clerk.session.getToken();
+          const resp = await fetch(`${API_BASE}/v1/account/portal`, {
+            method: 'POST',
             headers: { 'Authorization': `Bearer ${t}` },
           });
           if (!resp.ok) {
             const err = await resp.text();
             throw new Error(`Server returned ${resp.status}: ${err.slice(0, 200)}`);
           }
-          // Sign out locally and redirect to login. The Clerk identity is already deleted
-          // server-side, so the session is invalid — Clerk.signOut() just clears the local state.
-          await window.Clerk.signOut({ redirectUrl: '/login' });
+          const { url } = await resp.json();
+          window.location.href = url;
         } catch (e) {
-          alert('Could not delete account: ' + e.message);
+          alert('Could not open billing portal: ' + e.message);
+          portalBtn.disabled = false;
+          portalBtn.textContent = 'Manage billing';
         }
       });
-
-      // Manage billing → Stripe Customer Portal
-      const portalBtn = document.getElementById('portal-btn');
-      if (portalBtn) {
-        portalBtn.addEventListener('click', async () => {
-          portalBtn.disabled = true;
-          portalBtn.textContent = 'Loading...';
-          try {
-            const t = await window.Clerk.session.getToken();
-            const resp = await fetch(`${API_BASE}/v1/account/portal`, {
-              method: 'POST',
-              headers: { 'Authorization': `Bearer ${t}` },
-            });
-            if (!resp.ok) {
-              const err = await resp.text();
-              throw new Error(`Server returned ${resp.status}: ${err.slice(0, 200)}`);
-            }
-            const { url } = await resp.json();
-            window.location.href = url;
-          } catch (e) {
-            alert('Could not open billing portal: ' + e.message);
-            portalBtn.disabled = false;
-            portalBtn.textContent = 'Manage billing';
-          }
-        });
-      }
-    });
-  </script>
+    }
+  });
+</script>
 </body>
 </html>
