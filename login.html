@@ -152,7 +152,8 @@
       await window.Clerk.load();
       window.Clerk.mountSignIn(document.getElementById('clerk-root'), {
         signUpUrl: '/signup',
-        afterSignInUrl: '/account',
+        forceRedirectUrl: '/account',
+        fallbackRedirectUrl: '/account',
         appearance: CLERK_APPEARANCE,
       });
     });
