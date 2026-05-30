@@ -196,23 +196,28 @@
           </div>
         </div>
 
-        ${user.usage ? `
-        <div class="card">
-          <p class="card-title">Usage &mdash; this ${user.usage.period}</p>
-          <div class="row">
-            <span class="row-label">Requests</span>
-            <span class="row-val">${user.usage.used.toLocaleString()} / ${user.usage.limit.toLocaleString()}</span>
-          </div>
-          ${(() => {
-            const pct = Math.min(100, (user.usage.used / user.usage.limit) * 100);
+        ${(() => {
+          // Render one usage card for each non-null bucket on the user (api + chat).
+          const usageCard = (label, u) => {
+            if (!u) return '';
+            const pct = Math.min(100, (u.used / u.limit) * 100);
             const cls = pct >= 90 ? 'crit' : pct >= 75 ? 'warn' : '';
-            return `<div class="usage-bar ${cls}"><div style="width:${pct}%"></div></div>
-                    <div class="usage-meta">
-                      <span>${pct.toFixed(1)}% used</span>
-                      <span>Resets at start of next ${user.usage.period}</span>
-                    </div>`;
-          })()}
-        </div>` : ''}
+            return `
+              <div class="card">
+                <p class="card-title">${label} &mdash; this ${u.period}</p>
+                <div class="row">
+                  <span class="row-label">${label === 'Chat' ? 'Messages' : 'Requests'}</span>
+                  <span class="row-val">${u.used.toLocaleString()} / ${u.limit.toLocaleString()}</span>
+                </div>
+                <div class="usage-bar ${cls}"><div style="width:${pct}%"></div></div>
+                <div class="usage-meta">
+                  <span>${pct.toFixed(1)}% used</span>
+                  <span>Resets at start of next ${u.period}</span>
+                </div>
+              </div>`;
+          };
+          return usageCard('API usage',  user.usage) + usageCard('Chat', user.chat_usage);
+        })()}
 
         <div class="card">
           <p class="card-title">API key</p>
