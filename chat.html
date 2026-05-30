@@ -123,13 +123,60 @@ function restore() {
   }
 }
 
-function clearHistory() {
-  if (!confirm("Clear chat history on this browser?")) return;
+async function clearHistory() {
+  if (!confirm("Clear chat history? This will hide your previous conversations.")) return;
+  // Clear server-side (soft delete) — data stays in our DB for analytics but
+  // won't reappear on this or any other device the user logs into.
+  try {
+    const token = await window.Clerk.session.getToken();
+    await fetch(API_BASE + "/v1/chat/clear", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${token}` },
+    });
+  } catch (e) {
+    console.warn("server clear failed:", e);
+  }
   history = [];
   messages = [];
   localStorage.removeItem(STORAGE_KEY);
   document.getElementById("chat").innerHTML = "";
   renderGreeting();
+}
+
+async function fetchServerHistory() {
+  // Pull stored history from the API so it follows the user across devices.
+  // Falls back to localStorage if the request fails (network, transient 5xx).
+  try {
+    const token = await window.Clerk.session.getToken();
+    const r = await fetch(API_BASE + "/v1/chat/history", {
+      headers: { "Authorization": `Bearer ${token}` },
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    const rows = Array.isArray(data.messages) ? data.messages : [];
+    if (!rows.length) return false;
+
+    history = [];
+    messages = [];
+    for (const m of rows) {
+      const role = m.role === "assistant" ? "bot" : "user";
+      // Build the API-shape history array (used in subsequent /v1/chat calls).
+      history.push({ role: m.role === "assistant" ? "assistant" : "user", content: m.text });
+      // Build the render-shape messages array (used by replayMessages).
+      messages.push({
+        role, text: m.text,
+        chart_spec: m.chart_spec || null,
+        table:      m.table      || null,
+        api_calls:  m.api_calls  || null,
+        meta:       null,
+      });
+    }
+    persist();
+    return true;
+  } catch (e) {
+    console.warn("fetchServerHistory failed:", e);
+    return false;
+  }
 }
 
 function renderGreeting() {
@@ -180,7 +227,12 @@ window.addEventListener("load", async () => {
       <button id="send" onclick="send()">Send</button>
     </div>`;
 
-  if (restore() && messages.length) {
+  // Try server-side history first (cross-device), fall back to localStorage
+  // (offline-friendly), fall back to the greeting (brand-new user).
+  const serverHit = await fetchServerHistory();
+  if (!serverHit && restore() && messages.length) {
+    replayMessages();
+  } else if (serverHit) {
     replayMessages();
   } else {
     renderGreeting();
@@ -280,8 +332,32 @@ async function send() {
 
     if (!r.ok) {
       thinking.remove();
-      const err = await r.text();
-      addMsg("err", `HTTP ${r.status}: ${err}`);
+      // Try to parse a structured error (e.g., 429 quota) and present it nicely.
+      let friendly = null;
+      try {
+        const body = await r.json();
+        if (r.status === 429 && body.detail) {
+          // The backend returns: "Quota exceeded: X/Y chat messages this day on the
+          // BASIC plan. Upgrade to PRO for a larger quota. https://www.cryptovol.io/account"
+          friendly = body.detail.replace(/\s*https:\/\/\S+/g, "").trim();
+        } else if (body.detail) {
+          friendly = body.detail;
+        }
+      } catch (_e) { /* non-JSON, fall through */ }
+
+      if (r.status === 429 && friendly) {
+        const wrap = document.createElement("div");
+        wrap.className = "msg err";
+        wrap.innerHTML = `<pre></pre>
+          <div class="meta" style="margin-top:8px;">
+            <a href="/account" style="color:#1F6FBF;">Upgrade or view usage on /account →</a>
+          </div>`;
+        wrap.querySelector("pre").textContent = friendly;
+        document.getElementById("chat").appendChild(wrap);
+        window.scrollTo(0, document.body.scrollHeight);
+      } else {
+        addMsg("err", friendly || `HTTP ${r.status}`);
+      }
       return;
     }
 
