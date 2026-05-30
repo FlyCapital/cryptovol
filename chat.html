@@ -80,12 +80,7 @@
   .feedback button:hover { background:#f5f5f5; color:#1a1a1a; }
   .feedback button.selected.up   { background:#dcfce7; border-color:#86efac; color:#15803d; }
   .feedback button.selected.down { background:#fee2e2; border-color:#fca5a5; color:#b91c1c; }
-  /* When feedback is folded into the same row as the API requests collapser */
-  .msg.bot.with-feedback {
-    display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
-  }
-  .msg.bot.with-feedback > details.api-calls { flex:1; min-width:0; }
-  /* Standalone feedback row (when the assistant message had no API calls) */
+  /* Feedback always renders in its own subtle box, right-aligned. */
   .msg.bot.feedback-row {
     background:transparent; border:none; padding:4px 0;
     display:flex; justify-content:flex-end;
@@ -112,20 +107,26 @@
 // ── Config ────────────────────────────────────────────────────────────────
 const API_BASE = "https://cryptovol-api-nbakzshi6q-uc.a.run.app";
 const POST_URL = API_BASE + "/v1/chat/";
-const STORAGE_KEY = "cryptovol-chat-v1";
-const CONVERSATION_KEY = "cryptovol-chat-conv-id";
+
+// localStorage keys are scoped to the currently signed-in Clerk user so that
+// switching accounts in the same browser doesn't bleed chat history across
+// users. ``storageKey`` / ``conversationKey`` get populated after Clerk.load()
+// resolves the current user — see the boot block below.
+const STORAGE_KEY_BASE      = "cryptovol-chat-v1";
+const CONVERSATION_KEY_BASE = "cryptovol-chat-conv-id";
+let storageKey      = STORAGE_KEY_BASE;
+let conversationKey = CONVERSATION_KEY_BASE;
 
 // `history` is the API-shape array sent in each request ({role, content}).
 // `messages` is the full transcript including chart specs, used for re-rendering on reload.
 let history  = [];
 let messages = [];
-// Persists across page reloads so a returning user's follow-ups belong to the
-// same conversation thread (key training-data signal). Reset on Clear history.
-let conversationId = localStorage.getItem(CONVERSATION_KEY);
+// Populated after Clerk loads and we know which user's cache to read.
+let conversationId = null;
 
 function persist() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ history, messages }));
+    localStorage.setItem(storageKey, JSON.stringify({ history, messages }));
   } catch (e) {
     console.warn("persist failed:", e);   // quota exceeded; ignore
   }
@@ -133,7 +134,7 @@ function persist() {
 
 function restore() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey);
     if (!raw) return false;
     const data = JSON.parse(raw);
     if (!data || !Array.isArray(data.messages)) return false;
@@ -162,8 +163,8 @@ async function clearHistory() {
   history = [];
   messages = [];
   conversationId = null;
-  localStorage.removeItem(STORAGE_KEY);
-  localStorage.removeItem(CONVERSATION_KEY);
+  localStorage.removeItem(storageKey);
+  localStorage.removeItem(conversationKey);
   document.getElementById("chat").innerHTML = "";
   renderGreeting();
 }
@@ -203,7 +204,7 @@ async function fetchServerHistory() {
     // Continue the most recent conversation thread by default.
     if (lastConversationId) {
       conversationId = lastConversationId;
-      localStorage.setItem(CONVERSATION_KEY, conversationId);
+      localStorage.setItem(conversationKey, conversationId);
     }
     persist();
     return true;
@@ -237,10 +238,7 @@ function replayMessages() {
   }
 }
 
-// Append 👍 / 👎 buttons for an assistant message. If the most recent block
-// in the chat is the API-requests collapser for the same message, fold the
-// buttons into that block (right-aligned) so we don't add a separate row.
-// Otherwise (no API calls were made), put the buttons in their own subtle row.
+// Append 👍 / 👎 buttons for an assistant message in their own subtle row.
 function addFeedback(messageId, current) {
   const chat = document.getElementById("chat");
 
@@ -271,18 +269,10 @@ function addFeedback(messageId, current) {
     });
   });
 
-  // Fold into the trailing API-requests block when present.
-  const last = chat.lastElementChild;
-  if (last && last.classList.contains("msg") && last.classList.contains("bot")
-      && last.querySelector("details.api-calls")) {
-    last.classList.add("with-feedback");
-    last.appendChild(fb);
-  } else {
-    const row = document.createElement("div");
-    row.className = "msg bot feedback-row";
-    row.appendChild(fb);
-    chat.appendChild(row);
-  }
+  const row = document.createElement("div");
+  row.className = "msg bot feedback-row";
+  row.appendChild(fb);
+  chat.appendChild(row);
   window.scrollTo(0, document.body.scrollHeight);
 }
 
@@ -300,6 +290,16 @@ window.addEventListener("load", async () => {
     afterSignOutUrl: "/login",
   });
 
+  // Scope localStorage to the signed-in user so switching accounts in the
+  // same browser doesn't leak history (or conversation_id) across users.
+  // Also evict any unscoped legacy entries so the leak window closes cleanly.
+  const uid = window.Clerk.user.id;
+  storageKey      = `${STORAGE_KEY_BASE}:${uid}`;
+  conversationKey = `${CONVERSATION_KEY_BASE}:${uid}`;
+  localStorage.removeItem(STORAGE_KEY_BASE);       // legacy, unscoped
+  localStorage.removeItem(CONVERSATION_KEY_BASE);  // legacy, unscoped
+  conversationId = localStorage.getItem(conversationKey);
+
   document.getElementById("app").innerHTML = `
     <div class="toolbar">
       <button class="link" onclick="clearHistory()">Clear history</button>
@@ -311,14 +311,19 @@ window.addEventListener("load", async () => {
       <button id="send" onclick="send()">Send</button>
     </div>`;
 
-  // Try server-side history first (cross-device), fall back to localStorage
-  // (offline-friendly), fall back to the greeting (brand-new user).
+  // Server is the authority. If it returns rows, replay. If it returns nothing,
+  // show the greeting — do NOT fall back to localStorage. That fallback would
+  // leak history across accounts when the new user happens to have no rows on
+  // the server but the previous user's cache is still in this browser.
   const serverHit = await fetchServerHistory();
-  if (!serverHit && restore() && messages.length) {
-    replayMessages();
-  } else if (serverHit) {
+  if (serverHit) {
     replayMessages();
   } else {
+    // No server-side history — wipe any per-user cache (could be from a previous
+    // session that the user has since cleared on another device) and greet.
+    localStorage.removeItem(storageKey);
+    history = [];
+    messages = [];
     renderGreeting();
   }
   document.getElementById("input").focus();
@@ -476,7 +481,7 @@ async function send() {
     // fresh one if we passed null on the first turn. Persist either way.
     if (data.conversation_id) {
       conversationId = data.conversation_id;
-      localStorage.setItem(CONVERSATION_KEY, conversationId);
+      localStorage.setItem(conversationKey, conversationId);
     }
 
     history.push({ role: "user", content: msg });
