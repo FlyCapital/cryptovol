@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CryptoVol — Crypto Volatility Intelligence</title>
-<meta name="description" content="Institutional-grade implied volatility surfaces for BTC, ETH, SOL, XRP, AVAX, TRX. SABR-calibrated surfaces, full Greeks, three daily snapshots, REST API + Python SDK.">
-<meta name="keywords" content="crypto volatility, implied volatility, bitcoin volatility, BTC options, ETH options, vol surface, SABR, CryptoVIX, options Greeks, crypto derivatives">
+<meta name="description" content="Institutional-grade implied volatility surfaces for BTC, ETH, SOL, XRP, AVAX, TRX. No-arbitrage volatility model, full Greeks, three daily snapshots, REST API + Python SDK.">
+<meta name="keywords" content="crypto volatility, implied volatility, bitcoin volatility, BTC options, ETH options, vol surface, no-arbitrage volatility model, CryptoVIX, options Greeks, crypto derivatives">
 <meta name="author" content="CryptoVol">
 <meta name="robots" content="index, follow">
 
 <meta property="og:title" content="CryptoVol — Crypto Volatility Intelligence">
-<meta property="og:description" content="Institutional-grade implied volatility surfaces for BTC, ETH, SOL, XRP, AVAX, TRX. SABR-calibrated, full Greeks, REST API + Python SDK.">
+<meta property="og:description" content="Institutional-grade implied volatility surfaces for BTC, ETH, SOL, XRP, AVAX, TRX. No-arbitrage volatility model, full Greeks, REST API + Python SDK.">
 <meta property="og:url" content="https://www.cryptovol.io">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CryptoVol">
@@ -440,7 +440,7 @@ footer {
         <h1>Crypto volatility,<br><em>cleanly measured.</em></h1>
         <p class="hero-sub">
           Institutional-grade implied vol surfaces for BTC, ETH, SOL, XRP, AVAX and TRX.
-          SABR-calibrated, arbitrage-free, with full Greeks. One REST API for traders, quants and researchers.
+          Fitted with a no-arbitrage volatility model, full Greeks included. One REST API for traders, quants and researchers.
         </p>
         <div class="hero-actions">
           <a href="/signup" class="btn-pri">Create your account →</a>
@@ -460,7 +460,7 @@ footer {
               <button class="code-tab active" data-tab="python">Python</button>
               <button class="code-tab" data-tab="curl">curl</button>
             </div>
-            <span class="code-hint">BTC 25Δ call · SABR vol + Greeks</span>
+            <span class="code-hint">BTC 25Δ call · vol + Greeks</span>
           </div>
           <pre class="code-body" id="code-python"><code><span class="c-kw">from</span> cryptovol <span class="c-kw">import</span> CryptoVol
 
@@ -478,7 +478,7 @@ pt = cv.<span class="c-fn">vol_surface</span>(
 <span class="c-bi">print</span>(pt.vol, pt.analytics.greeks.delta)
 
 <span class="c-cm"># → 35.21%  0.2500</span>
-<span class="c-cm"># Δ round-trips exactly: SABR fit is</span>
+<span class="c-cm"># Δ round-trips exactly: the fit is</span>
 <span class="c-cm"># arbitrage-free across the smile.</span></code></pre>
           <pre class="code-body" id="code-curl" style="display:none;"><code>curl -H <span class="c-str">"X-CryptoVol-Key: cvk_live_..."</span> \
   <span class="c-str">"https://cryptovol-api-nbakzshi6q-uc.a.run.app/v1/vol-surface\
@@ -520,8 +520,8 @@ pt = cv.<span class="c-fn">vol_surface</span>(
         <div class="lbl">Historical archive for clean backtesting</div>
       </div>
       <div class="trust-item">
-        <div class="num">SABR</div>
-        <div class="lbl">Arbitrage-free surfaces, full Greeks</div>
+        <div class="num">No-arb</div>
+        <div class="lbl">Volatility model with full Greeks, no butterfly violations</div>
       </div>
     </div>
   </div>
@@ -594,7 +594,7 @@ pt = cv.<span class="c-fn">vol_surface</span>(
       <div class="feature">
         <div class="feature-icon">{ }</div>
         <h3>Vol surface, any strike</h3>
-        <p>Single-point or bulk SABR-interpolated quotes. Specify strike, moneyness, or delta — the API solves for the right point and returns vol, price, and Greeks.</p>
+        <p>Single-point or bulk interpolated quotes. Specify strike, moneyness, or delta — the API solves for the right point and returns vol, price, and Greeks.</p>
       </div>
       <div class="feature">
         <div class="feature-icon">↬</div>
@@ -614,7 +614,7 @@ pt = cv.<span class="c-fn">vol_surface</span>(
       <div class="feature">
         <div class="feature-icon">⌬</div>
         <h3>Arbitrage-free fits</h3>
-        <p>SABR-calibrated with multi-seed restart and degenerate-fit rejection. No butterfly violations. Same calibration pipeline that drives the live dashboard.</p>
+        <p>Calibrated with a no-arbitrage volatility model — multi-seed restart and degenerate-fit rejection. No butterfly violations. Same pipeline that drives the live dashboard.</p>
       </div>
       <div class="feature">
         <div class="feature-icon">π</div>
