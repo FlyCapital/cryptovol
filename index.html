@@ -100,6 +100,49 @@ nav {
 .nav-cta:hover  { background: #1e293b; }
 .nav-cta:active { transform: translateY(1px); }
 
+/* Nav dropdowns */
+.nav-dropdown { position: relative; }
+.nav-dropdown-trigger {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: none; border: none; padding: 0;
+  font-family: var(--sans); font-size: 14px; font-weight: 500;
+  color: var(--text2); cursor: pointer;
+  transition: color 0.15s;
+}
+.nav-dropdown-trigger:hover { color: var(--text); }
+.nav-dropdown-trigger svg {
+  width: 10px; height: 10px; opacity: 0.6;
+  transition: transform 0.15s;
+}
+.nav-dropdown:hover .nav-dropdown-trigger svg,
+.nav-dropdown:focus-within .nav-dropdown-trigger svg {
+  transform: rotate(180deg);
+}
+.nav-dropdown-menu {
+  position: absolute; top: calc(100% + 6px); left: -14px;
+  min-width: 200px; background: #fff;
+  border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  padding: 8px;
+  opacity: 0; visibility: hidden; transform: translateY(-4px);
+  transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
+}
+/* Invisible bridge so hover doesn't break across the gap */
+.nav-dropdown-menu::before {
+  content: ""; position: absolute; top: -10px; left: 0; right: 0; height: 10px;
+}
+.nav-dropdown:hover .nav-dropdown-menu,
+.nav-dropdown:focus-within .nav-dropdown-menu {
+  opacity: 1; visibility: visible; transform: translateY(0);
+}
+.nav-dropdown-item {
+  display: block; padding: 8px 12px;
+  font-family: var(--sans); font-size: 14px; color: var(--text);
+  text-decoration: none; border-radius: 6px;
+  transition: background 0.1s;
+}
+.nav-dropdown-item:hover { background: var(--surface2); }
+
 /* ─── Section helpers ─────────────────────────────────────────────────── */
 .wrap { max-width: 1180px; margin: 0 auto; padding: 0 32px; }
 
@@ -422,10 +465,28 @@ footer {
   <div class="nav-inner">
     <a href="/" class="logo">crypto<span>vol</span></a>
     <div class="nav-links">
-      <a href="/dashboard" class="nav-link">Dashboard</a>
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-trigger" type="button">
+          Developer
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/dashboard" class="nav-dropdown-item" role="menuitem">Dashboard</a>
+          <a href="/docs" class="nav-dropdown-item" role="menuitem">Docs</a>
+          <a href="https://github.com/FlyCapital/cryptovol-python" target="_blank" rel="noopener" class="nav-dropdown-item" role="menuitem">SDK</a>
+        </div>
+      </div>
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-trigger" type="button">
+          Research
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/methodology" class="nav-dropdown-item" role="menuitem">Methodology</a>
+          <a href="/blog" class="nav-dropdown-item" role="menuitem">Blog</a>
+        </div>
+      </div>
       <a href="#pricing" class="nav-link">Pricing</a>
-      <a href="/docs" class="nav-link">Docs</a>
-      <a href="/blog" class="nav-link">Research</a>
       <a href="/login" class="nav-link">Sign in</a>
       <a href="/signup" class="nav-cta">Try free →</a>
     </div>
