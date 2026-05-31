@@ -102,8 +102,25 @@
       border-radius: 8px !important;
       font-size: 15px !important;
       box-shadow: none !important;
+      -webkit-box-shadow: none !important;
       background-image: none !important;
       filter: none !important;
+      -webkit-filter: none !important;
+      text-shadow: none !important;
+      transform: none !important;
+    }
+    /* Kill the ::before / ::after pseudos Clerk uses for top-highlight and
+       bottom drop shadow — that's what was making them look uneven. */
+    .cl-socialButtonsBlockButton::before,
+    .cl-socialButtonsBlockButton::after,
+    .cl-formButtonPrimary::before,
+    .cl-formButtonPrimary::after,
+    .cl-formFieldInput::before,
+    .cl-formFieldInput::after {
+      content: none !important;
+      display: none !important;
+      background: none !important;
+      box-shadow: none !important;
     }
 
     /* Social button — white with crisp slate border on all sides */
