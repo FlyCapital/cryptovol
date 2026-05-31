@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Auth + gated user surfaces — no SEO value, would index sign-in chrome.
+Disallow: /signup
+Disallow: /login
+Disallow: /account
+Disallow: /chat
+Disallow: /admin
+
+Sitemap: https://www.cryptovol.io/sitemap.xml
