@@ -88,30 +88,52 @@
     }
     .cl-socialButtonsBlockButton { overflow: hidden !important; position: relative !important; }
 
+    .cl-socialButtonsBlockButton,
+    .cl-formFieldInput,
+    .cl-formButtonPrimary {
+      min-height: 48px !important;
+      border-radius: 8px !important;
+      font-size: 15px !important;
+      box-shadow: none !important;
+      background-image: none !important;
+      filter: none !important;
+    }
+
     .cl-socialButtonsBlockButton {
-      min-height: 46px !important;
       background: var(--surface) !important;
       border: 1px solid var(--border2) !important;
-      border-radius: 10px !important;
+      color: var(--text) !important;
+      transition: background 0.15s, border-color 0.15s !important;
     }
-    .cl-socialButtonsBlockButton:hover { background: #fafafa !important; }
+    .cl-socialButtonsBlockButton:hover {
+      background: #fafafa !important;
+      border-color: var(--text2) !important;
+    }
     .cl-socialButtonsBlockButtonText { font-weight: 500 !important; font-size: 15px !important; }
 
     .cl-formFieldInput {
-      min-height: 46px !important;
-      border-radius: 10px !important;
-      font-size: 15px !important;
+      background: var(--surface) !important;
+      border: 1px solid var(--border2) !important;
+      color: var(--text) !important;
+      transition: border-color 0.15s, box-shadow 0.15s !important;
+    }
+    .cl-formFieldInput:focus {
+      border-color: var(--text) !important;
+      box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08) !important;
+      outline: none !important;
     }
 
     .cl-formButtonPrimary {
-      min-height: 48px !important;
-      border-radius: 10px !important;
-      font-size: 15px !important;
-      font-weight: 600 !important;
       background: var(--black) !important;
-      box-shadow: none !important;
+      border: 1px solid var(--black) !important;
+      color: #ffffff !important;
+      font-weight: 600 !important;
+      transition: background 0.15s !important;
     }
-    .cl-formButtonPrimary:hover { background: #1e293b !important; }
+    .cl-formButtonPrimary:hover {
+      background: #1e293b !important;
+      border-color: #1e293b !important;
+    }
     .cl-formButtonPrimary svg,
     .cl-formButtonPrimary .cl-buttonArrowIcon { display: none !important; }
 
