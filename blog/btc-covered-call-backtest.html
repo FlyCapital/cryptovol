@@ -615,7 +615,7 @@ window.addEventListener('load', async () => {
       const slot = document.getElementById('nav-user-slot');
       slot.style.display = 'inline-flex';
       window.Clerk.mountUserButton(slot, {
-        afterSignOutUrl: '/',
+        afterSignOutUrl: '/login',
         userProfileMode: 'navigation',
         userProfileUrl: '/account',
       });
