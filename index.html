@@ -372,6 +372,37 @@ nav {
 }
 .chat-chart svg { display: block; width: 100%; height: auto; }
 
+/* ─── Chat demo animation ────────────────────────────────────────────── */
+.cd-caret {
+  display: inline-block;
+  width: 2px;
+  margin-left: 1px;
+  color: rgba(255, 255, 255, 0.7);
+  animation: cd-blink 1s steps(1) infinite;
+}
+@keyframes cd-blink { 50% { opacity: 0; } }
+
+.cd-fade {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.45s ease-out, transform 0.45s ease-out;
+}
+.chat-mockup.cd-step-bot  .cd-fade#cdBot { opacity: 1; transform: translateY(0); }
+.chat-mockup.cd-step-api  .cd-fade#cdApi { opacity: 1; transform: translateY(0); }
+
+/* SVG path-draw: starts fully dashed, animates dashoffset to 0 */
+#cdLine {
+  stroke-dasharray: 800;
+  stroke-dashoffset: 800;
+  transition: stroke-dashoffset 1.4s ease-out;
+}
+.chat-mockup.cd-step-draw #cdLine { stroke-dashoffset: 0; }
+#cdFill { transition: opacity 0.6s ease-out 0.8s; }
+.chat-mockup.cd-step-draw #cdFill { opacity: 1; }
+
+/* Hide caret once the user message has finished typing */
+.chat-mockup.cd-step-done #cdCaret { display: none; }
+
 /* ─── Pricing ─────────────────────────────────────────────────────────── */
 .tiers {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
@@ -596,9 +627,9 @@ g = pt.analytics.greeks
         <a href="/login" class="btn-pri">Try for free →</a>
       </div>
 
-      <div class="chat-mockup">
-        <div class="chat-msg-user">Plot BTC 1M ATM vol over the past month</div>
-        <div class="chat-msg-bot">
+      <div class="chat-mockup" id="chatDemo">
+        <div class="chat-msg-user" id="cdUser"><span id="cdUserText"></span><span class="cd-caret" id="cdCaret">▍</span></div>
+        <div class="chat-msg-bot cd-fade" id="cdBot">
           <strong>BTC 1M ATM implied vol</strong> over the past month. Vol compressed through mid-May
           as spot drifted, then spiked above 45% on the late-month move — currently rebuilding
           near the 30-day median.
@@ -614,10 +645,10 @@ g = pt.analytics.greeks
               <line x1="0"  y1="30"  x2="360" y2="30"  stroke="#e2e8f0" stroke-width="0.5"/>
               <line x1="0"  y1="60"  x2="360" y2="60"  stroke="#e2e8f0" stroke-width="0.5"/>
               <line x1="0"  y1="90"  x2="360" y2="90"  stroke="#e2e8f0" stroke-width="0.5"/>
-              <path d="M0,58 L18,62 L36,66 L54,70 L72,74 L90,78 L108,82 L126,86 L144,90 L162,94 L180,96 L198,90 L216,72 L234,40 L252,28 L270,34 L288,42 L306,50 L324,46 L342,52 L360,56"
+              <path id="cdLine" d="M0,58 L18,62 L36,66 L54,70 L72,74 L90,78 L108,82 L126,86 L144,90 L162,94 L180,96 L198,90 L216,72 L234,40 L252,28 L270,34 L288,42 L306,50 L324,46 L342,52 L360,56"
                     fill="none" stroke="#1F6FBF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-              <path d="M0,58 L18,62 L36,66 L54,70 L72,74 L90,78 L108,82 L126,86 L144,90 L162,94 L180,96 L198,90 L216,72 L234,40 L252,28 L270,34 L288,42 L306,50 L324,46 L342,52 L360,56 L360,120 L0,120 Z"
-                    fill="url(#rrFade)"/>
+              <path id="cdFill" d="M0,58 L18,62 L36,66 L54,70 L72,74 L90,78 L108,82 L126,86 L144,90 L162,94 L180,96 L198,90 L216,72 L234,40 L252,28 L270,34 L288,42 L306,50 L324,46 L342,52 L360,56 L360,120 L0,120 Z"
+                    fill="url(#rrFade)" opacity="0"/>
               <text x="2"   y="14" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8">50</text>
               <text x="2"   y="64" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8">40</text>
               <text x="2"   y="114" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8">30</text>
@@ -626,7 +657,7 @@ g = pt.analytics.greeks
             </svg>
           </div>
         </div>
-        <div style="font-family:var(--mono); font-size:11px; color:var(--text3); text-align:right;">
+        <div class="cd-fade" id="cdApi" style="font-family:var(--mono); font-size:11px; color:var(--text3); text-align:right;">
           ▸ ▸ API requests (1)
         </div>
       </div>
@@ -817,6 +848,52 @@ window.addEventListener('load', async () => {
     }
   } catch (e) { console.warn('Clerk failed to load', e); }
 });
+
+// ── Chat demo animation ───────────────────────────────────────────────
+// Plays once when the Quanta section scrolls into view: types the user
+// prompt char-by-char, fades in the bot reply, animates the SVG line in,
+// fades in the gradient + API-requests footer. No looping (intentionally
+// distraction-free after the first watch).
+(function () {
+  const demo  = document.getElementById('chatDemo');
+  if (!demo) return;
+  const text  = document.getElementById('cdUserText');
+  const caret = document.getElementById('cdCaret');
+  const PROMPT = 'Plot BTC 1M ATM vol over the past month';
+
+  function play() {
+    text.textContent = '';
+    demo.classList.remove('cd-step-bot', 'cd-step-draw', 'cd-step-api', 'cd-step-done');
+    caret.style.display = '';
+
+    let i = 0;
+    function tick() {
+      if (i <= PROMPT.length) {
+        text.textContent = PROMPT.slice(0, i);
+        i++;
+        setTimeout(tick, 32);
+      } else {
+        demo.classList.add('cd-step-done');           // hide caret
+        setTimeout(() => demo.classList.add('cd-step-bot'),  300);   // bot reply fades in
+        setTimeout(() => demo.classList.add('cd-step-draw'), 900);   // line draws + fill fades
+        setTimeout(() => demo.classList.add('cd-step-api'),  2400);  // API row appears last
+      }
+    }
+    tick();
+  }
+
+  // Trigger on viewport entry (fires once)
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) { play(); io.disconnect(); }
+      });
+    }, { threshold: 0.35 });
+    io.observe(demo);
+  } else {
+    setTimeout(play, 400);
+  }
+})();
 </script>
 
 </body>
