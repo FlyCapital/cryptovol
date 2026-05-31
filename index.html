@@ -912,6 +912,12 @@ window.addEventListener('load', async () => {
   function playOne(ex) {
     // Reset all state
     clearTimers();
+
+    // Disable line transitions BEFORE removing classes so the previous
+    // cycle's drawn line doesn't visibly un-draw over 1.4s.
+    line.style.transition  = 'none';
+    line2.style.transition = 'none';
+
     demo.classList.remove('cd-step-bot', 'cd-step-draw', 'cd-step-api', 'cd-step-done');
     text.textContent = '';
     caret.style.display = '';
@@ -928,13 +934,12 @@ window.addEventListener('load', async () => {
     line2.setAttribute('d', ex.line2 || '');                    // hides itself when empty
     fill.setAttribute('d', ex.line2 ? '' : fillFromLine(ex.line)); // skip fill on 2-line chart
 
-    // Force the lines to start fully dashed (re-init dashoffset)
-    [line, line2].forEach((el) => {
-      el.style.transition = 'none';
-      el.style.strokeDashoffset = '800';
-      void el.getBoundingClientRect();    // reflow
-      el.style.transition = '';
-    });
+    // Commit reset to the DOM, then restore transitions so the upcoming
+    // draw-in animation can play. NOTE: do NOT touch strokeDashoffset
+    // inline — the class-based CSS rule controls it (inline would override).
+    void demo.getBoundingClientRect();
+    line.style.transition  = '';
+    line2.style.transition = '';
 
     // Typewriter prompt
     let i = 0;
