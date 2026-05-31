@@ -553,9 +553,10 @@ pt = cv.<span class="c-fn">vol_surface</span>(
     include_analytics=<span class="c-kw">True</span>,
 )
 
-<span class="c-bi">print</span>(pt.vol, pt.analytics.greeks.delta)
+g = pt.analytics.greeks
+<span class="c-bi">print</span>(pt.vol, g.delta, g.gamma, g.vega)
 
-<span class="c-cm"># → 35.21%  0.2500</span></code></pre>
+<span class="c-cm"># → 35.21%  0.2500  0.00012  133.85</span></code></pre>
           <pre class="code-body" id="code-curl" style="display:none;"><code>curl -H <span class="c-str">"X-CryptoVol-Key: cvk_live_..."</span> \
   <span class="c-str">"https://cryptovol-api-nbakzshi6q-uc.a.run.app/v1/vol-surface\
 ?ccy=BTC&expiry=2026-09-26\
@@ -596,12 +597,13 @@ pt = cv.<span class="c-fn">vol_surface</span>(
       </div>
 
       <div class="chat-mockup">
-        <div class="chat-msg-user">Plot BTC 25Δ risk reversal over the past month</div>
+        <div class="chat-msg-user">Plot BTC 1M ATM vol over the past month</div>
         <div class="chat-msg-bot">
-          <strong>BTC 1M 25Δ risk reversal</strong> over the past month. Call IV has traded above put IV
-          for most of this period, reflecting relatively stronger demand for upside protection.
+          <strong>BTC 1M ATM implied vol</strong> over the past month. Vol compressed through mid-May
+          as spot drifted, then spiked above 45% on the late-month move — currently rebuilding
+          near the 30-day median.
           <div class="chat-chart">
-            <div class="chat-chart-title">BTC 1M 25ΔRR — history</div>
+            <div class="chat-chart-title">BTC 1M ATM vol (%) — history</div>
             <svg viewBox="0 0 360 120" preserveAspectRatio="none" aria-hidden="true">
               <defs>
                 <linearGradient id="rrFade" x1="0" x2="0" y1="0" y2="1">
@@ -612,13 +614,13 @@ pt = cv.<span class="c-fn">vol_surface</span>(
               <line x1="0"  y1="30"  x2="360" y2="30"  stroke="#e2e8f0" stroke-width="0.5"/>
               <line x1="0"  y1="60"  x2="360" y2="60"  stroke="#e2e8f0" stroke-width="0.5"/>
               <line x1="0"  y1="90"  x2="360" y2="90"  stroke="#e2e8f0" stroke-width="0.5"/>
-              <path d="M0,52 L18,48 L36,42 L54,40 L72,38 L90,40 L108,45 L126,50 L144,52 L162,58 L180,68 L198,86 L216,108 L234,72 L252,68 L270,60 L288,55 L306,42 L324,55 L342,52 L360,55"
+              <path d="M0,58 L18,62 L36,66 L54,70 L72,74 L90,78 L108,82 L126,86 L144,90 L162,94 L180,96 L198,90 L216,72 L234,40 L252,28 L270,34 L288,42 L306,50 L324,46 L342,52 L360,56"
                     fill="none" stroke="#1F6FBF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-              <path d="M0,52 L18,48 L36,42 L54,40 L72,38 L90,40 L108,45 L126,50 L144,52 L162,58 L180,68 L198,86 L216,108 L234,72 L252,68 L270,60 L288,55 L306,42 L324,55 L342,52 L360,55 L360,120 L0,120 Z"
+              <path d="M0,58 L18,62 L36,66 L54,70 L72,74 L90,78 L108,82 L126,86 L144,90 L162,94 L180,96 L198,90 L216,72 L234,40 L252,28 L270,34 L288,42 L306,50 L324,46 L342,52 L360,56 L360,120 L0,120 Z"
                     fill="url(#rrFade)"/>
-              <text x="2"   y="14" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8">−4</text>
-              <text x="2"   y="64" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8">−6</text>
-              <text x="2"   y="114" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8">−9</text>
+              <text x="2"   y="14" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8">50</text>
+              <text x="2"   y="64" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8">40</text>
+              <text x="2"   y="114" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8">30</text>
               <text x="0"   y="118" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8" text-anchor="start">Apr 30</text>
               <text x="358" y="118" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8" text-anchor="end">May 30</text>
             </svg>
