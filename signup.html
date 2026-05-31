@@ -179,6 +179,26 @@
       },
     };
 
+    // Walk the Clerk-rendered DOM and hide any element whose visible text
+    // is "Last used" (or starts with that). Class-name selectors miss it
+    // because Clerk uses hashed internal class names that change.
+    function hideClerkLastUsed() {
+      const sels = [
+        '.cl-socialButtonsBlockButton',
+        '.cl-socialButtonsBlockButton *',
+      ];
+      sels.forEach(sel => {
+        document.querySelectorAll(sel).forEach(el => {
+          if (el.children.length > 2) return;
+          const text = (el.textContent || '').trim().toLowerCase();
+          if (text === 'last used' || /^last us(ed)?\b/.test(text)) {
+            el.style.display = 'none';
+            el.style.visibility = 'hidden';
+          }
+        });
+      });
+    }
+
     window.addEventListener('load', async () => {
       await window.Clerk.load();
 
@@ -186,6 +206,9 @@
       window.Clerk.addListener(({ user }) => {
         if (user) window.location.replace('/account');
       });
+
+      const obs = new MutationObserver(() => hideClerkLastUsed());
+      obs.observe(document.body, { childList: true, subtree: true });
 
       window.Clerk.mountSignUp(document.getElementById('clerk-root'), {
         signInUrl: '/login',
