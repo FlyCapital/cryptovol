@@ -187,6 +187,14 @@
 
     window.addEventListener('load', async () => {
       await window.Clerk.load();
+
+      // Belt-and-suspenders: if the user lands on /signup already signed in,
+      // or the moment a session is created, go straight to /account.
+      if (window.Clerk.user) { window.location.replace('/account'); return; }
+      window.Clerk.addListener(({ user }) => {
+        if (user) window.location.replace('/account');
+      });
+
       window.Clerk.mountSignUp(document.getElementById('clerk-root'), {
         signInUrl: '/login',
         signUpForceRedirectUrl: '/account',
