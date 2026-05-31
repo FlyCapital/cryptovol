@@ -871,22 +871,27 @@ window.addEventListener('load', async () => {
 
   const EXAMPLES = [
     {
+      // 30 daily samples — IV drifts 44-51% with mild mean reversion,
+      // RV chops between 24-35%, persistently below IV (vol-risk premium).
       prompt: 'Compare BTC 1M ATM IV vs 30D realized vol',
       reply:  '<strong>BTC IV vs RV.</strong> Implied has held in the 45–50% range while realized compressed to ~28%, opening a 15–20pt vol-risk premium — historically a setup for short-gamma carry.',
       title:  'BTC 1M <span style="color:#0d4a8e;">IV</span> vs 30D <span style="color:#f59e0b;">RV</span> (%)',
       yHi: '60', yMid: '40', yLo: '20',
       xStart: 'Apr 30', xEnd: 'May 30',
-      line:  'M0,45 L36,42 L72,48 L108,40 L144,38 L180,42 L216,46 L252,40 L288,48 L324,42 L360,44',
-      line2: 'M0,88 L36,85 L72,92 L108,86 L144,78 L180,72 L216,80 L252,90 L288,94 L324,88 L360,84',
+      line:  'M0,44 L12,45 L24,44 L36,42 L48,39 L60,42 L72,46 L84,48 L96,51 L108,52 L120,54 L132,53 L144,56 L156,58 L168,61 L180,59 L192,57 L204,53 L216,48 L228,43 L240,40 L252,37 L264,39 L276,42 L288,47 L300,49 L312,52 L324,49 L336,46 L348,44 L360,46',
+      line2: 'M0,82 L12,86 L24,82 L36,90 L48,96 L60,99 L72,95 L84,89 L96,84 L108,80 L120,83 L132,88 L144,93 L156,91 L168,95 L180,99 L192,102 L204,98 L216,93 L228,89 L240,85 L252,79 L264,82 L276,87 L288,91 L300,95 L312,98 L324,100 L336,96 L348,90 L360,93',
     },
     {
+      // Smile compare — 13 evenly-spaced delta buckets, smooth U-shape via
+      // dense sampling. Orange = last week (symmetric, ATM=33%, wings=38%).
+      // Blue = today (left wing same, right wing steepened to 41%).
       prompt: 'Compare BTC 1M smile — today vs last week',
-      reply:  '<strong>BTC 1M IV smile, today vs 7 days ago.</strong> The call wing has steepened ~4 vol points while the put wing barely moved — recent rally has tilted the smile to favor upside skew.',
+      reply:  '<strong>BTC 1M IV smile, today vs 7 days ago.</strong> The call wing has steepened by ~3 vol points while the put wing barely moved — the recent rally tilted the smile to favor upside skew.',
       title:  'BTC 1M smile — <span style="color:#0d4a8e;">today</span> vs <span style="color:#f59e0b;">last week</span> (%)',
       yHi: '42', yMid: '37', yLo: '32',
       xStart: '10ΔP', xEnd: '10ΔC',
-      line:  'M0,42 L60,62 L120,82 L180,94 L240,70 L300,42 L360,18',
-      line2: 'M0,42 L60,62 L120,82 L180,96 L240,82 L300,62 L360,42',
+      line:  'M0,54 L30,68 L60,80 L90,90 L120,98 L150,102 L180,104 L210,99 L240,90 L270,78 L300,62 L330,42 L360,24',
+      line2: 'M0,54 L30,68 L60,80 L90,90 L120,98 L150,102 L180,104 L210,102 L240,98 L270,90 L300,80 L330,68 L360,54',
     },
   ];
 
