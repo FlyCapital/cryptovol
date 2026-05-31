@@ -630,11 +630,9 @@ g = pt.analytics.greeks
       <div class="chat-mockup" id="chatDemo">
         <div class="chat-msg-user" id="cdUser"><span id="cdUserText"></span><span class="cd-caret" id="cdCaret">▍</span></div>
         <div class="chat-msg-bot cd-fade" id="cdBot">
-          <strong>BTC 1M ATM implied vol</strong> over the past month. Vol compressed through mid-May
-          as spot drifted, then spiked above 45% on the late-month move — currently rebuilding
-          near the 30-day median.
+          <span id="cdReply"></span>
           <div class="chat-chart">
-            <div class="chat-chart-title">BTC 1M ATM vol (%) — history</div>
+            <div class="chat-chart-title" id="cdChartTitle"></div>
             <svg viewBox="0 0 360 120" preserveAspectRatio="none" aria-hidden="true">
               <defs>
                 <linearGradient id="rrFade" x1="0" x2="0" y1="0" y2="1">
@@ -645,15 +643,14 @@ g = pt.analytics.greeks
               <line x1="0"  y1="30"  x2="360" y2="30"  stroke="#e2e8f0" stroke-width="0.5"/>
               <line x1="0"  y1="60"  x2="360" y2="60"  stroke="#e2e8f0" stroke-width="0.5"/>
               <line x1="0"  y1="90"  x2="360" y2="90"  stroke="#e2e8f0" stroke-width="0.5"/>
-              <path id="cdLine" d="M0,58 L18,62 L36,66 L54,70 L72,74 L90,78 L108,82 L126,86 L144,90 L162,94 L180,96 L198,90 L216,72 L234,40 L252,28 L270,34 L288,42 L306,50 L324,46 L342,52 L360,56"
+              <path id="cdLine" d=""
                     fill="none" stroke="#1F6FBF" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-              <path id="cdFill" d="M0,58 L18,62 L36,66 L54,70 L72,74 L90,78 L108,82 L126,86 L144,90 L162,94 L180,96 L198,90 L216,72 L234,40 L252,28 L270,34 L288,42 L306,50 L324,46 L342,52 L360,56 L360,120 L0,120 Z"
-                    fill="url(#rrFade)" opacity="0"/>
-              <text x="2"   y="14" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8">50</text>
-              <text x="2"   y="64" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8">40</text>
-              <text x="2"   y="114" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8">30</text>
-              <text x="0"   y="118" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8" text-anchor="start">Apr 30</text>
-              <text x="358" y="118" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8" text-anchor="end">May 30</text>
+              <path id="cdFill" d="" fill="url(#rrFade)" opacity="0"/>
+              <text id="cdYHi"  x="2"   y="14"  font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8"></text>
+              <text id="cdYMid" x="2"   y="64"  font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8"></text>
+              <text id="cdYLo"  x="2"   y="114" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8"></text>
+              <text id="cdXStart" x="0"   y="118" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8" text-anchor="start"></text>
+              <text id="cdXEnd"   x="358" y="118" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8" text-anchor="end"></text>
             </svg>
           </div>
         </div>
@@ -849,49 +846,135 @@ window.addEventListener('load', async () => {
   } catch (e) { console.warn('Clerk failed to load', e); }
 });
 
-// ── Chat demo animation ───────────────────────────────────────────────
-// Plays once when the Quanta section scrolls into view: types the user
-// prompt char-by-char, fades in the bot reply, animates the SVG line in,
-// fades in the gradient + API-requests footer. No looping (intentionally
-// distraction-free after the first watch).
+// ── Chat demo animation — cycles through several Quanta examples ─────
+// Each example: typewriter prompt → fade-in reply → SVG line draws in →
+// fill gradient + API footer fade in → 4s hold → next example.
+// Pauses when scrolled off-screen so timers don't burn while invisible.
 (function () {
   const demo  = document.getElementById('chatDemo');
   if (!demo) return;
   const text  = document.getElementById('cdUserText');
   const caret = document.getElementById('cdCaret');
-  const PROMPT = 'Plot BTC 1M ATM vol over the past month';
+  const reply = document.getElementById('cdReply');
+  const title = document.getElementById('cdChartTitle');
+  const line  = document.getElementById('cdLine');
+  const fill  = document.getElementById('cdFill');
+  const yHi   = document.getElementById('cdYHi');
+  const yMid  = document.getElementById('cdYMid');
+  const yLo   = document.getElementById('cdYLo');
+  const xStart= document.getElementById('cdXStart');
+  const xEnd  = document.getElementById('cdXEnd');
 
-  function play() {
-    text.textContent = '';
+  const EXAMPLES = [
+    {
+      prompt: 'Plot BTC 1M ATM vol over the past month',
+      reply:  '<strong>BTC 1M ATM implied vol</strong> over the past month. Vol compressed through mid-May, then spiked above 45% on the late-month move — currently rebuilding near the 30-day median.',
+      title:  'BTC 1M ATM vol (%) — history',
+      yHi: '50', yMid: '40', yLo: '30',
+      xStart: 'Apr 30', xEnd: 'May 30',
+      line: 'M0,58 L18,62 L36,66 L54,70 L72,74 L90,78 L108,82 L126,86 L144,90 L162,94 L180,96 L198,90 L216,72 L234,40 L252,28 L270,34 L288,42 L306,50 L324,46 L342,52 L360,56',
+    },
+    {
+      prompt: 'Show BTC 1M vol smile by delta',
+      reply:  '<strong>BTC 1M IV smile.</strong> Both wings trade ~3 vol points above ATM, with a flat asymmetry — the market is pricing fat tails on both sides without strong directional bias.',
+      title:  'BTC 1M IV smile (by delta)',
+      yHi: '40', yMid: '36', yLo: '32',
+      xStart: '10ΔP', xEnd: '10ΔC',
+      line: 'M0,30 L40,46 L80,62 L120,76 L160,86 L180,90 L200,86 L240,76 L280,62 L320,48 L360,34',
+    },
+    {
+      prompt: 'Plot ETH ATM term structure',
+      reply:  '<strong>ETH ATM vol term structure.</strong> Front-end (7D-1M) at 52%, sloping up into the 6M point at 64%. Typical contango — market is pricing slow vol normalization rather than an event-driven spike.',
+      title:  'ETH ATM vol (%) — term structure',
+      yHi: '70', yMid: '60', yLo: '50',
+      xStart: '7D', xEnd: '1Y',
+      line: 'M0,84 L45,80 L90,74 L135,66 L180,56 L225,46 L270,38 L315,32 L360,28',
+    },
+    {
+      prompt: 'Compare BTC 25Δ risk reversal vs realized vol',
+      reply:  '<strong>BTC 1M 25Δ risk reversal.</strong> Call IV has traded above put IV (RR ≈ +2 to +4) for most of the month, reflecting persistent demand for upside protection ahead of the next FOMC.',
+      title:  'BTC 1M 25ΔRR — history',
+      yHi: '+4', yMid: '+2', yLo: '0',
+      xStart: 'Apr 30', xEnd: 'May 30',
+      line: 'M0,50 L36,45 L72,40 L108,35 L144,32 L180,28 L216,38 L252,52 L288,46 L324,40 L360,42',
+    },
+  ];
+
+  function fillFromLine(d) {
+    // Append L<lastX>,120 L0,120 Z to close to baseline
+    return d + ' L360,120 L0,120 Z';
+  }
+
+  let timers = [];
+  function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+  function schedule(fn, ms) { timers.push(setTimeout(fn, ms)); }
+
+  let idx = 0;
+  let isPlaying = false;
+
+  function playOne(ex) {
+    // Reset all state
+    clearTimers();
     demo.classList.remove('cd-step-bot', 'cd-step-draw', 'cd-step-api', 'cd-step-done');
+    text.textContent = '';
     caret.style.display = '';
 
+    // Update content
+    reply.innerHTML  = ex.reply;
+    title.textContent = ex.title;
+    yHi.textContent   = ex.yHi;
+    yMid.textContent  = ex.yMid;
+    yLo.textContent   = ex.yLo;
+    xStart.textContent = ex.xStart;
+    xEnd.textContent   = ex.xEnd;
+    line.setAttribute('d', ex.line);
+    fill.setAttribute('d', fillFromLine(ex.line));
+
+    // Force the line to start fully dashed (re-init dashoffset)
+    line.style.transition = 'none';
+    line.style.strokeDashoffset = '800';
+    void line.getBoundingClientRect();   // reflow
+    line.style.transition = '';
+
+    // Typewriter prompt
     let i = 0;
-    function tick() {
-      if (i <= PROMPT.length) {
-        text.textContent = PROMPT.slice(0, i);
+    const tick = () => {
+      if (i <= ex.prompt.length) {
+        text.textContent = ex.prompt.slice(0, i);
         i++;
-        setTimeout(tick, 32);
+        schedule(tick, 28);
       } else {
-        demo.classList.add('cd-step-done');           // hide caret
-        setTimeout(() => demo.classList.add('cd-step-bot'),  300);   // bot reply fades in
-        setTimeout(() => demo.classList.add('cd-step-draw'), 900);   // line draws + fill fades
-        setTimeout(() => demo.classList.add('cd-step-api'),  2400);  // API row appears last
+        demo.classList.add('cd-step-done');                 // hide caret
+        schedule(() => demo.classList.add('cd-step-bot'),  280);
+        schedule(() => demo.classList.add('cd-step-draw'), 850);
+        schedule(() => demo.classList.add('cd-step-api'), 2300);
+        // After the API row appears, hold then advance
+        schedule(() => {
+          idx = (idx + 1) % EXAMPLES.length;
+          if (isPlaying) playOne(EXAMPLES[idx]);
+        }, 6500);
       }
-    }
+    };
     tick();
   }
 
-  // Trigger on viewport entry (fires once)
+  // Pause when off-screen so the cycle doesn't churn invisibly
   if ('IntersectionObserver' in window) {
     const io = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
-        if (e.isIntersecting) { play(); io.disconnect(); }
+        if (e.isIntersecting && !isPlaying) {
+          isPlaying = true;
+          playOne(EXAMPLES[idx]);
+        } else if (!e.isIntersecting && isPlaying) {
+          isPlaying = false;
+          clearTimers();
+        }
       });
-    }, { threshold: 0.35 });
+    }, { threshold: 0.25 });
     io.observe(demo);
   } else {
-    setTimeout(play, 400);
+    isPlaying = true;
+    setTimeout(() => playOne(EXAMPLES[0]), 400);
   }
 })();
 </script>
