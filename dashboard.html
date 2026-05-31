@@ -236,6 +236,44 @@ nav {
 .leg-dash { width: 18px; height: 0; border-top: 2px dashed; }
 .panel-body { padding: 18px 22px 22px; }
 
+/* ─── Collapsible API-call block under each chart ─────────────────────── */
+.api-call {
+  margin: 0 22px 18px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface2);
+}
+.api-call summary {
+  cursor: pointer; list-style: none; user-select: none;
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  font-family: var(--mono); font-size: 12px;
+  color: var(--text2); letter-spacing: 0.04em;
+  transition: color 0.15s;
+}
+.api-call summary::-webkit-details-marker { display: none; }
+.api-call summary::before {
+  content: "▸"; transition: transform 0.15s; display: inline-block;
+  color: var(--text3);
+}
+.api-call[open] summary::before { transform: rotate(90deg); }
+.api-call summary:hover { color: var(--text); }
+.api-call summary .label { flex: 1; }
+.api-call summary .endpoint { color: var(--blue); font-size: 11.5px; }
+.api-call pre {
+  margin: 0;
+  background: #0f172a; color: #e2e8f0;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.6;
+  padding: 14px 18px;
+  overflow-x: auto;
+  border-top: 1px solid var(--border);
+}
+.api-call pre .c-cm { color: #94a3b8; font-style: italic; }
+.api-call pre .c-str { color: #86efac; }
+.api-call pre .c-kw { color: #93c5fd; }
+.api-call pre .c-bi { color: #fbbf24; }
+
 /* Tenor toggle (segmented) */
 .tenor-toggle {
   display: inline-flex; gap: 2px; padding: 3px;
@@ -420,10 +458,11 @@ footer {
   <section class="intro">
     <h1>Live <em>vol dashboard</em></h1>
     <p>
-      Live snapshots of every surface CryptoVol publishes — CryptoVIX-style IV index,
-      arbitrage-free 3D surfaces, term structure, and session-by-session smile comparison.
-      Free to view, no signup required. Data updates daily at Asia, London, and US closes.
-      <a href="/signup">Sign up free</a> to query the underlying API.
+      Every chart below is a live demo of what you can build with the CryptoVol API.
+      CryptoVIX-style IV index, arbitrage-free 3D surfaces, term structure across sessions,
+      smile comparison — all from public REST endpoints. Click <em style="font-style:normal; color:var(--text);">View API call</em>
+      under any panel to see the exact request that powers it.
+      <a href="/signup">Sign up free</a> to start querying.
     </p>
   </section>
 
@@ -442,6 +481,19 @@ footer {
     <div class="panel-body">
       <div style="position:relative;width:100%;height:300px;"><div class="chart-loading" id="vixLoading">LOADING DATA...</div><canvas id="vixChart" role="img" aria-label="Implied volatility index time series for all assets"></canvas></div>
     </div>
+    <details class="api-call">
+      <summary><span class="label">View API call</span><span class="endpoint">GET /v1/vol-index</span></summary>
+<pre><span class="c-cm"># Daily 30-day implied vol index, one row per (asset, date)</span>
+curl -H <span class="c-str">"X-CryptoVol-Key: cvk_live_..."</span> \
+  <span class="c-str">"https://cryptovol-api-nbakzshi6q-uc.a.run.app/v1/vol-index?ccy=BTC&tenor=30D&start_date=2025-12-01"</span>
+
+<span class="c-cm"># Python SDK — pip install cryptovol</span>
+<span class="c-kw">from</span> cryptovol <span class="c-kw">import</span> CryptoVol
+cv  = CryptoVol(api_key=<span class="c-str">"cvk_live_..."</span>)
+idx = cv.vol_index(ccy=<span class="c-str">"BTC"</span>, tenor=<span class="c-str">"30D"</span>, start_date=<span class="c-str">"2025-12-01"</span>)
+<span class="c-bi">print</span>(idx.data[-<span class="c-bi">1</span>].date, idx.data[-<span class="c-bi">1</span>].value)
+<span class="c-cm"># → 2026-05-30  42.18</span></pre>
+    </details>
   </div>
 
   <div class="controls-bar">
@@ -471,6 +523,17 @@ footer {
     <div class="panel-body">
       <div style="position:relative;width:100%;height:760px;"><div class="chart-loading" id="smileLoading">LOADING DATA...</div><div id="smileChart" role="img" aria-label="3D implied volatility surface" style="width:100%;height:100%;"></div></div>
     </div>
+    <details class="api-call">
+      <summary><span class="label">View API call</span><span class="endpoint">GET /v1/vol-surface/full</span></summary>
+<pre><span class="c-cm"># Full arbitrage-free surface — all expiries × all strikes for one session</span>
+curl -H <span class="c-str">"X-CryptoVol-Key: cvk_live_..."</span> \
+  <span class="c-str">"https://cryptovol-api-nbakzshi6q-uc.a.run.app/v1/vol-surface/full?ccy=BTC&session=us"</span>
+
+<span class="c-cm"># Python SDK</span>
+surf = cv.vol_surface_full(ccy=<span class="c-str">"BTC"</span>, session=<span class="c-str">"us"</span>)
+<span class="c-kw">for</span> exp <span class="c-kw">in</span> surf.expiries:
+    <span class="c-bi">print</span>(exp.expiry, exp.forward, <span class="c-bi">len</span>(exp.strikes), <span class="c-str">"strikes"</span>)</pre>
+    </details>
   </div>
 
   <div class="panel-row">
@@ -482,6 +545,17 @@ footer {
         <div class="exp-row" id="exp-row" style="display:none"></div>
         <div style="position:relative;width:100%;height:320px;"><div class="chart-loading" id="termLoading">LOADING DATA...</div><canvas id="termChart" role="img" aria-label="Volatility term structure by session"></canvas></div>
       </div>
+      <details class="api-call">
+        <summary><span class="label">View API call</span><span class="endpoint">GET /v1/vol-surface/full</span></summary>
+<pre><span class="c-cm"># Get the full surface, then pick ATM (moneyness=1.0) at each tenor</span>
+curl -H <span class="c-str">"X-CryptoVol-Key: cvk_live_..."</span> \
+  <span class="c-str">"https://cryptovol-api-nbakzshi6q-uc.a.run.app/v1/vol-surface/full?ccy=BTC&session=us"</span>
+
+<span class="c-cm"># Python SDK — one call per session, pluck ATM row at each tenor</span>
+<span class="c-kw">for</span> sess <span class="c-kw">in</span> [<span class="c-str">"asia"</span>, <span class="c-str">"london"</span>, <span class="c-str">"us"</span>]:
+    s = cv.vol_surface_full(ccy=<span class="c-str">"BTC"</span>, session=sess)
+    term = [(e.tenor, e.atm_vol) <span class="c-kw">for</span> e <span class="c-kw">in</span> s.expiries]</pre>
+      </details>
     </div>
 
     <div class="panel">
@@ -499,6 +573,14 @@ footer {
       <div class="panel-body">
         <div style="position:relative;width:100%;height:320px;"><div class="chart-loading" id="sessionSmileLoading">LOADING DATA...</div><canvas id="sessionSmileChart" role="img" aria-label="Vol smile by session for selected expiry"></canvas></div>
       </div>
+      <details class="api-call">
+        <summary><span class="label">View API call</span><span class="endpoint">GET /v1/vol-surface/full</span></summary>
+<pre><span class="c-cm"># Compare smile across the three daily sessions for one expiry</span>
+<span class="c-kw">for</span> sess <span class="c-kw">in</span> [<span class="c-str">"asia"</span>, <span class="c-str">"london"</span>, <span class="c-str">"us"</span>]:
+    surf  = cv.vol_surface_full(ccy=<span class="c-str">"BTC"</span>, session=sess)
+    smile = <span class="c-bi">next</span>(e <span class="c-kw">for</span> e <span class="c-kw">in</span> surf.expiries <span class="c-kw">if</span> e.expiry == <span class="c-str">"2026-06-27"</span>)
+    <span class="c-bi">print</span>(sess, smile.atm_vol, smile.rr_25d, smile.bf_25d)</pre>
+      </details>
     </div>
   </div>
 
