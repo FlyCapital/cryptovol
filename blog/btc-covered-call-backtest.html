@@ -532,7 +532,7 @@ footer {
     <span class="str">"""Returns strike, vol, BS premium, spot, and Greeks for a target-delta call."""</span>
     r = requests.<span class="fn">get</span>(
         <span class="str">"https://api.cryptovol.io/v1/vol-surface"</span>,
-        headers={<span class="str">"X-RapidAPI-Key"</span>: YOUR_API_KEY},
+        headers={<span class="str">"X-CryptoVol-Key"</span>: YOUR_API_KEY},
         params={
             <span class="str">"ccy"</span>:               <span class="str">"BTC"</span>,
             <span class="str">"date"</span>:              date,

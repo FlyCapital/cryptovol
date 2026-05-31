@@ -2,7 +2,7 @@
   "redirects": [
     {
       "source": "/api",
-      "destination": "https://rapidapi.com/mfzhang21/api/cryptovol",
+      "destination": "/signup",
       "permanent": false
     }
   ],
