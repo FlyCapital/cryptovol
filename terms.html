@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Service — CryptoVol</title>
+<meta name="description" content="Terms of Service and refund policy for CryptoVol — institutional-grade crypto volatility data and API.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://www.cryptovol.io/terms">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- Clerk auth -->
+<script defer crossorigin="anonymous"
+  data-clerk-publishable-key="pk_live_Y2xlcmsuY3J5cHRvdm9sLmlvJA"
+  src="https://clerk.cryptovol.io/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
+  type="text/javascript"></script>
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg:        #faf9f5;
+  --surface:   #ffffff;
+  --surface2:  #f5f4ef;
+  --border:    rgba(15, 23, 42, 0.08);
+  --border2:   rgba(15, 23, 42, 0.14);
+  --text:      #0f172a;
+  --text2:     #475569;
+  --text3:     #94a3b8;
+  --blue:      #1F6FBF;
+  --black:     #0f172a;
+  --sans:      'Inter', sans-serif;
+  --mono:      'IBM Plex Mono', monospace;
+  --serif:     'Source Serif 4', Georgia, serif;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: var(--sans); font-size: 15px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; }
+
+/* ─── Nav (shared with home) ────────────────────────────────────────── */
+nav { background: rgba(250, 249, 245, 0.85); backdrop-filter: saturate(180%) blur(12px); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+.nav-inner { max-width: 1180px; margin: 0 auto; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 64px; }
+.logo { font-family: var(--sans); font-size: 19px; font-weight: 800; letter-spacing: -0.4px; color: var(--text); text-decoration: none; }
+.logo span { color: var(--blue); }
+.nav-links { display: flex; align-items: center; gap: 28px; }
+.nav-link { color: var(--text2); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.15s; }
+.nav-link:hover { color: var(--text); }
+.nav-login { display: inline-flex; align-items: center; color: var(--text); text-decoration: none; font-family: var(--sans); font-size: 14px; font-weight: 500; padding: 7px 16px; border-radius: 8px; border: 1px solid var(--text); transition: background 0.15s, color 0.15s; }
+.nav-login:hover { background: var(--text); color: var(--surface); }
+.nav-dropdown { position: relative; }
+.nav-dropdown-trigger { display: inline-flex; align-items: center; gap: 4px; background: none; border: none; padding: 0; font-family: var(--sans); font-size: 14px; font-weight: 500; color: var(--text2); cursor: pointer; transition: color 0.15s; }
+.nav-dropdown-trigger:hover { color: var(--text); }
+.nav-dropdown-trigger svg { width: 10px; height: 10px; opacity: 0.6; transition: transform 0.15s; }
+.nav-dropdown:hover .nav-dropdown-trigger svg, .nav-dropdown:focus-within .nav-dropdown-trigger svg { transform: rotate(180deg); }
+.nav-dropdown-menu { position: absolute; top: calc(100% + 6px); left: -14px; min-width: 200px; background: #fff; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); padding: 8px; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity 0.15s, transform 0.15s, visibility 0.15s; }
+.nav-dropdown-menu::before { content: ""; position: absolute; top: -10px; left: 0; right: 0; height: 10px; }
+.nav-dropdown:hover .nav-dropdown-menu, .nav-dropdown:focus-within .nav-dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+.nav-dropdown-item { display: block; padding: 8px 12px; font-family: var(--sans); font-size: 14px; color: var(--text); text-decoration: none; border-radius: 6px; transition: background 0.1s; }
+.nav-dropdown-item:hover { background: var(--surface2); }
+
+/* ─── Document ──────────────────────────────────────────────────────── */
+.wrap { max-width: 760px; margin: 0 auto; padding: 56px 32px 24px; }
+.eyebrow { display: inline-block; font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; color: var(--blue); text-transform: uppercase; margin-bottom: 16px; }
+h1 { font-family: var(--serif); font-size: clamp(36px, 5vw, 52px); font-weight: 500; letter-spacing: -1.2px; line-height: 1.05; margin-bottom: 16px; }
+.lastmod { color: var(--text3); font-size: 13px; font-family: var(--mono); margin-bottom: 36px; }
+h2 { font-family: var(--serif); font-size: clamp(20px, 2.4vw, 26px); font-weight: 500; letter-spacing: -0.5px; line-height: 1.2; margin: 48px 0 12px; padding-top: 28px; border-top: 1px solid var(--border); scroll-margin-top: 80px; }
+h2:first-of-type { border-top: none; padding-top: 0; margin-top: 16px; }
+h3 { font-family: var(--sans); font-size: 16px; font-weight: 600; margin: 28px 0 8px; }
+p { color: var(--text2); margin-bottom: 14px; font-size: 16px; line-height: 1.7; }
+.lead { font-size: 17px; color: var(--text); margin-bottom: 28px; }
+ul { color: var(--text2); margin: 8px 0 16px; padding-left: 22px; font-size: 16px; line-height: 1.7; }
+ul li { margin-bottom: 8px; }
+strong { color: var(--text); font-weight: 600; }
+code { font-family: var(--mono); background: var(--surface2); border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; font-size: 13px; color: var(--text); }
+.callout {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--blue);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin: 16px 0 20px;
+}
+.callout p { margin: 0; color: var(--text); font-size: 14.5px; }
+.callout p + p { margin-top: 10px; }
+table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 14.5px; }
+th, td { padding: 10px 12px; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+th { background: var(--surface2); font-weight: 600; color: var(--text); }
+td { color: var(--text2); }
+.disclaimer-note { color: var(--text3); font-size: 13px; line-height: 1.6; margin: 40px 0 8px; font-style: italic; padding-top: 20px; border-top: 1px solid var(--border); }
+
+/* ─── Footer (shared with home) ─────────────────────────────────────── */
+footer { background: var(--surface2); border-top: 1px solid var(--border); padding: 56px 0 32px; margin-top: 64px; }
+footer .wrap { max-width: 1180px; padding: 0 32px; }
+.foot-grid { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 32px; }
+@media (max-width: 760px) { .foot-grid { grid-template-columns: 1fr 1fr; gap: 24px; } }
+.foot-brand p { color: var(--text2); font-size: 13.5px; line-height: 1.6; margin: 12px 0 0; max-width: 280px; }
+.foot-col h4 { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin-bottom: 14px; }
+.foot-col a { display: block; color: var(--text2); text-decoration: none; font-size: 14px; margin-bottom: 8px; transition: color 0.15s; }
+.foot-col a:hover { color: var(--blue); }
+.foot-note { margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); color: var(--text3); font-size: 12.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="logo">crypto<span>vol</span></a>
+    <div class="nav-links">
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-trigger" type="button">
+          Developer
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/dashboard" class="nav-dropdown-item" role="menuitem">Dashboard</a>
+          <a href="/docs" class="nav-dropdown-item" role="menuitem">Docs</a>
+          <a href="https://github.com/FlyCapital/cryptovol-python" target="_blank" rel="noopener" class="nav-dropdown-item" role="menuitem">SDK</a>
+        </div>
+      </div>
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-trigger" type="button">
+          Research
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg>
+        </button>
+        <div class="nav-dropdown-menu" role="menu">
+          <a href="/methodology" class="nav-dropdown-item" role="menuitem">Methodology</a>
+          <a href="/blog" class="nav-dropdown-item" role="menuitem">Blog</a>
+        </div>
+      </div>
+      <a href="/chat" class="nav-link">Ask Quanta</a>
+      <a href="/#pricing" class="nav-link">Pricing</a>
+      <a href="/login" class="nav-login" id="nav-login-link">Log in</a>
+      <span id="nav-user-slot" style="display:none; align-items:center;"></span>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <div class="wrap">
+    <span class="eyebrow">Legal</span>
+    <h1>Terms of Service</h1>
+    <p class="lastmod">Last updated: May 31, 2026</p>
+
+    <p class="lead">
+      These Terms govern your use of CryptoVol, a data-subscription service available at
+      <a href="https://www.cryptovol.io" style="color:var(--blue);">www.cryptovol.io</a>.
+      By creating an account or using the service, you agree to these Terms. We've written them
+      to be readable, not maximally lawyer-proof — if you need a vendor-grade contract,
+      <a href="mailto:support@cryptovol.io" style="color:var(--blue);">email us</a> and we'll work with your paper.
+    </p>
+
+    <h2 id="service">1. The service</h2>
+    <p>
+      CryptoVol provides a REST API and Python SDK that return calibrated implied-volatility
+      surfaces, options Greeks (delta, gamma, vega, theta), forwards, realized vol, and related
+      analytics for major cryptocurrency derivatives (BTC, ETH, SOL, XRP, AVAX, TRX). We also
+      operate an AI chat assistant ("Quanta") that translates natural-language questions into
+      API calls.
+    </p>
+
+    <h2 id="account">2. Your account</h2>
+    <p>
+      You sign up via email (Clerk-managed authentication). You are responsible for keeping your
+      account credentials and API key confidential. You may not share an API key with anyone
+      outside your organization, resell access, or sublicense the service. We may rotate or
+      revoke keys if we detect abuse.
+    </p>
+
+    <h2 id="plans">3. Subscription plans</h2>
+    <p>
+      We offer three tiers — <strong>BASIC</strong> (free), <strong>PRO</strong> ($49/month),
+      and <strong>ULTRA</strong> ($99/month). Tier features and rate limits are listed on the
+      <a href="/#pricing" style="color:var(--blue);">pricing page</a>. Paid subscriptions auto-renew
+      monthly until you cancel. Billing runs through Stripe; we never see or store your card details.
+      Prices are quoted in US Dollars.
+    </p>
+    <p>
+      You can switch between paid tiers at any time. Upgrades (PRO → ULTRA) are charged immediately
+      on a prorated basis — you pay only for the unused remainder of the current month at the
+      new price, minus credit for the unused portion of the old price. Downgrades take effect at
+      your next renewal.
+    </p>
+
+    <h2 id="refunds">4. Cancellation and refunds</h2>
+    <p>
+      We aim to be fair in both directions. The policy is simple:
+    </p>
+    <ul>
+      <li><strong>You can cancel any time.</strong> Click <em>Manage billing</em> on
+        <a href="/account" style="color:var(--blue);">your account page</a> to cancel via the
+        Stripe Customer Portal, or click <em>Delete account</em> if you want everything erased.</li>
+      <li><strong>Prorated refund on cancellation.</strong> When you cancel a paid subscription,
+        we refund the <em>unused portion of the current billing period</em>. So you pay for what
+        you used, and we refund what's left.</li>
+      <li><strong>Refunds are issued to your original card</strong> immediately when you cancel.
+        Most banks credit the card within 5–10 business days.</li>
+      <li><strong>No refunds for fully-used periods.</strong> If your subscription has already
+        auto-renewed past its expiry, the new month is refundable on the same prorated basis,
+        but we don't retroactively refund completed prior months.</li>
+      <li><strong>No refunds for the free BASIC tier</strong>, since there's nothing to refund.</li>
+    </ul>
+
+    <div class="callout">
+      <p><strong>Example.</strong> You pay $49 for PRO on day 1 of the month. You cancel on day 10.
+      You've used 10 of the 30 days in that period, so we refund
+      $49 × 20/30 ≈ <strong>$32.67</strong> to your card. PRO access ends immediately and your
+      account drops back to BASIC.</p>
+    </div>
+
+    <p>
+      If you believe you should be refunded outside these rules (billing error, double charge,
+      service outage you couldn't use through, etc.), reply to your most recent invoice email
+      or write to <a href="mailto:support@cryptovol.io" style="color:var(--blue);">support@cryptovol.io</a>
+      and we'll make it right.
+    </p>
+
+    <h3>Refund summary by scenario</h3>
+    <table>
+      <tr><th>What you do</th><th>What happens</th></tr>
+      <tr><td>Cancel via <em>Manage billing</em></td><td>Subscription ends immediately. Prorated refund of unused portion of current period to your card.</td></tr>
+      <tr><td>Delete your account</td><td>Same as above, plus all account data is erased and your sign-in identity is removed. Confirmation email sent.</td></tr>
+      <tr><td>Upgrade PRO → ULTRA mid-period</td><td>Prorated charge for the difference (e.g. ~$33 on day 11 of a 30-day period). No refund — it's a positive payment.</td></tr>
+      <tr><td>Downgrade ULTRA → PRO</td><td>Takes effect at next renewal. No refund for current period; you keep ULTRA until then.</td></tr>
+      <tr><td>Subscription auto-renews while inactive</td><td>Cancel now → prorated refund of the new period. Prior months are not refundable.</td></tr>
+    </table>
+
+    <h2 id="use">5. Acceptable use</h2>
+    <p>You agree not to:</p>
+    <ul>
+      <li>Use CryptoVol data to provide a competing or substantially-similar data product or API</li>
+      <li>Scrape the public dashboard or chat assistant outside the intended interactive use</li>
+      <li>Share, resell, or sublicense your API key</li>
+      <li>Use the service for any unlawful purpose</li>
+      <li>Probe, scan, or otherwise attempt to discover infrastructure vulnerabilities
+        (for responsible disclosure please email
+        <a href="mailto:support@cryptovol.io" style="color:var(--blue);">support@cryptovol.io</a>)</li>
+    </ul>
+    <p>We may suspend or terminate access for violation of this section, without refund where the violation is willful or fraudulent.</p>
+
+    <h2 id="data">6. Data and intellectual property</h2>
+    <p>
+      The data we deliver is calibrated by us from publicly-available exchange data. We grant
+      you a non-exclusive, non-transferable license to use it within your own applications,
+      internal analytics, research, and trading. You retain ownership of anything you build
+      with it. We retain ownership of the data assembly, calibration methodology, the chat
+      assistant's prompts and tooling, and the CryptoVol brand.
+    </p>
+
+    <h2 id="not-advice">7. Not financial advice</h2>
+    <p>
+      All data, analytics, charts, blog posts, and chat-assistant output are provided for
+      informational and research purposes only. Nothing on CryptoVol constitutes financial,
+      investment, trading, tax, or legal advice. Crypto derivatives are risky and you can lose
+      money. You are solely responsible for any trading or investment decisions you make.
+    </p>
+
+    <h2 id="warranty">8. Disclaimer of warranties</h2>
+    <p>
+      The service is provided "as is" and "as available". We do not warrant that the service
+      will be uninterrupted, error-free, or that the data will be accurate, complete, or fit
+      for any particular purpose. Volatility calibration involves modeling assumptions; consumers
+      of the data should perform their own validation appropriate to their use case.
+    </p>
+
+    <h2 id="liability">9. Limitation of liability</h2>
+    <p>
+      To the maximum extent permitted by law, CryptoVol's total cumulative liability arising out
+      of or related to these Terms or your use of the service shall not exceed the greater of
+      (a) the amount you paid us in the twelve (12) months preceding the claim, or (b) one
+      hundred US dollars ($100). We are not liable for any indirect, incidental, consequential,
+      or special damages — including lost profits, trading losses, or data loss — even if
+      advised of the possibility of such damages.
+    </p>
+
+    <h2 id="termination">10. Termination</h2>
+    <p>
+      You may terminate by deleting your account at any time. We may terminate or suspend
+      service for any reason on reasonable notice — except for abuse or violation of Section 5,
+      where we may act immediately. On termination we cancel your subscription, apply the
+      prorated refund described in Section 4, anonymize your billing record (kept for tax
+      compliance), and delete your account data.
+    </p>
+
+    <h2 id="changes">11. Changes to these terms</h2>
+    <p>
+      We may update these Terms from time to time. Material changes will be announced via email
+      to the address on your account at least 14 days before they take effect. Continued use
+      of the service after that date constitutes acceptance of the updated Terms.
+    </p>
+
+    <h2 id="law">12. Governing law</h2>
+    <p>
+      These Terms are governed by the laws of the State of New Jersey, USA, without regard to
+      its conflict-of-laws provisions. Any dispute arising out of or related to these Terms
+      shall be resolved in the state or federal courts located in New Jersey.
+    </p>
+
+    <h2 id="contact">13. Contact</h2>
+    <p>
+      Questions, concerns, or refund requests:
+      <a href="mailto:support@cryptovol.io" style="color:var(--blue);">support@cryptovol.io</a>.
+    </p>
+
+    <p class="disclaimer-note">
+      These terms are intended to be a fair and readable agreement, not legal advice. For your
+      own peace of mind, consider having your counsel review them before relying on them in
+      any commercial context.
+    </p>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a href="/" class="logo">crypto<span>vol</span></a>
+        <p>Institutional-grade crypto volatility data. Built for traders, quants and researchers.</p>
+      </div>
+      <div class="foot-col">
+        <h4>Product</h4>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/chat">Quanta</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="/signup">Sign up</a>
+      </div>
+      <div class="foot-col">
+        <h4>Developers</h4>
+        <a href="/docs">API docs</a>
+        <a href="https://github.com/FlyCapital/cryptovol-python" target="_blank" rel="noopener">Python SDK</a>
+        <a href="/methodology">Methodology</a>
+      </div>
+      <div class="foot-col">
+        <h4>Company</h4>
+        <a href="/blog">Research</a>
+        <a href="/terms">Terms &amp; refunds</a>
+        <a href="mailto:support@cryptovol.io">Support</a>
+      </div>
+    </div>
+    <div class="foot-note">
+      © 2026 CryptoVol · Data for informational purposes only. Not financial advice. ·
+      Support: <a href="mailto:support@cryptovol.io" style="color:var(--text);">support@cryptovol.io</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+window.addEventListener('load', async () => {
+  if (!window.Clerk) return;
+  try {
+    await window.Clerk.load();
+    if (window.Clerk.user) {
+      document.getElementById('nav-login-link').style.display = 'none';
+      const slot = document.getElementById('nav-user-slot');
+      slot.style.display = 'inline-flex';
+      window.Clerk.mountUserButton(slot, {
+        afterSignOutUrl: '/',
+        userProfileMode: 'navigation',
+        userProfileUrl: '/account',
+      });
+    }
+  } catch (e) { console.warn('Clerk failed to load', e); }
+});
+</script>
+
+</body>
+</html>

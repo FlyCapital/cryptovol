@@ -50,6 +50,10 @@
     {
       "source": "/account",
       "destination": "/account.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms.html"
     }
   ]
 }
