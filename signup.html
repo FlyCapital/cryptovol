@@ -21,7 +21,6 @@
       --blue:      #1F6FBF;
       --black:     #0f172a;
       --sans:      'Inter', sans-serif;
-      --mono:      'IBM Plex Mono', monospace;
       --serif:     'Source Serif 4', Georgia, serif;
     }
     * { margin:0; padding:0; box-sizing: border-box; }
@@ -43,53 +42,81 @@
       display: flex; align-items: center; justify-content: space-between;
       height: 64px;
     }
-    .logo {
-      font-family: var(--sans); font-size: 19px; font-weight: 800;
-      letter-spacing: -0.4px; color: var(--text); text-decoration: none;
-    }
+    .logo { font-family: var(--sans); font-size: 19px; font-weight: 800; letter-spacing: -0.4px; color: var(--text); text-decoration: none; }
     .logo span { color: var(--blue); }
-    .nav-aux {
-      color: var(--text2); font-family: var(--sans); font-size: 14px;
-      font-weight: 500; text-decoration: none;
-    }
+    .nav-aux { color: var(--text2); font-family: var(--sans); font-size: 14px; font-weight: 500; text-decoration: none; }
     .nav-aux:hover { color: var(--text); }
 
     main {
-      max-width: 420px; margin: 48px auto 0; padding: 0 24px 48px;
+      max-width: 440px; margin: 64px auto 0; padding: 0 24px 64px;
       text-align: center;
     }
     h1 {
       font-family: var(--serif);
-      font-size: clamp(30px, 4vw, 38px);
-      font-weight: 500; letter-spacing: -1px; line-height: 1.08;
-      margin: 0 0 10px; color: var(--text);
+      font-size: clamp(34px, 5vw, 44px);
+      font-weight: 500; letter-spacing: -1.4px; line-height: 1.08;
+      margin: 0 0 12px; color: var(--text);
     }
     h1 em { font-style: normal; color: var(--blue); font-family: inherit; font-weight: inherit; }
-    .tagline {
-      color: var(--text2); font-size: 14px; line-height: 1.55; margin: 0 0 22px;
-    }
+    .tagline { color: var(--text2); font-size: 15px; line-height: 1.5; margin: 0 0 28px; }
+
     .card-wrap {
-      background: var(--surface);
+      background: var(--surface2);
       border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+      border-radius: 14px;
+      padding: 24px;
     }
     #clerk-root { width:100%; }
-    .below-card { margin-top: 18px; font-size: 14px; color: var(--text2); }
-    .below-card a { color: var(--blue); text-decoration: none; font-weight: 500; }
-    .below-card a:hover { text-decoration: underline; }
+    .below-card { margin-top: 20px; font-size: 14px; color: var(--text2); }
+    .below-card a { color: var(--text); text-decoration: underline; font-weight: 500; }
+    .below-card a:hover { color: var(--blue); }
 
-    /* Hide every Clerk variant of the "Last used" indicator */
+    /* Hide every Clerk "Last used" badge variant */
     .cl-socialButtonsBlockButton__lastUsed,
     .cl-socialButtonsBlockButtonText__lastUsed,
     .cl-internal-lastUsed,
-    .cl-socialButtonsBlockButton [class*="lastUsed" i],
     .cl-providerInfo,
+    .cl-socialButtonsBlockButton [class*="lastUsed" i],
+    .cl-socialButtonsBlockButton [class*="LastUsed"],
+    .cl-socialButtonsBlockButton [class*="last-used" i],
     [class*="lastUsed" i],
-    [data-localization-key$="lastUsed"] { display: none !important; }
-    /* Give the social button a clean container so nothing leaks above */
-    .cl-socialButtonsBlockButton { overflow: hidden; }
+    [class*="last-used" i],
+    [data-localization-key*="lastUsed" i],
+    [data-localization-key*="last_used" i] {
+      display: none !important;
+      visibility: hidden !important;
+    }
+    .cl-socialButtonsBlockButton { overflow: hidden !important; position: relative !important; }
+
+    .cl-socialButtonsBlockButton {
+      min-height: 46px !important;
+      background: var(--surface) !important;
+      border: 1px solid var(--border2) !important;
+      border-radius: 10px !important;
+    }
+    .cl-socialButtonsBlockButton:hover { background: #fafafa !important; }
+    .cl-socialButtonsBlockButtonText { font-weight: 500 !important; font-size: 15px !important; }
+
+    .cl-formFieldInput {
+      min-height: 46px !important;
+      border-radius: 10px !important;
+      font-size: 15px !important;
+    }
+
+    .cl-formButtonPrimary {
+      min-height: 48px !important;
+      border-radius: 10px !important;
+      font-size: 15px !important;
+      font-weight: 600 !important;
+      background: var(--black) !important;
+      box-shadow: none !important;
+    }
+    .cl-formButtonPrimary:hover { background: #1e293b !important; }
+    .cl-formButtonPrimary svg,
+    .cl-formButtonPrimary .cl-buttonArrowIcon { display: none !important; }
+
+    .cl-formFieldLabel { display: none !important; }
+    .cl-formField { margin-bottom: 8px !important; }
   </style>
 
   <script defer crossorigin="anonymous"
@@ -119,16 +146,16 @@
   <script>
     const CLERK_APPEARANCE = {
       variables: {
-        colorPrimary: '#1F6FBF',
+        colorPrimary: '#0f172a',
         colorText: '#0f172a',
         colorTextSecondary: '#475569',
-        colorBackground: '#ffffff',
+        colorBackground: '#f5f4ef',
         colorInputBackground: '#ffffff',
         colorInputText: '#0f172a',
         fontFamily: '"Inter", sans-serif',
-        fontSize: '14px',
-        borderRadius: '8px',
-        spacingUnit: '0.75rem',
+        fontSize: '15px',
+        borderRadius: '10px',
+        spacingUnit: '0.85rem',
       },
       elements: {
         rootBox: { width: '100%' },
@@ -136,51 +163,18 @@
         card: { boxShadow: 'none', border: 'none', padding: 0, background: 'transparent' },
         header: { display: 'none' },
         footer: { display: 'none' },
-        socialButtonsBlockButton: {
-          border: '1px solid rgba(15, 23, 42, 0.14)',
-          background: '#ffffff',
-          fontFamily: '"Inter", sans-serif',
-          fontSize: '14px',
-          fontWeight: 500,
-          padding: '8px 12px',
-          minHeight: '38px',
-          '&:hover': { background: '#f5f4ef' },
-        },
         socialButtonsBlockButtonText: { fontWeight: 500 },
-        formFieldLabel: {
-          fontFamily: '"Inter", sans-serif',
-          fontSize: '12px',
-          color: '#475569',
-          fontWeight: 500,
-          letterSpacing: '0.02em',
-        },
-        formFieldInput: {
-          fontFamily: '"Inter", sans-serif',
-          fontSize: '14px',
-          border: '1px solid rgba(15, 23, 42, 0.14)',
-          background: '#ffffff',
-          padding: '9px 12px',
-          color: '#0f172a',
-        },
-        formButtonPrimary: {
-          background: '#0f172a',
-          fontFamily: '"Inter", sans-serif',
-          fontSize: '14px',
-          fontWeight: 500,
-          textTransform: 'none',
-          padding: '10px 16px',
-          '&:hover': { background: '#1e293b' },
-        },
-        dividerRow: { margin: '14px 0 20px' },
-        dividerLine: { background: 'rgba(15, 23, 42, 0.08)' },
+        dividerRow: { margin: '18px 0' },
+        dividerLine: { background: 'rgba(15, 23, 42, 0.10)', height: '1px' },
         dividerText: {
           fontFamily: '"Inter", sans-serif',
-          fontSize: '11px',
+          fontSize: '12px',
           color: '#94a3b8',
           textTransform: 'uppercase',
-          letterSpacing: '0.08em',
+          letterSpacing: '0.1em',
         },
-        identityPreview: { fontFamily: '"Inter", sans-serif', fontSize: '13px' },
+        formFieldInput: { background: '#ffffff', color: '#0f172a' },
+        identityPreview: { fontFamily: '"Inter", sans-serif', fontSize: '14px' },
         formResendCodeLink: { color: '#1F6FBF', fontFamily: '"Inter", sans-serif' },
       },
     };
@@ -188,8 +182,6 @@
     window.addEventListener('load', async () => {
       await window.Clerk.load();
 
-      // Belt-and-suspenders: if the user lands on /signup already signed in,
-      // or the moment a session is created, go straight to /account.
       if (window.Clerk.user) { window.location.replace('/account'); return; }
       window.Clerk.addListener(({ user }) => {
         if (user) window.location.replace('/account');
