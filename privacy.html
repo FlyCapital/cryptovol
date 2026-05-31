@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Terms of Service — CryptoVol</title>
-<meta name="description" content="Terms of Service and refund policy for CryptoVol — institutional-grade crypto volatility data and API.">
+<title>Privacy Policy — CryptoVol</title>
+<meta name="description" content="How CryptoVol collects, uses, and protects your data — privacy policy for the crypto volatility data API.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://www.cryptovol.io/terms">
+<link rel="canonical" href="https://www.cryptovol.io/privacy">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,14 +39,9 @@
 }
 
 html { scroll-behavior: smooth; }
-body {
-  background: var(--bg); color: var(--text);
-  font-family: var(--sans); font-size: 15px; line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-}
+body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
 a { color: inherit; }
 
-/* ─── Nav (shared with home) ────────────────────────────────────────── */
 nav { background: rgba(250, 249, 245, 0.85); backdrop-filter: saturate(180%) blur(12px); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
 .nav-inner { max-width: 1180px; margin: 0 auto; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 64px; }
 .logo { font-family: var(--sans); font-size: 19px; font-weight: 800; letter-spacing: -0.4px; color: var(--text); text-decoration: none; }
@@ -67,7 +62,6 @@ nav { background: rgba(250, 249, 245, 0.85); backdrop-filter: saturate(180%) blu
 .nav-dropdown-item { display: block; padding: 8px 12px; font-family: var(--sans); font-size: 14px; color: var(--text); text-decoration: none; border-radius: 6px; transition: background 0.1s; }
 .nav-dropdown-item:hover { background: var(--surface2); }
 
-/* ─── Document ──────────────────────────────────────────────────────── */
 .wrap { max-width: 760px; margin: 0 auto; padding: 56px 32px 24px; }
 .eyebrow { display: inline-block; font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; color: var(--blue); text-transform: uppercase; margin-bottom: 16px; }
 h1 { font-family: var(--serif); font-size: clamp(36px, 5vw, 52px); font-weight: 500; letter-spacing: -1.2px; line-height: 1.05; margin-bottom: 16px; }
@@ -81,23 +75,12 @@ ul { color: var(--text2); margin: 8px 0 16px; padding-left: 22px; font-size: 16p
 ul li { margin-bottom: 8px; }
 strong { color: var(--text); font-weight: 600; }
 code { font-family: var(--mono); background: var(--surface2); border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; font-size: 13px; color: var(--text); }
-.callout {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--blue);
-  border-radius: 8px;
-  padding: 16px 20px;
-  margin: 16px 0 20px;
-}
-.callout p { margin: 0; color: var(--text); font-size: 14.5px; }
-.callout p + p { margin-top: 10px; }
 table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 14.5px; }
 th, td { padding: 10px 12px; border: 1px solid var(--border); text-align: left; vertical-align: top; }
 th { background: var(--surface2); font-weight: 600; color: var(--text); }
 td { color: var(--text2); }
 .disclaimer-note { color: var(--text3); font-size: 13px; line-height: 1.6; margin: 40px 0 8px; font-style: italic; padding-top: 20px; border-top: 1px solid var(--border); }
 
-/* ─── Footer (shared with home) ─────────────────────────────────────── */
 footer { background: var(--surface2); border-top: 1px solid var(--border); padding: 56px 0 32px; margin-top: 64px; }
 footer .wrap { max-width: 1180px; padding: 0 32px; }
 .foot-grid { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 32px; }
@@ -147,173 +130,175 @@ footer .wrap { max-width: 1180px; padding: 0 32px; }
 <main>
   <div class="wrap">
     <span class="eyebrow">Legal</span>
-    <h1>Terms of Service</h1>
+    <h1>Privacy Policy</h1>
     <p class="lastmod">Last updated: May 31, 2026</p>
 
     <p class="lead">
-      These Terms govern your use of CryptoVol, a data-subscription service available at
-      <a href="https://www.cryptovol.io" style="color:var(--blue);">www.cryptovol.io</a>.
-      By creating an account or using the service, you agree to these Terms. We've written them
-      to be readable, not maximally lawyer-proof — if you need a vendor-grade contract,
-      <a href="mailto:support@cryptovol.io" style="color:var(--blue);">email us</a> and we'll work with your paper.
+      We try to collect the smallest amount of data that lets the service work, store it
+      securely, and let you remove it whenever you want. This page explains exactly what we
+      hold on you, why, who else sees it, and how to get it back or deleted.
     </p>
 
-    <h2 id="service">1. The service</h2>
+    <h2 id="who">1. Who we are</h2>
     <p>
-      CryptoVol provides a REST API and Python SDK that return calibrated implied-volatility
-      surfaces, options Greeks (delta, gamma, vega, theta), forwards, realized vol, and related
-      analytics for major cryptocurrency derivatives (BTC, ETH, SOL, XRP, AVAX, TRX). We also
-      operate an AI chat assistant ("Quanta") that translates natural-language questions into
-      API calls.
+      "CryptoVol" is the operator of <a href="https://www.cryptovol.io" style="color:var(--blue);">www.cryptovol.io</a>
+      and the underlying API and chat assistant. For any privacy-related question, email
+      <a href="mailto:support@cryptovol.io" style="color:var(--blue);">support@cryptovol.io</a>.
     </p>
 
-    <h2 id="account">2. Your account</h2>
-    <p>
-      You sign up via email (Clerk-managed authentication). You are responsible for keeping your
-      account credentials and API key confidential. You may not share an API key with anyone
-      outside your organization, resell access, or sublicense the service. We may rotate or
-      revoke keys if we detect abuse.
-    </p>
-
-    <h2 id="plans">3. Subscription plans</h2>
-    <p>
-      We offer three tiers — <strong>BASIC</strong> (free), <strong>PRO</strong> ($49/month),
-      and <strong>ULTRA</strong> ($99/month). Tier features and rate limits are listed on the
-      <a href="/#pricing" style="color:var(--blue);">pricing page</a>. Paid subscriptions auto-renew
-      monthly until you cancel. Billing runs through Stripe; we never see or store your card details.
-      Prices are quoted in US Dollars.
-    </p>
-    <p>
-      You can switch between paid tiers at any time. Upgrades (PRO → ULTRA) are charged immediately
-      on a prorated basis — you pay only for the unused remainder of the current month at the
-      new price, minus credit for the unused portion of the old price. Downgrades take effect at
-      your next renewal.
-    </p>
-
-    <h2 id="refunds">4. Cancellation and refunds</h2>
-    <p>
-      We aim to be fair in both directions. The policy is simple:
-    </p>
-    <ul>
-      <li><strong>You can cancel any time.</strong> Click <em>Manage billing</em> on
-        <a href="/account" style="color:var(--blue);">your account page</a> to cancel via the
-        Stripe Customer Portal, or click <em>Delete account</em> if you want everything erased.</li>
-      <li><strong>Prorated refund on cancellation.</strong> When you cancel a paid subscription,
-        we refund the <em>unused portion of the current billing period</em>. So you pay for what
-        you used, and we refund what's left.</li>
-      <li><strong>Refunds are issued to your original card</strong> immediately when you cancel.
-        Most banks credit the card within 5–10 business days.</li>
-      <li><strong>No refunds for fully-used periods.</strong> If your subscription has already
-        auto-renewed past its expiry, the new month is refundable on the same prorated basis,
-        but we don't retroactively refund completed prior months.</li>
-      <li><strong>No refunds for the free BASIC tier</strong>, since there's nothing to refund.</li>
-    </ul>
-
-    <div class="callout">
-      <p><strong>Example.</strong> You pay $49 for PRO on day 1 of the month. You cancel on day 10.
-      You've used 10 of the 30 days in that period, so we refund
-      $49 × 20/30 ≈ <strong>$32.67</strong> to your card. PRO access ends immediately and your
-      account drops back to BASIC.</p>
-    </div>
-
-    <p>
-      If you believe you should be refunded outside these rules (billing error, double charge,
-      service outage you couldn't use through, etc.), reply to your most recent invoice email
-      or write to <a href="mailto:support@cryptovol.io" style="color:var(--blue);">support@cryptovol.io</a>
-      and we'll make it right.
-    </p>
-
-    <h3>Refund summary by scenario</h3>
+    <h2 id="what">2. What we collect</h2>
     <table>
-      <tr><th>What you do</th><th>What happens</th></tr>
-      <tr><td>Cancel via <em>Manage billing</em></td><td>Subscription ends immediately. Prorated refund of unused portion of current period to your card.</td></tr>
-      <tr><td>Delete your account</td><td>Same as above, plus all account data is erased and your sign-in identity is removed. Confirmation email sent.</td></tr>
-      <tr><td>Upgrade PRO → ULTRA mid-period</td><td>Prorated charge for the difference (e.g. ~$33 on day 11 of a 30-day period). No refund — it's a positive payment.</td></tr>
-      <tr><td>Downgrade ULTRA → PRO</td><td>Takes effect at next renewal. No refund for current period; you keep ULTRA until then.</td></tr>
-      <tr><td>Subscription auto-renews while inactive</td><td>Cancel now → prorated refund of the new period. Prior months are not refundable.</td></tr>
+      <tr>
+        <th>Data</th>
+        <th>Why we have it</th>
+        <th>Where it lives</th>
+      </tr>
+      <tr>
+        <td><strong>Email address</strong></td>
+        <td>Sign-in identity, receipts, account-event emails (welcome, deletion confirmation, billing).</td>
+        <td>Clerk + our database + Stripe + Resend</td>
+      </tr>
+      <tr>
+        <td><strong>Name</strong> (only if you give it to us — Stripe collects it for KYC during paid checkout)</td>
+        <td>Billing records, tax compliance.</td>
+        <td>Stripe</td>
+      </tr>
+      <tr>
+        <td><strong>Payment details</strong> (card number, billing address)</td>
+        <td>Charging your subscription. <strong>We never see or store card numbers ourselves</strong> — Stripe handles this.</td>
+        <td>Stripe only</td>
+      </tr>
+      <tr>
+        <td><strong>API key</strong></td>
+        <td>Authenticates your API requests. Generated server-side; you can rotate it any time on /account.</td>
+        <td>Our database</td>
+      </tr>
+      <tr>
+        <td><strong>Subscription tier &amp; usage counters</strong></td>
+        <td>Enforce rate limits, show usage on /account.</td>
+        <td>Our database</td>
+      </tr>
+      <tr>
+        <td><strong>Quanta chat history</strong></td>
+        <td>So you can re-open prior conversations and we can show the right context to the assistant.</td>
+        <td>Our database + your browser's localStorage</td>
+      </tr>
+      <tr>
+        <td><strong>Site analytics</strong> (page views, referrer, anonymized IP)</td>
+        <td>Understand which pages people find useful.</td>
+        <td>Google Analytics</td>
+      </tr>
+      <tr>
+        <td><strong>Server access logs</strong> (IP, request path, timestamp)</td>
+        <td>Debugging, abuse detection, security. Retained ~30 days.</td>
+        <td>Google Cloud Logging</td>
+      </tr>
     </table>
 
-    <h2 id="use">5. Acceptable use</h2>
-    <p>You agree not to:</p>
+    <p>
+      We do not collect: location data beyond IP, contact lists, photos, voice, biometric data,
+      browsing history outside our domain, or anything from third-party ad networks (we don't
+      run ads).
+    </p>
+
+    <h2 id="why">3. How we use it</h2>
     <ul>
-      <li>Use CryptoVol data to provide a competing or substantially-similar data product or API</li>
-      <li>Scrape the public dashboard or chat assistant outside the intended interactive use</li>
-      <li>Share, resell, or sublicense your API key</li>
-      <li>Use the service for any unlawful purpose</li>
-      <li>Probe, scan, or otherwise attempt to discover infrastructure vulnerabilities
-        (for responsible disclosure please email
-        <a href="mailto:support@cryptovol.io" style="color:var(--blue);">support@cryptovol.io</a>)</li>
+      <li><strong>Provide the service.</strong> Authenticate you, enforce rate limits, serve API responses, run Quanta.</li>
+      <li><strong>Billing.</strong> Process subscriptions, issue receipts, handle refunds.</li>
+      <li><strong>Transactional email.</strong> Welcome email, deletion confirmation, plan-change notices, billing failures.</li>
+      <li><strong>Improve the product.</strong> Anonymous usage analytics, debugging logs.</li>
+      <li><strong>Security.</strong> Detect abuse, brute-force attempts, billing fraud.</li>
     </ul>
-    <p>We may suspend or terminate access for violation of this section, without refund where the violation is willful or fraudulent.</p>
-
-    <h2 id="data">6. Data and intellectual property</h2>
     <p>
-      The data we deliver is calibrated by us from publicly-available exchange data. We grant
-      you a non-exclusive, non-transferable license to use it within your own applications,
-      internal analytics, research, and trading. You retain ownership of anything you build
-      with it. We retain ownership of the data assembly, calibration methodology, the chat
-      assistant's prompts and tooling, and the CryptoVol brand.
+      We do <strong>not</strong> sell your data, share it with advertisers, or use it to train
+      machine-learning models for anyone else.
     </p>
 
-    <h2 id="not-advice">7. Not financial advice</h2>
+    <h2 id="third-parties">4. Who else processes your data</h2>
+    <p>We use a small set of vendors. Each is a reputable processor with their own privacy/security commitments:</p>
+    <table>
+      <tr><th>Vendor</th><th>Purpose</th><th>Data shared</th></tr>
+      <tr><td><strong>Clerk</strong> (clerk.com)</td><td>Authentication, password reset, session management</td><td>Email, sign-in events</td></tr>
+      <tr><td><strong>Stripe</strong> (stripe.com)</td><td>Payment processing, customer portal, KYC</td><td>Email, name, billing address, card (never seen by us)</td></tr>
+      <tr><td><strong>Resend</strong> (resend.com)</td><td>Transactional email delivery</td><td>Email address + message content</td></tr>
+      <tr><td><strong>Google Cloud Platform</strong></td><td>Hosting (Cloud Run, Cloud SQL, Secret Manager)</td><td>All operational data; encrypted at rest</td></tr>
+      <tr><td><strong>Vercel</strong></td><td>Hosting the marketing site (this page)</td><td>HTTP request logs</td></tr>
+      <tr><td><strong>Anthropic</strong> (anthropic.com)</td><td>Powers the Quanta chat assistant</td><td>Chat messages you send to Quanta</td></tr>
+      <tr><td><strong>Google Analytics</strong></td><td>Site usage analytics</td><td>Anonymized IP, page views, referrer</td></tr>
+    </table>
+
+    <h2 id="cookies">5. Cookies</h2>
+    <p>We use cookies and similar storage for three things:</p>
+    <ul>
+      <li><strong>Authentication session</strong> (Clerk) — keeps you signed in. Required.</li>
+      <li><strong>Quanta conversation cache</strong> (your browser's localStorage) — so closing and reopening the chat doesn't lose context. Stored locally; not sent to us beyond your normal API calls.</li>
+      <li><strong>Google Analytics</strong> — anonymized usage metrics. We do not use these cookies to retarget you elsewhere.</li>
+    </ul>
+
+    <h2 id="rights">6. Your rights</h2>
+    <p>Regardless of where you live, you can:</p>
+    <ul>
+      <li><strong>Access your data.</strong> Email <a href="mailto:support@cryptovol.io" style="color:var(--blue);">support@cryptovol.io</a> and we'll send you a copy of what we hold within 30 days.</li>
+      <li><strong>Correct it.</strong> Your email is editable in Clerk; reach out for anything else.</li>
+      <li><strong>Delete everything.</strong> Click <em>Delete account</em> on /account — your user row, API key, Quanta history, and Clerk identity are erased immediately. Stripe billing records are anonymized but kept for tax/accounting (typically 7 years).</li>
+      <li><strong>Export your chat history.</strong> Available from /chat or by emailing us.</li>
+      <li><strong>Object to processing.</strong> Email us and we'll discuss.</li>
+    </ul>
+    <p>EU/UK residents have additional rights under GDPR (lodge a complaint with your supervisory authority). California residents have additional rights under CCPA (right to know / delete / non-discrimination). Both are exercised by the same email above.</p>
+
+    <h2 id="retention">7. How long we keep things</h2>
+    <table>
+      <tr><th>Data</th><th>Kept for</th></tr>
+      <tr><td>Active account (user row, API key, chat history)</td><td>Until you delete the account</td></tr>
+      <tr><td>Server access logs</td><td>~30 days</td></tr>
+      <tr><td>Stripe billing records (anonymized after deletion)</td><td>~7 years (tax/accounting compliance)</td></tr>
+      <tr><td>Analytics (Google Analytics)</td><td>14 months, then auto-deleted</td></tr>
+      <tr><td>Transactional email logs (Resend)</td><td>~30 days</td></tr>
+    </table>
+
+    <h2 id="security">8. Security</h2>
     <p>
-      All data, analytics, charts, blog posts, and chat-assistant output are provided for
-      informational and research purposes only. Nothing on CryptoVol constitutes financial,
-      investment, trading, tax, or legal advice. Crypto derivatives are risky and you can lose
-      money. You are solely responsible for any trading or investment decisions you make.
+      All data is encrypted in transit (TLS 1.2+) and at rest. API keys are stored hashed where
+      possible; secrets (Stripe key, Clerk key, etc.) are in Google Secret Manager with access
+      audit logs. Two-factor authentication is enforced on the founder's Stripe account. We have
+      no employees, contractors, or interns; only the founder has access to production data.
+    </p>
+    <p>
+      Despite best efforts, no online service is 100% breach-proof. If we ever detect a breach
+      affecting your account, we'll notify you by email within 72 hours of discovery.
     </p>
 
-    <h2 id="warranty">8. Disclaimer of warranties</h2>
+    <h2 id="transfers">9. International transfers</h2>
     <p>
-      The service is provided "as is" and "as available". We do not warrant that the service
-      will be uninterrupted, error-free, or that the data will be accurate, complete, or fit
-      for any particular purpose. Volatility calibration involves modeling assumptions; consumers
-      of the data should perform their own validation appropriate to their use case.
+      Our infrastructure is in <strong>US-Central1 (Iowa)</strong>. If you access from outside the
+      US, your data will be transferred there. Our processors (Clerk, Stripe, Resend, Anthropic)
+      have global infrastructure and may process data in additional regions; each maintains
+      Standard Contractual Clauses or equivalent safeguards.
     </p>
 
-    <h2 id="liability">9. Limitation of liability</h2>
+    <h2 id="children">10. Children's privacy</h2>
     <p>
-      To the maximum extent permitted by law, CryptoVol's total cumulative liability arising out
-      of or related to these Terms or your use of the service shall not exceed the greater of
-      (a) the amount you paid us in the twelve (12) months preceding the claim, or (b) one
-      hundred US dollars ($100). We are not liable for any indirect, incidental, consequential,
-      or special damages — including lost profits, trading losses, or data loss — even if
-      advised of the possibility of such damages.
+      The service is intended for adult professional users (quants, traders, researchers). We
+      do not knowingly collect data from anyone under 18. If you believe we hold data on a
+      minor, please contact us and we'll delete it.
     </p>
 
-    <h2 id="termination">10. Termination</h2>
+    <h2 id="changes">11. Changes to this policy</h2>
     <p>
-      You may terminate by deleting your account at any time. We may terminate or suspend
-      service for any reason on reasonable notice — except for abuse or violation of Section 5,
-      where we may act immediately. On termination we cancel your subscription, apply the
-      prorated refund described in Section 4, anonymize your billing record (kept for tax
-      compliance), and delete your account data.
+      We may update this policy from time to time. Material changes will be announced via email
+      to the address on your account at least 14 days before they take effect.
     </p>
 
-    <h2 id="changes">11. Changes to these terms</h2>
+    <h2 id="contact">12. Contact</h2>
     <p>
-      We may update these Terms from time to time. Material changes will be announced via email
-      to the address on your account at least 14 days before they take effect. Continued use
-      of the service after that date constitutes acceptance of the updated Terms.
-    </p>
-
-    <h2 id="law">12. Governing law</h2>
-    <p>
-      These Terms are governed by the laws of the State of New Jersey, USA, without regard to
-      its conflict-of-laws provisions. Any dispute arising out of or related to these Terms
-      shall be resolved in the state or federal courts located in New Jersey.
-    </p>
-
-    <h2 id="contact">13. Contact</h2>
-    <p>
-      Questions, concerns, or refund requests:
+      Privacy questions, data requests, or breach concerns:
       <a href="mailto:support@cryptovol.io" style="color:var(--blue);">support@cryptovol.io</a>.
     </p>
 
     <p class="disclaimer-note">
-      These terms are intended to be a fair and readable agreement, not legal advice. For your
-      own peace of mind, consider having your counsel review them before relying on them in
-      any commercial context.
+      Written to be honest and complete, not maximally lawyer-proof. If you need a Data
+      Processing Agreement (DPA) for vendor due diligence, email us — we can sign yours or
+      provide ours.
     </p>
   </div>
 </main>
