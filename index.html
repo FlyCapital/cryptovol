@@ -792,6 +792,20 @@ window.addEventListener('load', async () => {
   try {
     await window.Clerk.load();
     if (window.Clerk.user) {
+      // If the user just signed up / signed in and landed on the home page
+      // by accident (e.g. Clerk Dashboard's "After sign-up URL" wasn't set
+      // to /account), bounce them to /account. We detect "just signed in"
+      // by checking the session age — anything fresher than 60s gets the
+      // redirect. Returning visitors browsing home stay where they are.
+      try {
+        const session   = window.Clerk.session;
+        const createdAt = session ? new Date(session.createdAt).getTime() : 0;
+        if (createdAt && (Date.now() - createdAt < 60_000)) {
+          window.location.replace('/account');
+          return;
+        }
+      } catch (_) { /* fall through to UserButton mount */ }
+
       document.getElementById('nav-login-link').style.display = 'none';
       const slot = document.getElementById('nav-user-slot');
       slot.style.display = 'inline-flex';
