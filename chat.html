@@ -663,7 +663,19 @@ function addChart(spec) {
   const hasY2 = spec.layout && spec.layout.yaxis2;
   const defaults = {height: 400, margin: {t: 50, b: 50, l: 60, r: hasY2 ? 70 : 20}};
   const layout = Object.assign(defaults, spec.layout);
-  Plotly.newPlot(div, spec.data, layout, {responsive: true, displaylogo: false});
+  Plotly.newPlot(div, spec.data, layout, {
+    responsive: true,
+    displaylogo: false,
+    displayModeBar: 'hover',           // toolbar only appears on hover
+    modeBarButtonsToRemove: [          // strip the noisy ones
+      'lasso2d', 'select2d', 'autoScale2d',
+      'hoverClosestCartesian', 'hoverCompareCartesian',
+      'toggleSpikelines',
+    ],
+    toImageButtonOptions: {            // nicer download default
+      format: 'png', filename: 'cryptovol-chart', scale: 2,
+    },
+  });
   window.scrollTo(0, document.body.scrollHeight);
 }
 
