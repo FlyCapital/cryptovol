@@ -660,8 +660,9 @@ function addChart(spec) {
   const div = document.createElement("div");
   div.className = "chart";
   chat.appendChild(div);
-  const hasY2 = spec.layout && spec.layout.yaxis2;
-  const defaults = {height: 400, margin: {t: 50, b: 50, l: 60, r: hasY2 ? 70 : 20}};
+  // Defaults are only used for fields the backend didn't set; automargin on
+  // each axis (server-side) will further expand the margin if labels need room.
+  const defaults = {height: 440};
   const layout = Object.assign(defaults, spec.layout);
   Plotly.newPlot(div, spec.data, layout, {
     responsive: true,
