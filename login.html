@@ -96,11 +96,19 @@
     /* Shared button + input shape — rectangular with subtle rounded corners,
        one crisp border on all four sides, no shadow or gradient. */
     .cl-socialButtonsBlockButton,
+    .cl-socialButtonsBlockButton *,
+    .cl-socialButtons button,
+    .cl-socialButtons button *,
     .cl-formFieldInput,
-    .cl-formButtonPrimary {
-      min-height: 48px !important;
-      border-radius: 8px !important;
-      font-size: 15px !important;
+    .cl-formButtonPrimary,
+    .cl-formButtonPrimary *,
+    button[class*="cl-socialButtons"],
+    button[class*="cl-formButtonPrimary"] {
+      border-radius: 14px !important;
+      border-top-left-radius: 14px !important;
+      border-top-right-radius: 14px !important;
+      border-bottom-left-radius: 14px !important;
+      border-bottom-right-radius: 14px !important;
       box-shadow: none !important;
       -webkit-box-shadow: none !important;
       background-image: none !important;
@@ -109,18 +117,60 @@
       text-shadow: none !important;
       transform: none !important;
     }
-    /* Kill the ::before / ::after pseudos Clerk uses for top-highlight and
-       bottom drop shadow — that's what was making them look uneven. */
+    .cl-socialButtonsBlockButton,
+    .cl-socialButtons button,
+    .cl-formFieldInput,
+    .cl-formButtonPrimary {
+      min-height: 48px !important;
+      font-size: 15px !important;
+    }
+    /* Kill ALL pseudo-element decorations Clerk uses to fake depth (top
+       highlight + bottom drop shadow). Those were causing the bottom corners
+       to look more rounded than the top. */
     .cl-socialButtonsBlockButton::before,
     .cl-socialButtonsBlockButton::after,
+    .cl-socialButtonsBlockButton *::before,
+    .cl-socialButtonsBlockButton *::after,
     .cl-formButtonPrimary::before,
     .cl-formButtonPrimary::after,
+    .cl-formButtonPrimary *::before,
+    .cl-formButtonPrimary *::after,
     .cl-formFieldInput::before,
     .cl-formFieldInput::after {
       content: none !important;
       display: none !important;
       background: none !important;
       box-shadow: none !important;
+      border: none !important;
+    }
+
+    /* Catch-all override: every Clerk-rendered Button-like element AND its
+       descendants (hashed cl-internal-* classes included) get the same 14px
+       radius on all four corners, with all visual chrome stripped. This is
+       the heavy hammer when nothing else worked. */
+    [class*="cl-"][class*="Button"],
+    [class*="cl-"][class*="Button"] *,
+    [class*="cl-"][class*="button"],
+    [class*="cl-"][class*="button"] *,
+    button[class*="cl-"],
+    button[class*="cl-"] *,
+    .cl-internal-1bn6c4u,
+    .cl-internal-1bn6c4u * {
+      border-radius: 14px !important;
+      border-top-left-radius: 14px !important;
+      border-top-right-radius: 14px !important;
+      border-bottom-left-radius: 14px !important;
+      border-bottom-right-radius: 14px !important;
+      box-shadow: none !important;
+      -webkit-box-shadow: none !important;
+      outline: none !important;
+      filter: none !important;
+      -webkit-filter: none !important;
+      background-image: none !important;
+      -webkit-mask: none !important;
+      mask: none !important;
+      clip-path: none !important;
+      transform: none !important;
     }
 
     /* Social button — white with crisp slate border on all sides */
@@ -168,6 +218,40 @@
     /* Hide the "Email address" label so it's placeholder-only like Claude */
     .cl-formFieldLabel { display: none !important; }
     .cl-formField { margin-bottom: 8px !important; }
+
+    /* ─── Corner fix (authoritative — wins by source order) ────────────
+       One clip defines the shape: the button/input element itself owns the
+       14px radius and clips its own contents. Every DESCENDANT gets radius 0
+       so no nested rounded corner sits inside the parent's and offsets it —
+       that nested-corner mismatch is what made the bottom corners read as
+       more rounded than the top. All four corners now match the inputs. */
+    .cl-socialButtonsBlockButton,
+    .cl-socialButtons button,
+    .cl-formFieldInput,
+    .cl-formButtonPrimary,
+    button[class*="cl-socialButtons"],
+    button[class*="cl-formButtonPrimary"] {
+      border-radius: 14px !important;
+      overflow: hidden !important;
+    }
+    .cl-socialButtonsBlockButton *,
+    .cl-socialButtons button *,
+    .cl-formButtonPrimary *,
+    button[class*="cl-socialButtons"] *,
+    button[class*="cl-formButtonPrimary"] * {
+      border-radius: 0 !important;
+    }
+
+    /* Primary "Continue" button: Clerk styles the solid variant with a
+       pill radius via a stylesheet it injects at runtime — AFTER this
+       <style> — so an equal-specificity rule loses the cascade. Chain the
+       data-variant/data-color attributes to out-specify it outright. */
+    button.cl-formButtonPrimary,
+    button.cl-formButtonPrimary[data-variant="solid"],
+    button.cl-formButtonPrimary[data-variant="solid"][data-color="primary"],
+    button.cl-button[data-variant="solid"][data-color="primary"] {
+      border-radius: 14px !important;
+    }
   </style>
 
   <script defer crossorigin="anonymous"
@@ -205,7 +289,7 @@
         colorInputText: '#0f172a',
         fontFamily: '"Inter", sans-serif',
         fontSize: '15px',
-        borderRadius: '10px',
+        borderRadius: '14px',
         spacingUnit: '0.85rem',
       },
       elements: {

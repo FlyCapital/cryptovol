@@ -89,11 +89,19 @@
     .cl-socialButtonsBlockButton { overflow: hidden !important; position: relative !important; }
 
     .cl-socialButtonsBlockButton,
+    .cl-socialButtonsBlockButton *,
+    .cl-socialButtons button,
+    .cl-socialButtons button *,
     .cl-formFieldInput,
-    .cl-formButtonPrimary {
-      min-height: 48px !important;
-      border-radius: 8px !important;
-      font-size: 15px !important;
+    .cl-formButtonPrimary,
+    .cl-formButtonPrimary *,
+    button[class*="cl-socialButtons"],
+    button[class*="cl-formButtonPrimary"] {
+      border-radius: 14px !important;
+      border-top-left-radius: 14px !important;
+      border-top-right-radius: 14px !important;
+      border-bottom-left-radius: 14px !important;
+      border-bottom-right-radius: 14px !important;
       box-shadow: none !important;
       -webkit-box-shadow: none !important;
       background-image: none !important;
@@ -102,16 +110,52 @@
       text-shadow: none !important;
       transform: none !important;
     }
+    .cl-socialButtonsBlockButton,
+    .cl-socialButtons button,
+    .cl-formFieldInput,
+    .cl-formButtonPrimary {
+      min-height: 48px !important;
+      font-size: 15px !important;
+    }
     .cl-socialButtonsBlockButton::before,
     .cl-socialButtonsBlockButton::after,
+    .cl-socialButtonsBlockButton *::before,
+    .cl-socialButtonsBlockButton *::after,
     .cl-formButtonPrimary::before,
     .cl-formButtonPrimary::after,
+    .cl-formButtonPrimary *::before,
+    .cl-formButtonPrimary *::after,
     .cl-formFieldInput::before,
     .cl-formFieldInput::after {
       content: none !important;
       display: none !important;
       background: none !important;
       box-shadow: none !important;
+      border: none !important;
+    }
+
+    /* Catch-all override - see login.html for rationale */
+    [class*="cl-"][class*="Button"],
+    [class*="cl-"][class*="Button"] *,
+    [class*="cl-"][class*="button"],
+    [class*="cl-"][class*="button"] *,
+    button[class*="cl-"],
+    button[class*="cl-"] * {
+      border-radius: 14px !important;
+      border-top-left-radius: 14px !important;
+      border-top-right-radius: 14px !important;
+      border-bottom-left-radius: 14px !important;
+      border-bottom-right-radius: 14px !important;
+      box-shadow: none !important;
+      -webkit-box-shadow: none !important;
+      outline: none !important;
+      filter: none !important;
+      -webkit-filter: none !important;
+      background-image: none !important;
+      -webkit-mask: none !important;
+      mask: none !important;
+      clip-path: none !important;
+      transform: none !important;
     }
 
     .cl-socialButtonsBlockButton {
@@ -154,6 +198,38 @@
 
     .cl-formFieldLabel { display: none !important; }
     .cl-formField { margin-bottom: 8px !important; }
+
+    /* ─── Corner fix (authoritative — wins by source order) ────────────
+       One clip defines the shape: the button/input element itself owns the
+       14px radius and clips its own contents. Every DESCENDANT gets radius 0
+       so no nested rounded corner sits inside the parent's and offsets it. */
+    .cl-socialButtonsBlockButton,
+    .cl-socialButtons button,
+    .cl-formFieldInput,
+    .cl-formButtonPrimary,
+    button[class*="cl-socialButtons"],
+    button[class*="cl-formButtonPrimary"] {
+      border-radius: 14px !important;
+      overflow: hidden !important;
+    }
+    .cl-socialButtonsBlockButton *,
+    .cl-socialButtons button *,
+    .cl-formButtonPrimary *,
+    button[class*="cl-socialButtons"] *,
+    button[class*="cl-formButtonPrimary"] * {
+      border-radius: 0 !important;
+    }
+
+    /* Primary "Continue" button: Clerk styles the solid variant with a
+       pill radius via a stylesheet it injects at runtime — AFTER this
+       <style> — so an equal-specificity rule loses the cascade. Chain the
+       data-variant/data-color attributes to out-specify it outright. */
+    button.cl-formButtonPrimary,
+    button.cl-formButtonPrimary[data-variant="solid"],
+    button.cl-formButtonPrimary[data-variant="solid"][data-color="primary"],
+    button.cl-button[data-variant="solid"][data-color="primary"] {
+      border-radius: 14px !important;
+    }
   </style>
 
   <script defer crossorigin="anonymous"
@@ -191,7 +267,7 @@
         colorInputText: '#0f172a',
         fontFamily: '"Inter", sans-serif',
         fontSize: '15px',
-        borderRadius: '10px',
+        borderRadius: '14px',
         spacingUnit: '0.85rem',
       },
       elements: {
