@@ -301,6 +301,19 @@ pre {
 }
 .table-toggle:hover { text-decoration: underline; }
 
+.nt-bar { margin: 8px 0 2px; }
+.nested-table td.nt-toggle {
+  width: 1.4em; text-align: center; color: var(--text2);
+  cursor: pointer; user-select: none; padding-right: 6px;
+}
+.nested-table tr.nt-parent:hover { background: rgba(15, 23, 42, 0.025); }
+.nested-table tr.nt-detail > td {
+  padding: 2px 0 10px 26px; background: rgba(15, 23, 42, 0.015);
+}
+.leg-table { margin: 2px 0; font-size: 12px; }
+.leg-table th { color: var(--text3); font-weight: 500; }
+.leg-table td, .leg-table th { padding: 4px 14px 4px 0; }
+
 details.api-calls {
   margin-top: 8px; font-size: 11px; color: var(--text2);
 }
@@ -697,8 +710,81 @@ function addChart(spec) {
   window.scrollTo(0, document.body.scrollHeight);
 }
 
+// Expandable grouped table: parent rows whose legs are nested under __legs__.
+// Each parent shows a ▸ toggle; clicking expands its legs as a sub-table.
+function addNestedTable(groups) {
+  const chat = document.getElementById("chat");
+  const isEmpty = (v) => v === null || v === undefined || v === "";
+  const esc = (v) => String(v).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+  const pcols = Object.keys(groups[0]).filter(k => k !== "__legs__");
+  const lcols = (groups[0].__legs__ && groups[0].__legs__.length)
+    ? Object.keys(groups[0].__legs__[0]) : [];
+
+  const wrap = document.createElement("div");
+  wrap.className = "msg bot";
+
+  const bar = document.createElement("div");
+  bar.className = "nt-bar";
+  const toggleAll = document.createElement("button");
+  toggleAll.className = "table-toggle";
+  toggleAll.textContent = "Expand all";
+  bar.appendChild(toggleAll);
+
+  const table = document.createElement("table");
+  table.className = "data-table nested-table";
+  const thead = document.createElement("thead");
+  thead.innerHTML = "<tr><th></th>" + pcols.map(c => "<th>" + esc(c) + "</th>").join("") + "</tr>";
+  table.appendChild(thead);
+  const tbody = document.createElement("tbody");
+  table.appendChild(tbody);
+
+  groups.forEach(g => {
+    const ptr = document.createElement("tr");
+    ptr.className = "nt-parent";
+    ptr.innerHTML = '<td class="nt-toggle">▸</td>' +
+      pcols.map(c => "<td>" + (isEmpty(g[c]) ? "" : esc(g[c])) + "</td>").join("");
+
+    const dtr = document.createElement("tr");
+    dtr.className = "nt-detail";
+    dtr.style.display = "none";
+    const legs = g.__legs__ || [];
+    const legHtml = "<table class='data-table leg-table'><thead><tr>" +
+      lcols.map(c => "<th>" + esc(c) + "</th>").join("") + "</tr></thead><tbody>" +
+      legs.map(l => "<tr>" + lcols.map(c => "<td>" + (isEmpty(l[c]) ? "" : esc(l[c])) + "</td>").join("") + "</tr>").join("") +
+      "</tbody></table>";
+    const td = document.createElement("td");
+    td.colSpan = pcols.length + 1;
+    td.innerHTML = legHtml;
+    dtr.appendChild(td);
+
+    const toggle = () => {
+      const open = dtr.style.display === "none";
+      dtr.style.display = open ? "" : "none";
+      ptr.querySelector(".nt-toggle").textContent = open ? "▾" : "▸";
+    };
+    ptr.style.cursor = "pointer";
+    ptr.addEventListener("click", toggle);
+    tbody.appendChild(ptr);
+    tbody.appendChild(dtr);
+  });
+
+  let allOpen = false;
+  toggleAll.addEventListener("click", () => {
+    allOpen = !allOpen;
+    tbody.querySelectorAll(".nt-detail").forEach(d => d.style.display = allOpen ? "" : "none");
+    tbody.querySelectorAll(".nt-toggle").forEach(t => t.textContent = allOpen ? "▾" : "▸");
+    toggleAll.textContent = allOpen ? "Collapse all" : "Expand all";
+  });
+
+  wrap.appendChild(bar);
+  wrap.appendChild(table);
+  chat.appendChild(wrap);
+  window.scrollTo(0, document.body.scrollHeight);
+}
+
 function addTable(rows) {
   if (!Array.isArray(rows) || !rows.length) return;
+  if (rows[0] && rows[0].__legs__) { addNestedTable(rows); return; }
   const chat = document.getElementById("chat");
   const cols = Object.keys(rows[0]);
   const COLLAPSE_AT = 12;   // collapse tables longer than this
