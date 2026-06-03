@@ -283,6 +283,23 @@ pre {
   color: var(--text);
 }
 .data-table tr:last-child td { border-bottom: none; }
+.data-table th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+.data-table th.sortable:hover { color: var(--text); }
+.data-table th.sortable::after { content: " ↕"; opacity: 0.35; font-size: 10px; }
+.data-table th.sort-asc::after  { content: " ↑"; opacity: 0.9; }
+.data-table th.sort-desc::after { content: " ↓"; opacity: 0.9; }
+
+.table-collapse.collapsed {
+  max-height: 320px; overflow: hidden;
+  -webkit-mask-image: linear-gradient(#000 78%, transparent);
+  mask-image: linear-gradient(#000 78%, transparent);
+}
+.table-toggle {
+  margin-top: 6px; background: none; border: none;
+  color: #1F6FBF; font-family: var(--mono); font-size: 12px;
+  cursor: pointer; padding: 2px 0;
+}
+.table-toggle:hover { text-decoration: underline; }
 
 details.api-calls {
   margin-top: 8px; font-size: 11px; color: var(--text2);
@@ -684,15 +701,81 @@ function addTable(rows) {
   if (!Array.isArray(rows) || !rows.length) return;
   const chat = document.getElementById("chat");
   const cols = Object.keys(rows[0]);
-  const html = `<table class="data-table">
-      <thead><tr>${cols.map(c => "<th>" + c + "</th>").join("")}</tr></thead>
-      <tbody>${rows.map(r =>
-        "<tr>" + cols.map(c => "<td>" + (r[c] ?? "") + "</td>").join("") + "</tr>"
-      ).join("")}</tbody>
-    </table>`;
-  const wrap = document.createElement("div");
+  const COLLAPSE_AT = 12;   // collapse tables longer than this
+
+  const isEmpty = (v) => v === null || v === undefined || v === "";
+  const isNum   = (v) => !isEmpty(v) && !isNaN(Number(v));
+  const esc = (v) => String(v).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+  const wrap  = document.createElement("div");
   wrap.className = "msg bot";
-  wrap.innerHTML = html;
+
+  const table = document.createElement("table");
+  table.className = "data-table";
+
+  const htr = document.createElement("tr");
+  cols.forEach(c => {
+    const th = document.createElement("th");
+    th.textContent = c;
+    th.className = "sortable";
+    htr.appendChild(th);
+  });
+  const thead = document.createElement("thead");
+  thead.appendChild(htr);
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  table.appendChild(tbody);
+  const data = rows.slice();
+  const renderBody = () => {
+    tbody.innerHTML = data.map(r =>
+      "<tr>" + cols.map(c => "<td>" + (isEmpty(r[c]) ? "" : esc(r[c])) + "</td>").join("") + "</tr>"
+    ).join("");
+  };
+  renderBody();
+
+  // Click a header to sort by that column; click again to flip direction.
+  // Numeric columns compare numerically, text uses a natural-order compare;
+  // blank cells always sink to the bottom regardless of direction.
+  htr.querySelectorAll("th").forEach((th, ci) => {
+    th.addEventListener("click", () => {
+      const col = cols[ci];
+      const dir = th.dataset.dir === "asc" ? "desc" : "asc";
+      htr.querySelectorAll("th").forEach(o => {
+        o.dataset.dir = ""; o.classList.remove("sort-asc", "sort-desc");
+      });
+      th.dataset.dir = dir;
+      th.classList.add(dir === "asc" ? "sort-asc" : "sort-desc");
+      data.sort((a, b) => {
+        const va = a[col], vb = b[col];
+        if (isEmpty(va) && isEmpty(vb)) return 0;
+        if (isEmpty(va)) return 1;
+        if (isEmpty(vb)) return -1;
+        const cmp = (isNum(va) && isNum(vb))
+          ? Number(va) - Number(vb)
+          : String(va).localeCompare(String(vb), undefined, { numeric: true });
+        return dir === "asc" ? cmp : -cmp;
+      });
+      renderBody();
+    });
+  });
+
+  if (rows.length > COLLAPSE_AT) {
+    const box = document.createElement("div");
+    box.className = "table-collapse collapsed";
+    box.appendChild(table);
+    const btn = document.createElement("button");
+    btn.className = "table-toggle";
+    const setLbl = () => btn.textContent =
+      box.classList.contains("collapsed") ? `Show all ${rows.length} rows` : "Show less";
+    setLbl();
+    btn.addEventListener("click", () => { box.classList.toggle("collapsed"); setLbl(); });
+    wrap.appendChild(box);
+    wrap.appendChild(btn);
+  } else {
+    wrap.appendChild(table);
+  }
+
   chat.appendChild(wrap);
   window.scrollTo(0, document.body.scrollHeight);
 }
