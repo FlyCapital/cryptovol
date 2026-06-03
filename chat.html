@@ -715,6 +715,7 @@ function addChart(spec) {
 function addNestedTable(groups) {
   const chat = document.getElementById("chat");
   const isEmpty = (v) => v === null || v === undefined || v === "";
+  const isNum   = (v) => !isEmpty(v) && !isNaN(Number(v));
   const esc = (v) => String(v).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
   const pcols = Object.keys(groups[0]).filter(k => k !== "__legs__");
   const lcols = (groups[0].__legs__ && groups[0].__legs__.length)
@@ -727,53 +728,86 @@ function addNestedTable(groups) {
   bar.className = "nt-bar";
   const toggleAll = document.createElement("button");
   toggleAll.className = "table-toggle";
-  toggleAll.textContent = "Expand all";
   bar.appendChild(toggleAll);
 
   const table = document.createElement("table");
   table.className = "data-table nested-table";
   const thead = document.createElement("thead");
-  thead.innerHTML = "<tr><th></th>" + pcols.map(c => "<th>" + esc(c) + "</th>").join("") + "</tr>";
+  const htr = document.createElement("tr");
+  htr.appendChild(document.createElement("th"));          // toggle column (not sortable)
+  pcols.forEach(c => {
+    const th = document.createElement("th");
+    th.textContent = c; th.className = "sortable";
+    htr.appendChild(th);
+  });
+  thead.appendChild(htr);
   table.appendChild(thead);
   const tbody = document.createElement("tbody");
   table.appendChild(tbody);
 
-  groups.forEach(g => {
-    const ptr = document.createElement("tr");
-    ptr.className = "nt-parent";
-    ptr.innerHTML = '<td class="nt-toggle">▸</td>' +
-      pcols.map(c => "<td>" + (isEmpty(g[c]) ? "" : esc(g[c])) + "</td>").join("");
+  const legTable = (g) =>
+    "<table class='data-table leg-table'><thead><tr>" +
+    lcols.map(c => "<th>" + esc(c) + "</th>").join("") + "</tr></thead><tbody>" +
+    (g.__legs__ || []).map(l => "<tr>" + lcols.map(c => "<td>" + (isEmpty(l[c]) ? "" : esc(l[c])) + "</td>").join("") + "</tr>").join("") +
+    "</tbody></table>";
 
-    const dtr = document.createElement("tr");
-    dtr.className = "nt-detail";
-    dtr.style.display = "none";
-    const legs = g.__legs__ || [];
-    const legHtml = "<table class='data-table leg-table'><thead><tr>" +
-      lcols.map(c => "<th>" + esc(c) + "</th>").join("") + "</tr></thead><tbody>" +
-      legs.map(l => "<tr>" + lcols.map(c => "<td>" + (isEmpty(l[c]) ? "" : esc(l[c])) + "</td>").join("") + "</tr>").join("") +
-      "</tbody></table>";
-    const td = document.createElement("td");
-    td.colSpan = pcols.length + 1;
-    td.innerHTML = legHtml;
-    dtr.appendChild(td);
+  // Rebuild rows from the current `groups` order, preserving each group's
+  // expand state (g.__open). Sorting reorders `groups`; legs follow the parent.
+  const renderBody = () => {
+    tbody.innerHTML = "";
+    groups.forEach(g => {
+      const ptr = document.createElement("tr");
+      ptr.className = "nt-parent";
+      ptr.innerHTML = '<td class="nt-toggle">' + (g.__open ? "▾" : "▸") + "</td>" +
+        pcols.map(c => "<td>" + (isEmpty(g[c]) ? "" : esc(g[c])) + "</td>").join("");
+      const dtr = document.createElement("tr");
+      dtr.className = "nt-detail";
+      dtr.style.display = g.__open ? "" : "none";
+      const td = document.createElement("td");
+      td.colSpan = pcols.length + 1;
+      td.innerHTML = legTable(g);
+      dtr.appendChild(td);
+      ptr.style.cursor = "pointer";
+      ptr.addEventListener("click", () => {
+        g.__open = !g.__open;
+        dtr.style.display = g.__open ? "" : "none";
+        ptr.querySelector(".nt-toggle").textContent = g.__open ? "▾" : "▸";
+      });
+      tbody.appendChild(ptr);
+      tbody.appendChild(dtr);
+    });
+  };
+  renderBody();
 
-    const toggle = () => {
-      const open = dtr.style.display === "none";
-      dtr.style.display = open ? "" : "none";
-      ptr.querySelector(".nt-toggle").textContent = open ? "▾" : "▸";
-    };
-    ptr.style.cursor = "pointer";
-    ptr.addEventListener("click", toggle);
-    tbody.appendChild(ptr);
-    tbody.appendChild(dtr);
+  // Sort parent groups by a column (click to flip asc/desc); legs travel along.
+  htr.querySelectorAll("th.sortable").forEach((th, i) => {
+    const col = pcols[i];
+    th.addEventListener("click", () => {
+      const dir = th.dataset.dir === "asc" ? "desc" : "asc";
+      htr.querySelectorAll("th").forEach(o => { o.dataset.dir = ""; o.classList.remove("sort-asc", "sort-desc"); });
+      th.dataset.dir = dir; th.classList.add(dir === "asc" ? "sort-asc" : "sort-desc");
+      groups.sort((a, b) => {
+        const va = a[col], vb = b[col];
+        if (isEmpty(va) && isEmpty(vb)) return 0;
+        if (isEmpty(va)) return 1;
+        if (isEmpty(vb)) return -1;
+        const cmp = (isNum(va) && isNum(vb))
+          ? Number(va) - Number(vb)
+          : String(va).localeCompare(String(vb), undefined, { numeric: true });
+        return dir === "asc" ? cmp : -cmp;
+      });
+      renderBody();
+    });
   });
 
   let allOpen = false;
+  const setLbl = () => toggleAll.textContent = allOpen ? "Collapse all" : "Expand all";
+  setLbl();
   toggleAll.addEventListener("click", () => {
     allOpen = !allOpen;
-    tbody.querySelectorAll(".nt-detail").forEach(d => d.style.display = allOpen ? "" : "none");
-    tbody.querySelectorAll(".nt-toggle").forEach(t => t.textContent = allOpen ? "▾" : "▸");
-    toggleAll.textContent = allOpen ? "Collapse all" : "Expand all";
+    groups.forEach(g => g.__open = allOpen);
+    renderBody();
+    setLbl();
   });
 
   wrap.appendChild(bar);
