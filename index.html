@@ -406,6 +406,14 @@ nav {
 #cdFill { transition: opacity 0.6s ease-out 0.8s; }
 .chat-mockup.cd-step-draw #cdFill { opacity: 1; }
 
+/* Bar chart: each bar grows from its baseline (transform-origin set inline) */
+#cdBars rect {
+  transform: scaleY(0);
+  transform-box: fill-box;
+  transition: transform 0.7s cubic-bezier(.22,.61,.36,1);
+}
+.chat-mockup.cd-step-draw #cdBars rect { transform: scaleY(1); }
+
 /* Hide caret once the user message has finished typing */
 .chat-mockup.cd-step-done #cdCaret { display: none; }
 
@@ -654,6 +662,7 @@ g = pt.analytics.greeks
               <path id="cdLine2" d=""
                     fill="none" stroke="#f59e0b" stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round"/>
               <path id="cdFill" d="" fill="url(#rrFade)" opacity="0"/>
+              <g id="cdBars"></g>
               <text id="cdYHi"  x="2"   y="14"  font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8"></text>
               <text id="cdYMid" x="2"   y="64"  font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8"></text>
               <text id="cdYLo"  x="2"   y="114" font-family="IBM Plex Mono, monospace" font-size="9" fill="#94a3b8"></text>
@@ -906,6 +915,7 @@ window.addEventListener('load', async () => {
   const line  = document.getElementById('cdLine');
   const line2 = document.getElementById('cdLine2');
   const fill  = document.getElementById('cdFill');
+  const bars  = document.getElementById('cdBars');
   const yHi   = document.getElementById('cdYHi');
   const yMid  = document.getElementById('cdYMid');
   const yLo   = document.getElementById('cdYLo');
@@ -913,6 +923,24 @@ window.addEventListener('load', async () => {
   const xEnd  = document.getElementById('cdXEnd');
 
   const EXAMPLES = [
+    {
+      // ΔOI by strike for a single expiry — grouped Calls (blue) / Puts (amber)
+      // bars off a zero line. Call wall at the 2,000 strike, put build 1.5-1.75k.
+      type:   'bars',
+      prompt: 'Show ETH ΔOI by strike for the Jun 26 expiry',
+      reply:  '<strong>ETH open-interest shift — 26 Jun expiry.</strong> Dealers stacked a wall of call OI at the 2,000 strike (+5.8k) while puts built up across 1,500–1,750 — a pin-and-protect structure, upside calls bracketed by downside put cover.',
+      title:  'ETH — Δ OI by strike · <span style="color:#0d4a8e;">Calls</span> / <span style="color:#f59e0b;">Puts</span> · 26 Jun',
+      yHi: '6k', yMid: '3k', yLo: '0',
+      xStart: '500', xEnd: '3,500',
+      bars: [
+        { c: 0,    p: 120  }, { c: 0,    p: 280  }, { c: 0,    p: -60  },
+        { c: 0,    p: -300 }, { c: 60,   p: 1780 }, { c: 220,  p: 2150 },
+        { c: 240,  p: 5030 }, { c: 250,  p: -1180}, { c: 90,   p: -180 },
+        { c: 5850, p: -80  }, { c: 3420, p: -60  }, { c: 760,  p: 30   },
+        { c: 520,  p: 20   }, { c: -70,  p: 0    }, { c: -240, p: 0    },
+        { c: -900, p: 0    },
+      ],
+    },
     {
       // 30 daily samples — IV drifts 44-51% with mild mean reversion,
       // RV chops between 24-35%, persistently below IV (vol-risk premium).
@@ -943,6 +971,39 @@ window.addEventListener('load', async () => {
     return d + ' L360,120 L0,120 Z';
   }
 
+  // Render grouped Calls/Puts ΔOI bars off a zero line. Each bar grows from
+  // its baseline via the CSS scaleY transition (origin set inline per bar).
+  function buildBars(ex) {
+    const data  = ex.bars;
+    const n     = data.length;
+    const x0    = 18, plotW = 338;
+    const slot  = plotW / n;
+    const bw    = 4.5;
+    const y0    = 90;                 // zero line
+    const scale = 80 / 6000;          // px per contract (6k → 80px tall)
+    const CALL  = '#0d4a8e', PUT = '#f59e0b';
+    let html = '';
+    function bar(v, color, x) {
+      if (!v) return '';
+      let y, h, origin;
+      if (v > 0) { h = v * scale; y = y0 - h; origin = '50% 100%'; }
+      else       { h = -v * scale; y = y0;     origin = '50% 0%';   }
+      if (h < 0.8) h = 0.8;
+      return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw}" `
+           + `height="${h.toFixed(1)}" rx="0.6" fill="${color}" `
+           + `style="transform-origin:${origin};"/>`;
+    }
+    data.forEach((d, i) => {
+      const cx = x0 + slot * i + slot / 2;
+      html += bar(d.c, CALL, cx - bw - 0.6);
+      html += bar(d.p, PUT,  cx + 0.6);
+    });
+    // zero line emphasis
+    html += `<line x1="${x0}" y1="${y0}" x2="${x0 + plotW}" y2="${y0}" `
+          + `stroke="#94a3b8" stroke-width="0.75"/>`;
+    return html;
+  }
+
   let timers = [];
   function clearTimers() { timers.forEach(clearTimeout); timers = []; }
   function schedule(fn, ms) { timers.push(setTimeout(fn, ms)); }
@@ -971,9 +1032,17 @@ window.addEventListener('load', async () => {
     yLo.textContent   = ex.yLo;
     xStart.textContent = ex.xStart;
     xEnd.textContent   = ex.xEnd;
-    line.setAttribute('d', ex.line);
-    line2.setAttribute('d', ex.line2 || '');                    // hides itself when empty
-    fill.setAttribute('d', ex.line2 ? '' : fillFromLine(ex.line)); // skip fill on 2-line chart
+    if (ex.type === 'bars') {
+      bars.innerHTML = buildBars(ex);
+      line.setAttribute('d', '');
+      line2.setAttribute('d', '');
+      fill.setAttribute('d', '');
+    } else {
+      bars.innerHTML = '';
+      line.setAttribute('d', ex.line);
+      line2.setAttribute('d', ex.line2 || '');                  // hides itself when empty
+      fill.setAttribute('d', ex.line2 ? '' : fillFromLine(ex.line)); // skip fill on 2-line chart
+    }
 
     // Commit reset to the DOM, then restore transitions so the upcoming
     // draw-in animation can play. NOTE: do NOT touch strokeDashoffset
