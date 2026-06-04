@@ -1,0 +1,32 @@
+=== 'block' / 'trade' mentions in api+web ===
+cryptovol-api/billing.py
+cryptovol-api/email_sender.py
+cryptovol-api/main.py
+cryptovol-api/account.py
+cryptovol-api/chat/main.py
+cryptovol/index.html
+cryptovol/terms.html
+cryptovol/_blk.txt
+cryptovol/blog.html
+cryptovol/methodology.html
+=== trades tables / ingestion clues ===
+cryptovol-api/main.py:422:    """For surface queries with a single 'date' param — block dates older than the plan's window."""
+cryptovol-api/main.py:850:# raw `deribit_data` snapshot table (populated by the bitVolSurface ingester).
+cryptovol-api/main.py:931:                "SELECT MAX(DateTime) FROM deribit_data "
+cryptovol-api/main.py:940:                "SELECT MAX(DateTime) FROM deribit_data "
+cryptovol-api/main.py:960:            "FROM deribit_data "
+cryptovol-api/main.py:1078:                "FROM deribit_data "
+=== data ingester repo (bitVolSurface) files ===
+bitVolSurface/QLib.py
+bitVolSurface/QLib2.py
+bitVolSurface/backfill.py
+bitVolSurface/bitVIXFlash.py
+bitVolSurface/bitVolFlash.py
+bitVolSurface/bitVolUtil.py
+bitVolSurface/create_db_mysql.py
+bitVolSurface/create_db_table.py
+bitVolSurface/create_table.py
+bitVolSurface/create_vix_db_mysql.py
+=== block/trade in ingester ===
+bitVolSurface/backfill.py
+bitVolSurface/deribitv2.py

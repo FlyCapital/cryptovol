@@ -1,0 +1,41 @@
+=== admin / user-listing routes in account.py ===
+1:"""Phase 1 self-hosted hub: account endpoints + Clerk integration.
+7:2. /v1/account/me — returns the logged-in user's profile (tier, API key,
+9:3. /v1/account/rotate-key — generates a new API key, invalidates the old.
+23:router = APIRouter(prefix="/v1", tags=["Account"])
+30:    "CLERK_JWKS_URL", ""  # e.g. https://your-app.clerk.accounts.dev/.well-known/jwks.json
+36:def _get_jwks() -> dict:
+48:def _verify_clerk_jwt(token: str) -> dict:
+77:def _generate_api_key() -> str:
+86:def _get_user_by_clerk_id(get_conn, clerk_user_id: str) -> Optional[dict]:
+91:            "stripe_subscription_id, created_at "
+92:            "FROM users WHERE clerk_user_id = %s",
+102:            "created_at": row[7].isoformat() if row[7] else None,
+108:def _get_user_by_api_key(get_conn, api_key: str) -> Optional[dict]:
+116:            "FROM users WHERE api_key = %s",
+130:def _create_user(get_conn, clerk_user_id: str, email: str) -> dict:
+149:def _get_usage(get_conn, user_id: int, period: str, kind: str = "api") -> int:
+150:    """Return the user's request count for the current period.
+183:def _increment_usage(get_conn, user_id: int, kind: str = "api") -> None:
+205:def _delete_user(get_conn, user_id: int) -> None:
+209:        cursor.execute("DELETE FROM users WHERE id = %s", (user_id,))
+215:def _cancel_stripe_and_anonymize(user: dict) -> None:
+217:    customer's email. Stripe customer records are kept for accounting/tax
+220:    Failures are logged but don't block the account-deletion flow — the
+244:        # Strip PII from the customer record (kept for tax/accounting).
+255:def _delete_clerk_user(clerk_user_id: str) -> None:
+267:            f"https://api.clerk.com/v1/users/{clerk_user_id}",
+280:def _rotate_api_key(get_conn, clerk_user_id: str) -> str:
+303:class AccountResponse(BaseModel):
+307:    created_at: Optional[str] = None
+325:def _build_account_response(get_conn, user: dict) -> "AccountResponse":
+340:    return AccountResponse(
+344:        created_at=user["created_at"],
+350:def make_router(get_conn):
+356:    @router.post("/webhooks/clerk", include_in_schema=False)
+357:    async def clerk_webhook(request: Request):
+409:                from email_sender import send_admin_signup_notification
+410:                send_admin_signup_notification(
+427:    @router.get("/account/me", response_model=AccountResponse)
+428:    async def account_me(authorization: str = Header(...)):
+447:                "Account not yet provisioned. Refresh in a moment.",

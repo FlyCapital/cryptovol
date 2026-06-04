@@ -1,0 +1,8 @@
+=== anything listening on 3307 (cloud-sql-proxy)? ===
+COMMAND     PID         USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+cloud-sql 29551 mengfeizhang    6u  IPv4 0x9554f1add2e3baa9      0t0  TCP 127.0.0.1:3307 (LISTEN)
+rc=0
+=== cloud-sql-proxy / proxy process ===
+=== mysql client available? ===
+=== ADC present? ===
+/Users/mengfeizhang/.config/gcloud/application_default_credentials.json

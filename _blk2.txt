@@ -1,0 +1,33 @@
+=== deribitv2.py: trade/block methods ===
+445:    def get_trades_by_instrument(self, Instr, num):
+451:                "method": "private/get_user_trades_by_instrument",
+596:def get_last_trades_rest(instr_name, start_ts_ms, end_ts_ms, count=100):
+598:    Historical trades for an instrument via REST API.
+604:            'https://www.deribit.com/api/v2/public/get_last_trades_by_instrument_and_time',
+615:        return resp.json().get('result', {}).get('trades', [])
+625:    Returns None when the instrument had no trades in the lookback window.
+=== backfill.py block/trade ===
+70:      • Options  : latest trade on the snapshot day via get_last_trades_by_instrument_and_time;
+188:            trades = get_last_trades_rest(name, _day_start_ms, snap_ts_ms)
+189:            if trades:
+190:                latest = max(trades, key=lambda t: t['timestamp'])
+=== deribit_data table columns (schema) ===
+create_table.py:13:    CREATE TABLE IF NOT EXISTS vol_surface (
+create_table.py:32:    CREATE TABLE IF NOT EXISTS vol_index (
+create_table.py:42:    CREATE TABLE IF NOT EXISTS const_maturity_vol (
+create_db_table.py:15:CREATE TABLE deribit_data (
+create_db_table.py:17:    Ticker TEXT NOT NULL,
+create_db_table.py:18:    TickerUdly TEXT,
+create_db_table.py:19:    InstrType TEXT CHECK (InstrType IN ('spot', 'future', 'option')) NOT NULL,
+create_db_table.py:31:CREATE TABLE okx_data (
+create_db_table.py:33:    Ticker TEXT NOT NULL,
+create_db_table.py:34:    TickerUdly TEXT,
+create_db_table.py:35:    InstrType TEXT CHECK (InstrType IN ('spot', 'future', 'option')) NOT NULL,
+create_db_mysql.py:20:CREATE TABLE deribit_data (
+create_db_mysql.py:22:    Ticker VARCHAR(32) NOT NULL,
+create_db_mysql.py:23:    TickerUdly VARCHAR(32),
+create_db_mysql.py:24:    InstrType ENUM('spot', 'future', 'option') NOT NULL,
+create_db_mysql.py:36:CREATE TABLE okx_data (
+create_db_mysql.py:38:    Ticker VARCHAR(32) NOT NULL,
+create_db_mysql.py:39:    TickerUdly VARCHAR(32),
+create_db_mysql.py:40:    InstrType ENUM('spot', 'future', 'option') NOT NULL,
