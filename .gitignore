@@ -1,1 +1,4 @@
 .vercel
+
+# local scratch / debug output
+_*.txt
