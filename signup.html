@@ -231,32 +231,6 @@
       border-radius: 14px !important;
     }
 
-    /* Verification code (OTP): the 6 boxes have fixed widths that overflow the
-       card and clip the left box. Let them flex to fit the card, evenly gapped
-       and centered, so they always sit inside with consistent side margins. */
-    .cl-otpCodeFieldInputs,
-    .cl-otpCodeFieldInputContainer,
-    div[class*="otpCodeFieldInputContainer"],
-    div[class*="otpCodeFieldInputs"] {
-      display: flex !important;
-      width: 100% !important;
-      max-width: 100% !important;
-      gap: 8px !important;
-      justify-content: center !important;
-      padding: 0 !important;
-      margin: 0 auto !important;
-    }
-    input[class*="otpCodeFieldInput"] {
-      flex: 1 1 0 !important;
-      min-width: 0 !important;
-      width: auto !important;
-      max-width: 52px !important;
-      aspect-ratio: 1 / 1 !important;
-      padding: 0 !important;
-      text-align: center !important;
-      border-radius: 12px !important;
-    }
-
     /* Remove Clerk's "Last used" badge */
     .cl-badge { display: none !important; }
   </style>
@@ -318,28 +292,6 @@
         formFieldInput: { background: '#ffffff', color: '#0f172a' },
         identityPreview: { fontFamily: '"Inter", sans-serif', fontSize: '14px' },
         formResendCodeLink: { color: '#1F6FBF', fontFamily: '"Inter", sans-serif' },
-        // Verification code: keep the 6 boxes inside the card (they overflow
-        // and clip the left box by default). Flex them to share the width.
-        otpCodeFieldInputs: {
-          display: 'flex',
-          width: '100%',
-          maxWidth: '100%',
-          gap: '8px',
-          justifyContent: 'center',
-          padding: 0,
-          margin: '0 auto',
-        },
-        otpCodeFieldInput: {
-          flex: '1 1 0',
-          minWidth: 0,
-          width: 'auto',
-          maxWidth: '52px',
-          height: 'auto',
-          aspectRatio: '1 / 1',
-          borderRadius: '12px',
-          padding: 0,
-          textAlign: 'center',
-        },
       },
     };
 
