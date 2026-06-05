@@ -524,15 +524,20 @@ idx = cv.vol_index(ccy=<span class="c-str">"BTC"</span>, tenor=<span class="c-st
       <div style="position:relative;width:100%;height:760px;"><div class="chart-loading" id="smileLoading">LOADING DATA...</div><div id="smileChart" role="img" aria-label="3D implied volatility surface" style="width:100%;height:100%;"></div></div>
     </div>
     <details class="api-call">
-      <summary><span class="label">View API call</span><span class="endpoint">GET /v1/vol-surface/raw</span></summary>
-<pre><span class="c-cm"># Raw market-quoted surface — every listed expiry × its strike ladder</span>
-curl -H <span class="c-str">"X-CryptoVol-Key: cvk_live_..."</span> \
-  <span class="c-str">"https://cryptovol-api-nbakzshi6q-uc.a.run.app/v1/vol-surface/raw?ccy=BTC&session=us"</span>
-
-<span class="c-cm"># Python SDK — strikes[] and mkt_vol[] are index-aligned per expiry</span>
+      <summary><span class="label">View API call</span><span class="endpoint">GET /v1/vol-surface/raw · POST /v1/vol-surface/bulk</span></summary>
+<pre><span class="c-cm"># DOTS — raw market-quoted surface (every listed expiry × its strike ladder)</span>
 surf = cv.vol_surface_raw(ccy=<span class="c-str">"BTC"</span>, session=<span class="c-str">"us"</span>)
 <span class="c-kw">for</span> exp <span class="c-kw">in</span> surf.expiries:
-    <span class="c-bi">print</span>(exp.expiry, exp.forward, <span class="c-bi">len</span>(exp.strikes), <span class="c-str">"strikes"</span>)</pre>
+    <span class="c-bi">print</span>(exp.expiry, exp.forward, <span class="c-bi">len</span>(exp.strikes), <span class="c-str">"strikes"</span>)
+
+<span class="c-cm"># LINES — the fitted (arbitrage-free SABR) surface: sample a moneyness grid</span>
+<span class="c-cm"># at each expiry via the bulk endpoint; .vol is the interpolated fitted vol.</span>
+grid = [<span class="c-bi">0.8</span>, <span class="c-bi">0.9</span>, <span class="c-bi">1.0</span>, <span class="c-bi">1.1</span>, <span class="c-bi">1.2</span>]
+fit  = cv.vol_surface_bulk(ccy=<span class="c-str">"BTC"</span>, session=<span class="c-str">"us"</span>, queries=[
+    {<span class="c-str">"expiry"</span>: e.expiry, <span class="c-str">"strike_type"</span>: <span class="c-str">"moneyness"</span>, <span class="c-str">"strike_value"</span>: m}
+    <span class="c-kw">for</span> e <span class="c-kw">in</span> surf.expiries <span class="c-kw">for</span> m <span class="c-kw">in</span> grid])
+<span class="c-kw">for</span> r <span class="c-kw">in</span> fit.successful:
+    <span class="c-bi">print</span>(r.expiry, r.strike, r.vol)   <span class="c-cm"># smooth fitted vol at each grid point</span></pre>
     </details>
   </div>
 
@@ -575,12 +580,19 @@ curl -H <span class="c-str">"X-CryptoVol-Key: cvk_live_..."</span> \
         <div style="position:relative;width:100%;height:320px;"><div class="chart-loading" id="sessionSmileLoading">LOADING DATA...</div><canvas id="sessionSmileChart" role="img" aria-label="Vol smile by session for selected expiry"></canvas></div>
       </div>
       <details class="api-call">
-        <summary><span class="label">View API call</span><span class="endpoint">GET /v1/vol-surface/raw</span></summary>
-<pre><span class="c-cm"># Compare the quoted smile across the three daily sessions for one expiry</span>
+        <summary><span class="label">View API call</span><span class="endpoint">GET /v1/vol-surface/raw · POST /v1/vol-surface/bulk</span></summary>
+<pre>exp = <span class="c-str">"2026-06-27"</span>
 <span class="c-kw">for</span> sess <span class="c-kw">in</span> [<span class="c-str">"asia"</span>, <span class="c-str">"london"</span>, <span class="c-str">"us"</span>]:
+    <span class="c-cm"># dots — market-quoted smile for this expiry</span>
     surf  = cv.vol_surface_raw(ccy=<span class="c-str">"BTC"</span>, session=sess)
-    smile = <span class="c-bi">next</span>(e <span class="c-kw">for</span> e <span class="c-kw">in</span> surf.expiries <span class="c-kw">if</span> e.expiry == <span class="c-str">"2026-06-27"</span>)
-    <span class="c-bi">print</span>(sess, <span class="c-bi">list</span>(<span class="c-bi">zip</span>(smile.strikes, smile.mkt_vol)))</pre>
+    smile = <span class="c-bi">next</span>(e <span class="c-kw">for</span> e <span class="c-kw">in</span> surf.expiries <span class="c-kw">if</span> e.expiry == exp)
+    dots  = <span class="c-bi">list</span>(<span class="c-bi">zip</span>(smile.strikes, smile.mkt_vol))
+
+    <span class="c-cm"># line — fitted SABR smile: sample a moneyness grid via the bulk endpoint</span>
+    fit   = cv.vol_surface_bulk(ccy=<span class="c-str">"BTC"</span>, session=sess, queries=[
+        {<span class="c-str">"expiry"</span>: exp, <span class="c-str">"strike_type"</span>: <span class="c-str">"moneyness"</span>, <span class="c-str">"strike_value"</span>: m}
+        <span class="c-kw">for</span> m <span class="c-kw">in</span> [<span class="c-bi">0.7</span> + <span class="c-bi">0.02</span>*i <span class="c-kw">for</span> i <span class="c-kw">in</span> <span class="c-bi">range</span>(<span class="c-bi">31</span>)]])   <span class="c-cm"># 0.70 … 1.30</span>
+    line  = [(r.strike, r.vol) <span class="c-kw">for</span> r <span class="c-kw">in</span> fit.successful]</pre>
       </details>
     </div>
   </div>
