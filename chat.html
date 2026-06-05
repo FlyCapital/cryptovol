@@ -732,6 +732,32 @@ function addMsg(role, html, _meta) {
   return div;
 }
 
+// Robust chart download. Plotly's default PNG export goes SVG → canvas →
+// toDataURL, which the browser can block (or it mis-sizes a responsive chart),
+// producing "problem downloading your snapshot". We export at the chart's real
+// size on a solid background; if PNG is blocked, fall back to SVG, which never
+// touches a canvas and always succeeds.
+function downloadChart(gd) {
+  const dl = (url, filename) => {
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+  };
+  const rect = gd.getBoundingClientRect();
+  const opts = {
+    width:  Math.round(rect.width)  || 900,
+    height: Math.round(rect.height) || 440,
+    scale: 2,
+    setBackground: "#faf9f5",
+  };
+  Plotly.toImage(gd, Object.assign({ format: "png" }, opts))
+    .then(url => dl(url, "cryptovol-chart.png"))
+    .catch(() => Plotly.toImage(gd, Object.assign({ format: "svg" }, opts))
+      .then(url => dl(url, "cryptovol-chart.svg"))
+      .catch(err => { console.error("chart download failed", err);
+                      alert("Sorry — couldn't download the chart."); }));
+}
+
 function addChart(spec) {
   const chat = document.getElementById("chat");
   const div = document.createElement("div");
@@ -749,10 +775,14 @@ function addChart(spec) {
       'lasso2d', 'select2d', 'autoScale2d',
       'hoverClosestCartesian', 'hoverCompareCartesian',
       'toggleSpikelines',
+      'toImage',                       // replaced by our robust downloader below
     ],
-    toImageButtonOptions: {            // nicer download default
-      format: 'png', filename: 'cryptovol-chart', scale: 2,
-    },
+    modeBarButtonsToAdd: [{
+      name: 'downloadChart',
+      title: 'Download chart',
+      icon: Plotly.Icons.camera,
+      click: downloadChart,
+    }],
   });
   window.scrollTo(0, document.body.scrollHeight);
 }
