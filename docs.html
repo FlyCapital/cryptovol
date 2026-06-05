@@ -38,7 +38,10 @@
   --serif:     'Source Serif 4', Georgia, serif;
 }
 
-html { scroll-behavior: smooth; }
+/* NOTE: do NOT set `scroll-behavior: smooth` here — it animates the window
+   scroll and gets interrupted by Redoc's scroll-spy, so clicking an endpoint
+   in the sidebar never lands on its section. Leave it at the default (auto). */
+html { scroll-behavior: auto; }
 body {
   margin: 0; padding: 0;
   background: var(--bg);
@@ -286,7 +289,7 @@ footer {
   spec-url="/openapi.json"
   hide-download-button="true"
   expand-responses="200"
-  scroll-y-offset="nav"
+  scroll-y-offset="72"
   theme='{
     "colors": {
       "primary": { "main": "#1F6FBF" },
