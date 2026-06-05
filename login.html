@@ -347,24 +347,23 @@
       },
     };
 
-    // Walk the Clerk-rendered DOM and hide any element whose visible text
-    // is "Last used" (or starts with that). Class-name selectors miss it
-    // because Clerk uses hashed internal class names that change.
+    // Hide the "Last used" badge wherever Clerk renders it (it appears above
+    // the email field AND on social buttons). Class selectors miss it because
+    // Clerk uses hashed internal class names, so match on the visible text:
+    // find any leaf whose text is "Last used", then climb to the outermost
+    // wrapper that still contains only that text (the pill) and hide it.
     function hideClerkLastUsed() {
-      const sels = [
-        '.cl-socialButtonsBlockButton',
-        '.cl-socialButtonsBlockButton *',
-      ];
-      sels.forEach(sel => {
-        document.querySelectorAll(sel).forEach(el => {
-          // Skip elements with many children (likely the container itself)
-          if (el.children.length > 2) return;
-          const text = (el.textContent || '').trim().toLowerCase();
-          if (text === 'last used' || /^last us(ed)?\b/.test(text)) {
-            el.style.display = 'none';
-            el.style.visibility = 'hidden';
-          }
-        });
+      const root = document.getElementById('clerk-root') || document.body;
+      root.querySelectorAll('*').forEach(el => {
+        if (el.children.length) return;                      // leaf nodes only
+        if ((el.textContent || '').trim().toLowerCase() !== 'last used') return;
+        let node = el;
+        while (node.parentElement && node.parentElement !== root &&
+               (node.parentElement.textContent || '').trim().toLowerCase() === 'last used') {
+          node = node.parentElement;                         // climb to the pill
+        }
+        node.style.display = 'none';
+        node.style.visibility = 'hidden';
       });
     }
 
