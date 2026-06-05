@@ -389,11 +389,40 @@ footer {
 .foot-inner a { color: var(--text2); text-decoration: none; }
 .foot-inner a:hover { color: var(--text); }
 
+/* Wide tables scroll horizontally instead of overflowing the chat bubble */
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 @media (max-width: 720px) {
-  .container { padding: 0 20px; }
-  .chat-panel { padding: 16px; }
-  .nav-inner { padding: 0 20px; }
+  main { padding: 24px 0 16px; }
+  .container { padding: 0 16px; }
+  .chat-panel { padding: 14px; border-radius: 10px; }
+  .nav-inner { padding: 0 16px; }
+  .nav-links { gap: 18px; }
+  .page-head { margin-bottom: 16px; }
+  /* Let bot replies (charts/tables) use the full width; keep user msgs inset */
+  .msg { max-width: 100%; }
+  .msg.user { max-width: 88%; }
+  .chart { min-height: 300px; }
+  .input-row { padding: 12px 0 16px; }
+  button#send { padding: 12px 16px; }
+  /* 16px input prevents iOS Safari from zooming in on focus */
+  input[type=text] { font-size: 16px; }
+}
+
+@media (max-width: 560px) {
+  /* Trim the nav so it fits a phone without wrapping/overflow.
+     Hidden items remain reachable from the homepage. */
+  .nav-secondary { display: none !important; }
   .nav-links { gap: 16px; }
+  .nav-link, .nav-dropdown-trigger { font-size: 13px; }
+  .nav-login { font-size: 13px; padding: 6px 12px; }
+  .logo { font-size: 18px; }
+  .chat-panel { padding: 12px; }
+  .toolbar { margin-bottom: 8px; }
 }
 </style>
 </head>
@@ -414,7 +443,7 @@ footer {
           <a href="https://github.com/FlyCapital/cryptovol-python" target="_blank" rel="noopener" class="nav-dropdown-item" role="menuitem">SDK</a>
         </div>
       </div>
-      <div class="nav-dropdown">
+      <div class="nav-dropdown nav-secondary">
         <button class="nav-dropdown-trigger" type="button">
           Research
           <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg>
@@ -425,7 +454,7 @@ footer {
         </div>
       </div>
       <a href="/chat" class="nav-link active"><svg width="13" height="13" viewBox="0 0 16 16" fill="#1F6FBF" style="vertical-align:-2px;margin-right:5px;" aria-hidden="true"><path d="M8 1.2l1.25 3.55L12.8 6l-3.55 1.25L8 10.8 6.75 7.25 3.2 6l3.55-1.25z"/><path d="M13 9.3l.6 1.7 1.7.6-1.7.6-.6 1.7-.6-1.7-1.7-.6 1.7-.6z"/></svg>Ask Quanta</a>
-      <a href="/#pricing" class="nav-link">Pricing</a>
+      <a href="/#pricing" class="nav-link nav-secondary">Pricing</a>
       <a href="/login" class="nav-login" id="nav-login-link">Log in</a>
       <span id="nav-user-slot" style="display:none; align-items:center;"></span>
     </div>
@@ -829,7 +858,10 @@ function addNestedTable(groups) {
   });
 
   wrap.appendChild(bar);
-  wrap.appendChild(table);
+  const scroll = document.createElement("div");
+  scroll.className = "table-scroll";
+  scroll.appendChild(table);
+  wrap.appendChild(scroll);
   chat.appendChild(wrap);
   window.scrollTo(0, document.body.scrollHeight);
 }
@@ -898,10 +930,16 @@ function addTable(rows) {
     });
   });
 
+  // Wrap in a horizontally scrollable container so wide tables don't overflow
+  // the chat bubble (and stay swipeable on mobile).
+  const scroll = document.createElement("div");
+  scroll.className = "table-scroll";
+  scroll.appendChild(table);
+
   if (rows.length > COLLAPSE_AT) {
     const box = document.createElement("div");
     box.className = "table-collapse collapsed";
-    box.appendChild(table);
+    box.appendChild(scroll);
     const btn = document.createElement("button");
     btn.className = "table-toggle";
     const setLbl = () => btn.textContent =
@@ -911,7 +949,7 @@ function addTable(rows) {
     wrap.appendChild(box);
     wrap.appendChild(btn);
   } else {
-    wrap.appendChild(table);
+    wrap.appendChild(scroll);
   }
 
   chat.appendChild(wrap);
