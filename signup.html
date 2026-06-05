@@ -364,9 +364,29 @@
     window.addEventListener('load', async () => {
       await window.Clerk.load();
 
+      // Google Ads — sign-up conversion. Set this to the conversion label from
+      // Google Ads (format 'AW-18214921102/XXXXXXXXXXXX') to enable it. While
+      // null, no conversion fires (safe to ship). It is reported ONLY here, on a
+      // genuine new account: an already-signed-in visitor is redirected below
+      // before the listener is added, and sign-in happens on /login — so this
+      // never counts sign-ins, /account revisits, or plain page views.
+      const ADS_SIGNUP_CONVERSION = null;  // e.g. 'AW-18214921102/abcdEFgh12'
+      let signupConversionFired = false;
+
       if (window.Clerk.user) { window.location.replace('/account'); return; }
       window.Clerk.addListener(({ user }) => {
-        if (user) window.location.replace('/account');
+        if (!user) return;
+        const go = () => window.location.replace('/account');
+        if (ADS_SIGNUP_CONVERSION && !signupConversionFired) {
+          signupConversionFired = true;
+          let done = false;
+          const once = () => { if (!done) { done = true; go(); } };
+          // Wait for the conversion beacon, but redirect anyway after 1s.
+          gtag('event', 'conversion', { send_to: ADS_SIGNUP_CONVERSION, event_callback: once });
+          setTimeout(once, 1000);
+        } else {
+          go();
+        }
       });
 
       const obs = new MutationObserver(() => { hideClerkLastUsed(); nudgeOtpReflow(); });
