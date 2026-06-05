@@ -551,10 +551,10 @@ surf = cv.vol_surface_raw(ccy=<span class="c-str">"BTC"</span>, session=<span cl
 curl -H <span class="c-str">"X-CryptoVol-Key: cvk_live_..."</span> \
   <span class="c-str">"https://cryptovol-api-nbakzshi6q-uc.a.run.app/v1/vol-surface/raw?ccy=BTC&session=us"</span>
 
-<span class="c-cm"># Python SDK — one call per session, read ATM market vol at each tenor</span>
+<span class="c-cm"># Python SDK — one call per session, read ATM market vol at each expiry</span>
 <span class="c-kw">for</span> sess <span class="c-kw">in</span> [<span class="c-str">"asia"</span>, <span class="c-str">"london"</span>, <span class="c-str">"us"</span>]:
     s = cv.vol_surface_raw(ccy=<span class="c-str">"BTC"</span>, session=sess)
-    term = [(e.tenor_days, <span class="c-bi">min</span>(<span class="c-bi">zip</span>(e.strikes, e.mkt_vol),
+    term = [(e.expiry, <span class="c-bi">min</span>(<span class="c-bi">zip</span>(e.strikes, e.mkt_vol),
             key=<span class="c-kw">lambda</span> kv: <span class="c-bi">abs</span>(kv[<span class="c-bi">0</span>] - e.atm_strike))[<span class="c-bi">1</span>]) <span class="c-kw">for</span> e <span class="c-kw">in</span> s.expiries]</pre>
       </details>
     </div>
