@@ -263,6 +263,7 @@
       width: 100% !important;
       align-items: center !important;
       justify-content: center !important;
+      margin-top: 12px !important;
     }
     .cl-otpCodeFieldInputContainer,
     .cl-otpCodeFieldInputs {
@@ -364,6 +365,21 @@
       });
     }
 
+    // The verification-code widget (input-otp) measures its container at mount,
+    // before the card/fonts settle, and lays the 6 boxes out for a stale width —
+    // clipping the left box until a reflow re-measures it (which is why it looks
+    // right only once a warning/message pushes the layout). Force that reflow by
+    // dispatching a resize the moment the OTP appears.
+    let otpNudged = false;
+    function nudgeOtpReflow() {
+      const otp = document.querySelector('[data-input-otp-container]');
+      if (!otp) { otpNudged = false; return; }
+      if (otpNudged) return;
+      otpNudged = true;
+      [0, 60, 200, 500].forEach(t =>
+        setTimeout(() => window.dispatchEvent(new Event('resize')), t));
+    }
+
     window.addEventListener('load', async () => {
       await window.Clerk.load();
 
@@ -372,8 +388,8 @@
         if (user) window.location.replace('/account');
       });
 
-      // Catch the badge whenever it renders or re-renders.
-      const obs = new MutationObserver(() => hideClerkLastUsed());
+      // Catch the badge + nudge the OTP layout whenever Clerk re-renders.
+      const obs = new MutationObserver(() => { hideClerkLastUsed(); nudgeOtpReflow(); });
       obs.observe(document.body, { childList: true, subtree: true });
 
       window.Clerk.mountSignIn(document.getElementById('clerk-root'), {
