@@ -253,6 +253,22 @@
       border-radius: 14px !important;
     }
 
+    /* Verification code (OTP): the box group is left-aligned by default, so
+       the leftmost box gets clipped at the card edge. Center the group — do
+       NOT resize the boxes (they're rendered by input-otp and collapse if
+       flexed). Classes confirmed from the rendered DOM. */
+    .cl-otpCodeField,
+    .cl-otpCodeFieldInputContainer,
+    .cl-otpCodeFieldInputs {
+      justify-content: center !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+    .cl-otpCodeField {
+      display: flex !important;
+      width: 100% !important;
+    }
+
     /* Remove Clerk's "Last used" badge above the email field */
     .cl-badge { display: none !important; }
   </style>
