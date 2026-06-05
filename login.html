@@ -254,19 +254,26 @@
     }
 
     /* Verification code (OTP): the box group is left-aligned by default, so
-       the leftmost box gets clipped at the card edge. Center the group — do
-       NOT resize the boxes (they're rendered by input-otp and collapse if
-       flexed). Classes confirmed from the rendered DOM. */
-    .cl-otpCodeField,
+       the leftmost box gets clipped at the card edge. Center it both ways
+       (align-items handles the column-flex case) WITHOUT resizing the boxes —
+       they're rendered by input-otp and collapse if flexed. Classes/wrapper
+       confirmed from the rendered DOM. */
+    .cl-otpCodeField {
+      display: flex !important;
+      width: 100% !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
     .cl-otpCodeFieldInputContainer,
     .cl-otpCodeFieldInputs {
+      align-items: center !important;
       justify-content: center !important;
       margin-left: auto !important;
       margin-right: auto !important;
     }
-    .cl-otpCodeField {
-      display: flex !important;
-      width: 100% !important;
+    [data-input-otp-container] {
+      margin-left: auto !important;
+      margin-right: auto !important;
     }
 
     /* Remove Clerk's "Last used" badge above the email field */
