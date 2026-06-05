@@ -318,6 +318,28 @@
         formFieldInput: { background: '#ffffff', color: '#0f172a' },
         identityPreview: { fontFamily: '"Inter", sans-serif', fontSize: '14px' },
         formResendCodeLink: { color: '#1F6FBF', fontFamily: '"Inter", sans-serif' },
+        // Verification code: keep the 6 boxes inside the card (they overflow
+        // and clip the left box by default). Flex them to share the width.
+        otpCodeFieldInputs: {
+          display: 'flex',
+          width: '100%',
+          maxWidth: '100%',
+          gap: '8px',
+          justifyContent: 'center',
+          padding: 0,
+          margin: '0 auto',
+        },
+        otpCodeFieldInput: {
+          flex: '1 1 0',
+          minWidth: 0,
+          width: 'auto',
+          maxWidth: '52px',
+          height: 'auto',
+          aspectRatio: '1 / 1',
+          borderRadius: '12px',
+          padding: 0,
+          textAlign: 'center',
+        },
       },
     };
 
