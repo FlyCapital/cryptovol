@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Source+Serif+4:wght@400;500;600&display=swap" rel="stylesheet">
 
-<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <script defer crossorigin="anonymous"
   data-clerk-publishable-key="pk_live_Y2xlcmsuY3J5cHRvdm9sLmlvJA"
   src="https://clerk.cryptovol.io/npm/@clerk/clerk-js@5/dist/clerk.browser.js"
@@ -229,12 +229,34 @@ button.link:hover { color: var(--text); }
 }
 
 .chart {
-  width: 100%; max-width: 900px; min-height: 420px; margin-top: 6px;
+  width: 100%; max-width: 900px; margin-top: 6px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 10px;
+  overflow: hidden;
 }
+.chart-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px 6px; gap: 8px;
+}
+.chart-title {
+  font-family: var(--serif); font-size: 14px; font-weight: 500; color: var(--text);
+  flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.chart-canvas { height: 360px; width: 100%; }
+.chart-dl {
+  flex-shrink: 0; background: none; border: none; color: var(--text3);
+  cursor: pointer; padding: 4px; border-radius: 4px;
+  display: flex; align-items: center; transition: color 0.15s;
+}
+.chart-dl:hover { color: var(--text2); }
+.chart-legend {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  padding: 4px 16px 12px;
+  font-family: var(--sans); font-size: 11px; color: var(--text2);
+}
+.chart-legend-item { display: flex; align-items: center; gap: 5px; }
+.chart-legend-swatch { width: 18px; height: 2.5px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
 
 .input-row {
   position: sticky; bottom: 0;
@@ -406,7 +428,7 @@ footer {
   /* Let bot replies (charts/tables) use the full width; keep user msgs inset */
   .msg { max-width: 100%; }
   .msg.user { max-width: 88%; }
-  .chart { min-height: 300px; }
+  .chart-canvas { height: 280px; }
   .input-row { padding: 12px 0 16px; }
   button#send { padding: 12px 16px; }
   /* 16px input prevents iOS Safari from zooming in on focus */
@@ -732,58 +754,176 @@ function addMsg(role, html, _meta) {
   return div;
 }
 
-// Robust chart download. Plotly's default PNG export goes SVG → canvas →
-// toDataURL, which the browser can block (or it mis-sizes a responsive chart),
-// producing "problem downloading your snapshot". We export at the chart's real
-// size on a solid background; if PNG is blocked, fall back to SVG, which never
-// touches a canvas and always succeeds.
-function downloadChart(gd) {
-  const dl = (url, filename) => {
-    const a = document.createElement("a");
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); a.remove();
-  };
-  const rect = gd.getBoundingClientRect();
-  const opts = {
-    width:  Math.round(rect.width)  || 900,
-    height: Math.round(rect.height) || 440,
-    scale: 2,
-    setBackground: "#faf9f5",
-  };
-  Plotly.toImage(gd, Object.assign({ format: "png" }, opts))
-    .then(url => dl(url, "cryptovol-chart.png"))
-    .catch(() => Plotly.toImage(gd, Object.assign({ format: "svg" }, opts))
-      .then(url => dl(url, "cryptovol-chart.svg"))
-      .catch(err => { console.error("chart download failed", err);
-                      alert("Sorry — couldn't download the chart."); }));
-}
+// ── Lightweight Charts renderer ───────────────────────────────────────────────
+const _CV_PALETTE = ["#4F7BE8","#E8A030","#16a34a","#dc2626","#7c3aed","#0891b2"];
+const _LWC_DASH   = { solid: 0, dash: 1, dot: 3, dashdot: 4 };
 
 function addChart(spec) {
   const chat = document.getElementById("chat");
-  const div = document.createElement("div");
-  div.className = "chart";
-  chat.appendChild(div);
-  // Defaults are only used for fields the backend didn't set; automargin on
-  // each axis (server-side) will further expand the margin if labels need room.
-  const defaults = {height: 440};
-  const layout = Object.assign(defaults, spec.layout);
-  Plotly.newPlot(div, spec.data, layout, {
-    responsive: true,
-    displaylogo: false,
-    displayModeBar: 'hover',           // toolbar only appears on hover
-    modeBarButtonsToRemove: [          // strip the noisy ones
-      'lasso2d', 'select2d', 'autoScale2d',
-      'hoverClosestCartesian', 'hoverCompareCartesian',
-      'toggleSpikelines',
-      'toImage',                       // replaced by our robust downloader below
-    ],
-    modeBarButtonsToAdd: [{
-      name: 'downloadChart',
-      title: 'Download chart',
-      icon: Plotly.Icons.camera,
-      click: downloadChart,
-    }],
+  const wrapper = document.createElement("div");
+  wrapper.className = "chart";
+
+  // Title
+  const rawTitle = typeof spec.layout?.title === "string"
+    ? spec.layout.title : (spec.layout?.title?.text || "");
+
+  // Header row: serif title + download icon
+  const header = document.createElement("div");
+  header.className = "chart-header";
+  const titleEl = document.createElement("span");
+  titleEl.className = "chart-title";
+  titleEl.textContent = rawTitle;
+  const dlBtn = document.createElement("button");
+  dlBtn.className = "chart-dl";
+  dlBtn.title = "Download PNG";
+  dlBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+  header.appendChild(titleEl);
+  header.appendChild(dlBtn);
+
+  const chartEl = document.createElement("div");
+  chartEl.className = "chart-canvas";
+
+  wrapper.appendChild(header);
+  wrapper.appendChild(chartEl);
+  chat.appendChild(wrapper);
+
+  const traces    = spec.data || [];
+  const hasY2     = traces.some(t => t.yaxis === "y2");
+  const firstX    = traces[0]?.x?.[0];
+  const isTime    = firstX != null && /^\d{4}-\d{2}-\d{2}/.test(String(firstX));
+  const barmode   = spec.layout?.barmode;
+  const barTraces = traces.filter(t => t.type === "bar");
+  const nBars     = barTraces.length;
+  // x labels for category axes (strikes, tenors, etc.)
+  const xCats = isTime ? null : (traces[0]?.x || []);
+  const fmtCat = (v) => {
+    const n = Number(v);
+    if (isNaN(n)) return String(v);
+    return n >= 1000 ? (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1) + "k" : String(n);
+  };
+
+  const chart = LightweightCharts.createChart(chartEl, {
+    width:  chartEl.offsetWidth || 860,
+    height: chartEl.offsetHeight || 360,
+    layout: {
+      background: { type: "solid", color: "transparent" },
+      textColor:  "#64748b",
+      fontFamily: '"IBM Plex Mono", Menlo, monospace',
+      fontSize:   11,
+    },
+    grid: {
+      vertLines: { color: "rgba(15,23,42,0.05)" },
+      horzLines: { color: "rgba(15,23,42,0.05)" },
+    },
+    crosshair: {
+      vertLine: { color: "rgba(31,111,191,0.35)", labelBackgroundColor: "#1F6FBF" },
+      horzLine: { color: "rgba(31,111,191,0.35)", labelBackgroundColor: "#1F6FBF" },
+    },
+    timeScale: { borderColor: "rgba(15,23,42,0.10)", timeVisible: true, secondsVisible: false },
+    rightPriceScale: { borderColor: "rgba(15,23,42,0.10)" },
+    leftPriceScale:  { borderColor: "rgba(15,23,42,0.10)", visible: hasY2 },
   });
+
+  traces.forEach((trace, idx) => {
+    const isY2   = trace.yaxis === "y2";
+    const scaleId = isY2 ? "left" : "right";
+    const rawC   = trace.line?.color;
+    const color  = typeof rawC === "string" ? rawC
+      : typeof trace.marker?.color === "string" ? trace.marker.color
+      : _CV_PALETTE[idx % _CV_PALETTE.length];
+    const lineStyle = _LWC_DASH[trace.line?.dash] ?? 0;
+
+    if (trace.type === "bar") {
+      // Grouped bars: interleave time slots so call/put bars sit side-by-side.
+      // Group i occupies slots [i*(nBars+1)+1 … i*(nBars+1)+nBars]; gap follows.
+      const barIdx  = barTraces.indexOf(trace);
+      const groupStep = nBars > 1 ? nBars + 1 : 1;
+      const perBarColors = Array.isArray(trace.marker?.color) ? trace.marker.color : null;
+      const s = chart.addHistogramSeries({
+        color, base: 0, priceScaleId: scaleId,
+        priceFormat: { type: "volume" },
+      });
+      s.setData((trace.x || []).map((x, i) => ({
+        time:  isTime ? x.slice(0, 10) : (i * groupStep + barIdx + 1),
+        value: trace.y[i] ?? 0,
+        color: perBarColors ? perBarColors[i] : color,
+      })).filter(d => d.value != null));
+
+    } else {
+      // scatter → area (if fill set) or line
+      const isArea = trace.fill === "tozeroy" || trace.fill === "tonexty";
+      const s = isArea
+        ? chart.addAreaSeries({
+            lineColor: color, topColor: color + "35", bottomColor: color + "00",
+            lineWidth: 2, title: trace.name || "", priceScaleId: scaleId, lineStyle,
+          })
+        : chart.addLineSeries({
+            color, lineWidth: 2, title: trace.name || "", priceScaleId: scaleId, lineStyle,
+          });
+      s.setData((trace.x || []).map((x, i) => ({
+        time:  isTime ? x.slice(0, 10) : i + 1,
+        value: trace.y[i],
+      })).filter(d => d.value != null && !isNaN(d.value)));
+    }
+  });
+
+  // Category x-axis: override tick labels with the actual category values
+  if (!isTime && xCats.length) {
+    const groupStep = nBars > 1 ? nBars + 1 : 1;
+    chart.timeScale().applyOptions({
+      tickMarkFormatter: (t) => {
+        if (nBars > 1 && barmode === "group") {
+          // Show label only under the first bar of each group
+          if ((t - 1) % groupStep !== 0) return "";
+          const gi = Math.floor((t - 1) / groupStep);
+          return xCats[gi] != null ? fmtCat(xCats[gi]) : "";
+        }
+        const i = t - 1;
+        return xCats[i] != null ? fmtCat(xCats[i]) : "";
+      },
+    });
+  }
+
+  chart.timeScale().fitContent();
+
+  // Legend (only for multi-series charts)
+  if (traces.length > 1) {
+    const legend = document.createElement("div");
+    legend.className = "chart-legend";
+    traces.forEach((trace, idx) => {
+      const rawC = trace.line?.color;
+      const c = typeof rawC === "string" ? rawC
+        : typeof trace.marker?.color === "string" ? trace.marker.color
+        : _CV_PALETTE[idx % _CV_PALETTE.length];
+      const item = document.createElement("span");
+      item.className = "chart-legend-item";
+      item.innerHTML = `<span class="chart-legend-swatch" style="background:${c}"></span>${trace.name || ""}`;
+      legend.appendChild(item);
+    });
+    wrapper.appendChild(legend);
+  }
+
+  // Download: composite onto white background then save PNG
+  dlBtn.addEventListener("click", () => {
+    const canvas = chartEl.querySelector("canvas");
+    if (!canvas) return;
+    const off = document.createElement("canvas");
+    off.width = canvas.width; off.height = canvas.height;
+    const ctx = off.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, off.width, off.height);
+    ctx.drawImage(canvas, 0, 0);
+    const a = document.createElement("a");
+    a.download = "cryptovol-chart.png";
+    a.href = off.toDataURL("image/png");
+    a.click();
+  });
+
+  // Keep chart sized to its container
+  new ResizeObserver(() => {
+    chart.resize(chartEl.offsetWidth, chartEl.offsetHeight);
+  }).observe(chartEl);
+
   window.scrollTo(0, document.body.scrollHeight);
 }
 
