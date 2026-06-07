@@ -1006,14 +1006,14 @@ function addChart(spec) {
 
   // Download: Retina-quality PNG — title + chart + axis labels + legend + watermark
   dlBtn.addEventListener("click", () => {
-    const canvas = chart.takeScreenshot();
+    // The internal LWC canvas is rendered at devicePixelRatio (_DPR) — use it
+    // directly for a crisp 2x export. takeScreenshot() returns 1x and looks soft.
+    const canvas = chartEl.querySelector("canvas");
     if (!canvas) return;
 
-    // Derive actual pixel ratio from the screenshot canvas itself — works
-    // regardless of whether takeScreenshot() returns at 1x or DPR scale.
-    const pw  = canvas.width;                         // physical chart pixels
+    const pw  = canvas.width;                // physical chart pixels (= offsetWidth × _DPR)
     const ph  = canvas.height;
-    const dpr = pw / chartEl.offsetWidth;             // actual ratio
+    const dpr = pw / chartEl.offsetWidth;   // actual ratio (should equal _DPR)
 
     const hasLegend = traces.length > 1;
 
