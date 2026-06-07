@@ -856,11 +856,11 @@ function addChart(spec) {
       const s = isArea
         ? chart.addAreaSeries({
             lineColor: color, topColor: color + "35", bottomColor: color + "00",
-            lineWidth: 2, title: trace.name || "", priceScaleId: scaleId, lineStyle,
+            lineWidth: 2, priceScaleId: scaleId, lineStyle,
             lastValueVisible: false, priceLineVisible: false,
           })
         : chart.addLineSeries({
-            color, lineWidth: 2, title: trace.name || "", priceScaleId: scaleId, lineStyle,
+            color, lineWidth: 2, priceScaleId: scaleId, lineStyle,
             lastValueVisible: false, priceLineVisible: false,
           });
       s.setData((trace.x || []).map((x, i) => ({
