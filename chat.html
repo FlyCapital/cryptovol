@@ -255,7 +255,7 @@ button.link:hover { color: var(--text); }
   padding: 4px 16px 12px;
   font-family: var(--sans); font-size: 11px; color: var(--text2);
 }
-.chart-legend-item { display: flex; align-items: center; gap: 5px; }
+.chart-legend-item { display: flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; transition: opacity 0.15s; }
 .chart-legend-swatch { width: 18px; height: 2.5px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
 
 .input-row {
@@ -824,6 +824,9 @@ function addChart(spec) {
     leftPriceScale:  { borderColor: "rgba(15,23,42,0.10)", visible: hasY2 },
   });
 
+  // Collect series refs so the legend can toggle/isolate them
+  const seriesRefs = [];
+
   traces.forEach((trace, idx) => {
     const isY2   = trace.yaxis === "y2";
     const scaleId = isY2 ? "left" : "right";
@@ -849,6 +852,7 @@ function addChart(spec) {
         value: trace.y[i] ?? 0,
         color: perBarColors ? perBarColors[i] : color,
       })).filter(d => d.value != null));
+      seriesRefs.push({ series: s, color });
 
     } else {
       // scatter → area (if fill set) or line
@@ -867,6 +871,7 @@ function addChart(spec) {
         time:  isTime ? x.slice(0, 10) : i + 1,
         value: trace.y[i],
       })).filter(d => d.value != null && !isNaN(d.value)));
+      seriesRefs.push({ series: s, color });
     }
   });
 
@@ -889,18 +894,51 @@ function addChart(spec) {
 
   chart.timeScale().fitContent();
 
-  // Legend (only for multi-series charts)
+  // Legend — click to toggle, double-click to isolate (same as Plotly behaviour)
   if (traces.length > 1) {
     const legend = document.createElement("div");
     legend.className = "chart-legend";
+    const hidden = new Set();         // indices of hidden series
+    const items = [];
+
+    const applyVisibility = () => {
+      seriesRefs.forEach(({ series }, i) => {
+        series.applyOptions({ visible: !hidden.has(i) });
+      });
+      items.forEach((el, i) => {
+        el.style.opacity = hidden.has(i) ? "0.35" : "1";
+      });
+    };
+
     traces.forEach((trace, idx) => {
-      const rawC = trace.line?.color;
-      const c = typeof rawC === "string" ? rawC
-        : typeof trace.marker?.color === "string" ? trace.marker.color
-        : _CV_PALETTE[idx % _CV_PALETTE.length];
+      const { color: c } = seriesRefs[idx];
       const item = document.createElement("span");
       item.className = "chart-legend-item";
+      item.style.cursor = "pointer";
       item.innerHTML = `<span class="chart-legend-swatch" style="background:${c}"></span>${trace.name || ""}`;
+      items.push(item);
+
+      let clickTimer = null;
+      item.addEventListener("click", () => {
+        // Debounce: wait 220 ms to distinguish single vs double click
+        if (clickTimer) return;
+        clickTimer = setTimeout(() => {
+          clickTimer = null;
+          // Toggle this series
+          hidden.has(idx) ? hidden.delete(idx) : hidden.add(idx);
+          applyVisibility();
+        }, 220);
+      });
+      item.addEventListener("dblclick", () => {
+        // Cancel the pending single-click
+        if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+        // Isolate: if already isolated, restore all; else hide everything else
+        const isIsolated = hidden.size === traces.length - 1 && !hidden.has(idx);
+        hidden.clear();
+        if (!isIsolated) traces.forEach((_, i) => { if (i !== idx) hidden.add(i); });
+        applyVisibility();
+      });
+
       legend.appendChild(item);
     });
     wrapper.appendChild(legend);
