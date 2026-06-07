@@ -1004,16 +1004,18 @@ function addChart(spec) {
     wrapper.appendChild(legend);
   }
 
-  // Download: Retina-quality PNG — title + chart + axis labels + legend + watermark
+  // Download: fixed-resolution PNG — chart upscaled to EXPORT_SCALE, text drawn natively
   dlBtn.addEventListener("click", () => {
-    const canvas = chart.takeScreenshot();
+    const EXPORT_SCALE = 2;                            // change to 3 for higher res
+    const canvas = chart.takeScreenshot();             // always returns 1× from LWC
     if (!canvas) return;
 
-    // Derive actual pixel ratio from the screenshot canvas itself — works
-    // regardless of whether takeScreenshot() returns at 1x or DPR scale.
-    const pw  = canvas.width;                         // physical chart pixels
-    const ph  = canvas.height;
-    const dpr = pw / chartEl.offsetWidth;             // actual ratio
+    // Source is 1× — scale everything up to EXPORT_SCALE for the export canvas
+    const srcW = canvas.width;
+    const srcH = canvas.height;
+    const dpr  = EXPORT_SCALE;
+    const pw   = srcW * dpr;                           // chart at export resolution
+    const ph   = srcH * dpr;
 
     const hasLegend = traces.length > 1;
 
@@ -1046,8 +1048,10 @@ function addChart(spec) {
       ctx.fillText(rawTitle, cx, TITLE_H / 2);
     }
 
-    // Chart — 1:1 physical pixel copy, no scaling artifacts
-    ctx.drawImage(canvas, cx, TITLE_H);
+    // Chart — upscale 1× source to EXPORT_SCALE with high-quality interpolation
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(canvas, cx, TITLE_H, pw, ph);
 
     // Watermark (inside chart, above time-scale area)
     ctx.save();
