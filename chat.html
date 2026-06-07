@@ -253,10 +253,11 @@ button.link:hover { color: var(--text); }
 .chart-axis-label {
   font-size: 10px; font-family: var(--sans); color: #94a3b8;
   display: flex; align-items: center; justify-content: center;
-  white-space: nowrap; overflow: hidden;
+  overflow: visible;
 }
-.chart-axis-label.y-side {
-  writing-mode: vertical-rl; transform: rotate(180deg);
+.chart-axis-label.y-side span {
+  display: block; white-space: nowrap;
+  transform: rotate(-90deg); transform-origin: center center;
 }
 .chart-xlabel {
   text-align: center; padding: 3px 0 8px;
@@ -818,14 +819,14 @@ function addChart(spec) {
 
   const lblY2 = document.createElement("div");
   lblY2.className = "chart-axis-label y-side";
-  lblY2.textContent = y2Title;
+  lblY2.innerHTML = y2Title ? `<span>${y2Title}</span>` : "";
 
   const chartEl = document.createElement("div");
   chartEl.className = "chart-canvas";
 
   const lblY1 = document.createElement("div");
   lblY1.className = "chart-axis-label y-side";
-  lblY1.textContent = yTitle;
+  lblY1.innerHTML = yTitle ? `<span>${yTitle}</span>` : "";
 
   axesWrap.appendChild(lblY2);
   axesWrap.appendChild(chartEl);
@@ -1005,7 +1006,8 @@ function addChart(spec) {
 
   // Download: Retina-quality PNG — title + chart + axis labels + legend + watermark
   dlBtn.addEventListener("click", () => {
-    const canvas = chartEl.querySelector("canvas");
+    // takeScreenshot() returns an HTMLCanvasElement at full DPR resolution
+    const canvas = chart.takeScreenshot();
     if (!canvas) return;
     const dpr = _DPR;
     const logW = Math.round(canvas.width  / dpr);
