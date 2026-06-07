@@ -243,7 +243,25 @@ button.link:hover { color: var(--text); }
   font-family: var(--serif); font-size: 14px; font-weight: 500; color: var(--text);
   flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.chart-canvas { position: relative; height: 360px; width: 100%; }
+.chart-axes-wrap {
+  display: grid;
+  grid-template-columns: 0px 1fr 20px;
+  height: 360px;
+}
+.chart-axes-wrap.has-y2 { grid-template-columns: 20px 1fr 20px; }
+.chart-canvas { position: relative; height: 100%; width: 100%; }
+.chart-axis-label {
+  font-size: 10px; font-family: var(--sans); color: #94a3b8;
+  display: flex; align-items: center; justify-content: center;
+  white-space: nowrap; overflow: hidden;
+}
+.chart-axis-label.y-side {
+  writing-mode: vertical-rl; transform: rotate(180deg);
+}
+.chart-xlabel {
+  text-align: center; padding: 3px 0 8px;
+  font-size: 10px; font-family: var(--sans); color: #94a3b8;
+}
 .chart-watermark {
   position: absolute; bottom: 28px; right: 12px; pointer-events: none; user-select: none;
   font-family: var(--mono); font-size: 11px; font-weight: 500;
@@ -433,7 +451,7 @@ footer {
   /* Let bot replies (charts/tables) use the full width; keep user msgs inset */
   .msg { max-width: 100%; }
   .msg.user { max-width: 88%; }
-  .chart-canvas { height: 280px; }
+  .chart-axes-wrap { height: 280px; }
   .input-row { padding: 12px 0 16px; }
   button#send { padding: 12px 16px; }
   /* 16px input prevents iOS Safari from zooming in on focus */
@@ -785,15 +803,43 @@ function addChart(spec) {
   header.appendChild(titleEl);
   header.appendChild(dlBtn);
 
+  const traces    = spec.data || [];
+  const hasY2     = traces.some(t => t.yaxis === "y2");
+
+  // Extract axis titles from Plotly spec (backend normalises to {text:...} objects)
+  const axTitle = (ax) => ax?.title?.text || (typeof ax?.title === "string" ? ax.title : "");
+  const yTitle  = axTitle(spec.layout?.yaxis);
+  const y2Title = axTitle(spec.layout?.yaxis2);
+  const xTitle  = axTitle(spec.layout?.xaxis);
+
+  // Grid: [y2-label | canvas | y1-label]
+  const axesWrap = document.createElement("div");
+  axesWrap.className = "chart-axes-wrap" + (hasY2 ? " has-y2" : "");
+
+  const lblY2 = document.createElement("div");
+  lblY2.className = "chart-axis-label y-side";
+  lblY2.textContent = y2Title;
+
   const chartEl = document.createElement("div");
   chartEl.className = "chart-canvas";
 
-  wrapper.appendChild(header);
-  wrapper.appendChild(chartEl);
-  chat.appendChild(wrapper);
+  const lblY1 = document.createElement("div");
+  lblY1.className = "chart-axis-label y-side";
+  lblY1.textContent = yTitle;
 
-  const traces    = spec.data || [];
-  const hasY2     = traces.some(t => t.yaxis === "y2");
+  axesWrap.appendChild(lblY2);
+  axesWrap.appendChild(chartEl);
+  axesWrap.appendChild(lblY1);
+
+  wrapper.appendChild(header);
+  wrapper.appendChild(axesWrap);
+  if (xTitle) {
+    const lblX = document.createElement("div");
+    lblX.className = "chart-xlabel";
+    lblX.textContent = xTitle;
+    wrapper.appendChild(lblX);
+  }
+  chat.appendChild(wrapper);
   const firstX    = traces[0]?.x?.[0];
   const isTime    = firstX != null && /^\d{4}-\d{2}-\d{2}/.test(String(firstX));
   const barmode   = spec.layout?.barmode;
@@ -989,6 +1035,31 @@ function addChart(spec) {
         ctx.fillText(name, x, ly);
         x += ctx.measureText(name).width + 18;
       });
+    }
+
+    // Axis labels
+    const axFont = `400 10px system-ui, -apple-system, sans-serif`;
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = axFont;
+    if (yTitle) {
+      ctx.save();
+      ctx.translate(off.width - 6, canvas.height / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(yTitle, 0, 0);
+      ctx.restore();
+    }
+    if (y2Title) {
+      ctx.save();
+      ctx.translate(6, canvas.height / 2);
+      ctx.rotate(Math.PI / 2);
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(y2Title, 0, 0);
+      ctx.restore();
+    }
+    if (xTitle) {
+      ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+      ctx.fillText(xTitle, off.width / 2, off.height - 2);
     }
 
     // Watermark
