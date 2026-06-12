@@ -1615,7 +1615,7 @@ async function runTemplate(t) {
   const savedHistory = history;
   history = [];
   for (const prompt of t.prompts) {
-    await sendPrompt(prompt);
+    await sendPrompt(prompt, true);
   }
   history = savedHistory;
 
@@ -1627,8 +1627,8 @@ function escHtml(s) {
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
-async function sendPrompt(msg) {
-  addMsg("user", msg);
+async function sendPrompt(msg, hideUser = false) {
+  if (!hideUser) addMsg("user", msg);
   const thinking = addMsg("bot", "thinking…");
 
   try {
