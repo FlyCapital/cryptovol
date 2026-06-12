@@ -1494,9 +1494,15 @@ async function runTemplate(t) {
   document.getElementById("chat").appendChild(header);
   window.scrollTo(0, document.body.scrollHeight);
 
+  // Each template runs with a clean slate — prompts are self-contained
+  // and should not be treated as follow-ups to the existing conversation.
+  const savedHistory = history;
+  history = [];
   for (const prompt of t.prompts) {
     await sendPrompt(prompt);
   }
+  history = savedHistory;
+
   btn.disabled = false;
 }
 
