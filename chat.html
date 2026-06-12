@@ -414,6 +414,76 @@ details.api-calls pre {
   align-self: stretch; max-width: 100%;
 }
 
+/* ─── Templates tray ─────────────────────────────────────────────────── */
+.templates-tray {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: 6px; padding-bottom: 12px; margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.tpl-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 999px; padding: 4px 12px 4px 10px;
+  font-size: 12px; font-family: var(--sans); color: var(--text);
+  cursor: pointer; transition: background 0.15s, border-color 0.15s;
+  user-select: none;
+}
+.tpl-pill:hover { background: #e8e6e0; border-color: var(--blue); }
+.tpl-pill-name { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tpl-pill-del {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: none; border: none; padding: 0;
+  font-size: 13px; line-height: 1; color: var(--text3);
+  cursor: pointer; flex-shrink: 0;
+  transition: color 0.15s;
+}
+.tpl-pill-del:hover { color: #b91c1c; }
+.tpl-save-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: none; border: 1px dashed var(--border2);
+  border-radius: 999px; padding: 4px 10px;
+  font-size: 12px; font-family: var(--sans); color: var(--text2);
+  cursor: pointer; transition: border-color 0.15s, color 0.15s;
+}
+.tpl-save-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+/* ─── Save template modal ────────────────────────────────────────────── */
+.tpl-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(15,23,42,0.35);
+  z-index: 200; display: flex; align-items: center; justify-content: center;
+}
+.tpl-modal {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 12px; padding: 24px 28px; width: 400px; max-width: 92vw;
+  box-shadow: 0 20px 48px rgba(15,23,42,0.16);
+}
+.tpl-modal h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+.tpl-modal label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+.tpl-modal input[type=text] { width: 100%; margin-bottom: 14px; }
+.tpl-prompt-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; max-height: 220px; overflow-y: auto; }
+.tpl-prompt-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: 12px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 7px 10px; cursor: pointer;
+}
+.tpl-prompt-item input[type=checkbox] { flex-shrink: 0; margin-top: 1px; cursor: pointer; }
+.tpl-prompt-item span { color: var(--text); line-height: 1.4; }
+.tpl-modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.tpl-modal-actions button {
+  padding: 8px 18px; border-radius: 7px; font-size: 13px; font-weight: 500;
+  font-family: var(--sans); cursor: pointer; transition: background 0.15s;
+}
+.tpl-btn-cancel { background: var(--surface2); border: 1px solid var(--border2); color: var(--text); }
+.tpl-btn-cancel:hover { background: #e8e6e0; }
+.tpl-btn-save { background: var(--black); border: 1px solid var(--black); color: #fff; }
+.tpl-btn-save:hover { background: #1e293b; }
+.tpl-running-header {
+  font-size: 11px; font-family: var(--mono); color: var(--text3);
+  padding: 6px 0 2px; letter-spacing: 0.04em;
+}
+
 .loading {
   text-align: center; padding: 60px 20px;
   color: var(--text2); font-size: 14px;
@@ -531,7 +601,7 @@ footer {
 
 <script>
 // ── Config ────────────────────────────────────────────────────────────────
-const API_BASE = "https://cryptovol-api-nbakzshi6q-uc.a.run.app";
+const API_BASE = "https://api.cryptovol.io";
 const POST_URL = API_BASE + "/v1/chat/";
 
 // localStorage keys are scoped to the currently signed-in Clerk user so that
@@ -735,14 +805,18 @@ window.addEventListener("load", async () => {
 
   document.getElementById("app").innerHTML = `
     <div class="toolbar">
-      <button class="link" onclick="clearHistory()">Clear history</button>
+      <button class="link" onclick="openSaveModal()">+ Save template</button>
+      <button class="link" onclick="clearHistory()" style="margin-left:8px;">Clear history</button>
     </div>
+    <div id="templates-tray" class="templates-tray" style="display:none;"></div>
     <div id="chat" class="chat"></div>
     <div class="input-row">
       <input type="text" id="input" placeholder="Ask about vol analytics..." autofocus
              onkeydown="if(event.key==='Enter') send()">
       <button id="send" onclick="send()">Send</button>
     </div>`;
+
+  await loadTemplates();
 
   // Server is the authority. If it returns rows, replay. If it returns nothing,
   // show the greeting — do NOT fall back to localStorage. That fallback would
@@ -864,6 +938,7 @@ function addChart(spec) {
       textColor:  "#64748b",
       fontFamily: '"IBM Plex Mono", Menlo, monospace',
       fontSize:   11,
+      padding:    { top: 8, bottom: 0, left: 8, right: 0 },
     },
     grid: {
       vertLines: { color: "rgba(15,23,42,0.05)" },
@@ -876,6 +951,15 @@ function addChart(spec) {
     timeScale: { borderColor: "rgba(15,23,42,0.10)", timeVisible: true, secondsVisible: false },
     rightPriceScale: { borderColor: "rgba(15,23,42,0.10)" },
     leftPriceScale:  { borderColor: "rgba(15,23,42,0.10)", visible: hasY2 },
+    localization: (!isTime && xCats.length) ? {
+      timeFormatter: (t) => {
+        const gStep = nBars > 1 ? nBars + 1 : 1;
+        const gi = (nBars > 1 && barmode === "group")
+          ? Math.floor((t - 1) / gStep)
+          : (t - 1);
+        return xCats[gi] != null ? fmtCat(xCats[gi]) : String(t);
+      },
+    } : {},
   });
 
   // Collect series refs so the legend can toggle/isolate them
@@ -1006,14 +1090,15 @@ function addChart(spec) {
 
   // Download: fixed-resolution PNG — chart upscaled to EXPORT_SCALE, text drawn natively
   dlBtn.addEventListener("click", () => {
-    const EXPORT_SCALE = 2;                            // change to 3 for higher res
+    const EXPORT_SCALE = 5;                            // further increased for higher res
     const canvas = chart.takeScreenshot();             // always returns 1× from LWC
     if (!canvas) return;
 
     // Source is 1× — scale everything up to EXPORT_SCALE for the export canvas
     const srcW = canvas.width;
     const srcH = canvas.height;
-    const dpr  = EXPORT_SCALE;
+    // dpr already accounts for screen density; apply EXPORT_SCALE multiplier to it
+    const dpr  = EXPORT_SCALE; 
     const pw   = srcW * dpr;                           // chart at export resolution
     const ph   = srcH * dpr;
 
@@ -1101,6 +1186,7 @@ function addChart(spec) {
       const legSz   = Math.round(11 * dpr);
       ctx.font = `400 ${legSz}px system-ui, -apple-system, BlinkMacSystemFont, sans-serif`;
       ctx.textBaseline = "middle";
+      ctx.textAlign = "left"; // ADDED THIS
       let x = cx;
       traces.forEach((trace, idx) => {
         const { color } = seriesRefs[idx];
@@ -1110,6 +1196,7 @@ function addChart(spec) {
         ctx.fillStyle = "#475569";
         const name = trace.name || "";
         ctx.fillText(name, x, ly);
+        // Ensure x tracks the end of the text
         x += ctx.measureText(name).width + itemGap;
       });
     }
@@ -1345,16 +1432,148 @@ function addApiCalls(calls) {
   window.scrollTo(0, document.body.scrollHeight);
 }
 
-async function send() {
-  const input = document.getElementById("input");
-  const btn   = document.getElementById("send");
-  const msg = input.value.trim();
-  if (!msg) return;
+// ── Templates ─────────────────────────────────────────────────────────────
 
-  addMsg("user", msg);
-  input.value = "";
+let templates = [];   // [{id, name, prompts}]
+
+async function loadTemplates() {
+  try {
+    const token = await window.Clerk.session.getToken();
+    const r = await fetch(API_BASE + "/v1/chat/templates", {
+      headers: { "Authorization": `Bearer ${token}` },
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    templates = data.templates || [];
+    renderTemplatesTray();
+  } catch (e) {
+    console.warn("loadTemplates failed:", e);
+  }
+}
+
+function renderTemplatesTray() {
+  const tray = document.getElementById("templates-tray");
+  if (!tray) return;
+  tray.innerHTML = "";
+  if (!templates.length) { tray.style.display = "none"; return; }
+  tray.style.display = "flex";
+  for (const t of templates) {
+    const pill = document.createElement("div");
+    pill.className = "tpl-pill";
+    pill.title = t.prompts.join("\n");
+    pill.innerHTML = `<span class="tpl-pill-name">${escHtml(t.name)}</span>
+      <button class="tpl-pill-del" title="Delete template" onclick="event.stopPropagation(); deleteTemplate(${t.id})">&times;</button>`;
+    pill.addEventListener("click", () => runTemplate(t));
+    tray.appendChild(pill);
+  }
+}
+
+async function deleteTemplate(id) {
+  if (!confirm("Delete this template?")) return;
+  try {
+    const token = await window.Clerk.session.getToken();
+    const r = await fetch(`${API_BASE}/v1/chat/templates/${id}`, {
+      method: "DELETE",
+      headers: { "Authorization": `Bearer ${token}` },
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    templates = templates.filter(t => t.id !== id);
+    renderTemplatesTray();
+  } catch (e) {
+    alert("Could not delete template: " + e.message);
+  }
+}
+
+async function runTemplate(t) {
+  const btn = document.getElementById("send");
   btn.disabled = true;
 
+  const header = document.createElement("div");
+  header.className = "tpl-running-header";
+  header.textContent = `▶ ${t.name}`;
+  document.getElementById("chat").appendChild(header);
+  window.scrollTo(0, document.body.scrollHeight);
+
+  for (const prompt of t.prompts) {
+    await sendPrompt(prompt);
+  }
+  btn.disabled = false;
+}
+
+function openSaveModal() {
+  // Collect the last 10 unique user prompts from current session as candidates.
+  const candidates = [];
+  const seen = new Set();
+  for (let i = messages.length - 1; i >= 0 && candidates.length < 10; i--) {
+    const m = messages[i];
+    if (m.role === "user" && !seen.has(m.text)) {
+      candidates.push(m.text);
+      seen.add(m.text);
+    }
+  }
+
+  const backdrop = document.createElement("div");
+  backdrop.className = "tpl-modal-backdrop";
+  backdrop.innerHTML = `
+    <div class="tpl-modal" onclick="event.stopPropagation()">
+      <h3>Save as template</h3>
+      <label>Template name</label>
+      <input type="text" id="tpl-name-input" placeholder="e.g. BTC Morning Dashboard" maxlength="120">
+      <label>Select prompts to include</label>
+      <div class="tpl-prompt-list" id="tpl-prompt-list">
+        ${candidates.length
+          ? candidates.map((p, i) => `
+            <label class="tpl-prompt-item">
+              <input type="checkbox" value="${escHtml(p)}" ${i === 0 ? "checked" : ""}>
+              <span>${escHtml(p)}</span>
+            </label>`).join("")
+          : '<p style="font-size:12px;color:var(--text2);">Send some messages first, then save them as a template.</p>'
+        }
+      </div>
+      <div class="tpl-modal-actions">
+        <button class="tpl-btn-cancel" onclick="this.closest('.tpl-modal-backdrop').remove()">Cancel</button>
+        <button class="tpl-btn-save" onclick="submitSaveModal(this)">Save</button>
+      </div>
+    </div>`;
+  backdrop.addEventListener("click", () => backdrop.remove());
+  document.body.appendChild(backdrop);
+  document.getElementById("tpl-name-input").focus();
+}
+
+async function submitSaveModal(btn) {
+  const backdrop = btn.closest(".tpl-modal-backdrop");
+  const name = document.getElementById("tpl-name-input").value.trim();
+  if (!name) { alert("Please enter a template name."); return; }
+
+  const checked = [...backdrop.querySelectorAll(".tpl-prompt-list input[type=checkbox]:checked")];
+  if (!checked.length) { alert("Select at least one prompt."); return; }
+  const prompts = checked.map(c => c.value);
+
+  btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    const token = await window.Clerk.session.getToken();
+    const r = await fetch(API_BASE + "/v1/chat/templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      body: JSON.stringify({ name, prompts }),
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const saved = await r.json();
+    templates.push(saved);
+    renderTemplatesTray();
+    backdrop.remove();
+  } catch (e) {
+    alert("Could not save template: " + e.message);
+    btn.disabled = false; btn.textContent = "Save";
+  }
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+async function sendPrompt(msg) {
+  addMsg("user", msg);
   const thinking = addMsg("bot", "thinking…");
 
   try {
@@ -1445,6 +1664,19 @@ async function send() {
   } catch (e) {
     thinking.remove();
     addMsg("err", "Network error: " + e.message);
+  }
+}
+
+async function send() {
+  const input = document.getElementById("input");
+  const btn   = document.getElementById("send");
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  input.value = "";
+  btn.disabled = true;
+  try {
+    await sendPrompt(msg);
   } finally {
     btn.disabled = false;
     input.focus();
