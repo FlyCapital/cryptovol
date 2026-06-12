@@ -1700,6 +1700,7 @@ async function sendPrompt(msg, hideUser = false) {
     if (data.api_calls)  addApiCalls(data.api_calls);
     if (data.assistant_message_id) addFeedback(data.assistant_message_id, null, msg);
     if (data.refresh_templates) loadTemplates().then(renderTemplatesTray);
+    if (data.template_to_run)   runTemplate(data.template_to_run);
 
     // Server is the authority for conversation_id — it may have generated a
     // fresh one if we passed null on the first turn. Persist either way.
@@ -1729,11 +1730,12 @@ async function send() {
   const msg = input.value.trim();
   if (!msg) return;
 
-  // If the message matches a template name, run the template instead.
-  const matched = templates.find(t => t.name.toLowerCase() === msg.toLowerCase());
-  if (matched) {
+  // Fast path: exact template name → run immediately without hitting the AI.
+  const msgLow = msg.toLowerCase();
+  const exactMatch = templates.find(t => t.name.toLowerCase() === msgLow);
+  if (exactMatch) {
     input.value = "";
-    await runTemplate(matched);
+    await runTemplate(exactMatch);
     input.focus();
     return;
   }
