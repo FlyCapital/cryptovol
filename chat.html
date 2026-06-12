@@ -448,37 +448,30 @@ details.api-calls pre {
 }
 .tpl-save-btn:hover { border-color: var(--blue); color: var(--blue); }
 
-/* ─── Save template modal ────────────────────────────────────────────── */
-.tpl-modal-backdrop {
-  position: fixed; inset: 0; background: rgba(15,23,42,0.35);
-  z-index: 200; display: flex; align-items: center; justify-content: center;
-}
-.tpl-modal {
+/* ─── Pin popover ────────────────────────────────────────────────────── */
+.pin-popover {
+  position: absolute; z-index: 200;
   background: var(--surface); border: 1px solid var(--border2);
-  border-radius: 12px; padding: 24px 28px; width: 400px; max-width: 92vw;
-  box-shadow: 0 20px 48px rgba(15,23,42,0.16);
+  border-radius: 10px; padding: 14px 16px; width: 260px;
+  box-shadow: 0 8px 24px rgba(15,23,42,0.12);
 }
-.tpl-modal h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
-.tpl-modal label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; }
-.tpl-modal input[type=text] { width: 100%; margin-bottom: 14px; }
-.tpl-prompt-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; max-height: 220px; overflow-y: auto; }
-.tpl-prompt-item {
-  display: flex; align-items: flex-start; gap: 8px;
-  font-size: 12px; background: var(--surface2);
-  border: 1px solid var(--border); border-radius: 6px;
-  padding: 7px 10px; cursor: pointer;
+.pin-popover label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+.pin-popover input[type=text] { width: 100%; margin-bottom: 8px; font-size: 13px; }
+.pin-popover select {
+  width: 100%; padding: 7px 10px; border: 1px solid var(--border2);
+  border-radius: 6px; font-size: 13px; font-family: var(--sans);
+  background: var(--surface); color: var(--text); margin-bottom: 8px;
 }
-.tpl-prompt-item input[type=checkbox] { flex-shrink: 0; margin-top: 1px; cursor: pointer; }
-.tpl-prompt-item span { color: var(--text); line-height: 1.4; }
-.tpl-modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
-.tpl-modal-actions button {
-  padding: 8px 18px; border-radius: 7px; font-size: 13px; font-weight: 500;
-  font-family: var(--sans); cursor: pointer; transition: background 0.15s;
+.pin-popover-row { display: flex; gap: 6px; }
+.pin-popover-row button {
+  flex: 1; padding: 7px 10px; border-radius: 6px; font-size: 12px;
+  font-weight: 500; font-family: var(--sans); cursor: pointer;
+  transition: background 0.15s;
 }
-.tpl-btn-cancel { background: var(--surface2); border: 1px solid var(--border2); color: var(--text); }
-.tpl-btn-cancel:hover { background: #e8e6e0; }
-.tpl-btn-save { background: var(--black); border: 1px solid var(--black); color: #fff; }
-.tpl-btn-save:hover { background: #1e293b; }
+.pin-btn-cancel { background: var(--surface2); border: 1px solid var(--border2); color: var(--text); }
+.pin-btn-save   { background: var(--black);    border: 1px solid var(--black);    color: #fff; }
+.pin-btn-save:hover { background: #1e293b; }
+.pin-divider { font-size: 11px; color: var(--text3); text-align: center; margin: 8px 0; }
 .tpl-running-header {
   font-size: 11px; font-family: var(--mono); color: var(--text3);
   padding: 6px 0 2px; letter-spacing: 0.04em;
@@ -726,27 +719,37 @@ function renderGreeting() {
 }
 
 function replayMessages() {
-  for (const m of messages) {
+  for (let i = 0; i < messages.length; i++) {
+    const m = messages[i];
     addMsg(m.role, m.text, m.meta);
     if (m.chart_spec) addChart(m.chart_spec);
     if (m.table)      addTable(m.table);
     if (m.api_calls)  addApiCalls(m.api_calls);
-    if (m.role === "bot" && m.id) addFeedback(m.id, m.feedback || null);
+    if (m.role === "bot" && m.id) {
+      const prevUser = i > 0 && messages[i-1].role === "user" ? messages[i-1].text : null;
+      addFeedback(m.id, m.feedback || null, prevUser);
+    }
   }
 }
 
-// Append 👍 / 👎 buttons for an assistant message in their own subtle row.
-function addFeedback(messageId, current) {
+// Append 👍 / 👎 / 📌 buttons for an assistant message in their own subtle row.
+function addFeedback(messageId, current, userText) {
   const chat = document.getElementById("chat");
 
   const fb = document.createElement("div");
   fb.className = "feedback";
   fb.dataset.messageId = String(messageId);
-  fb.innerHTML = `
-    <button data-value="up"   class="up${current === "up"   ? " selected" : ""}">👍</button>
-    <button data-value="down" class="down${current === "down" ? " selected" : ""}">👎</button>
-  `;
-  fb.querySelectorAll("button").forEach(b => {
+
+  // 👍 / 👎
+  const upBtn   = document.createElement("button");
+  upBtn.dataset.value = "up";
+  upBtn.className = "up" + (current === "up" ? " selected" : "");
+  upBtn.textContent = "👍";
+  const downBtn = document.createElement("button");
+  downBtn.dataset.value = "down";
+  downBtn.className = "down" + (current === "down" ? " selected" : "");
+  downBtn.textContent = "👎";
+  [upBtn, downBtn].forEach(b => {
     b.addEventListener("click", async () => {
       const wasSelected = b.classList.contains("selected");
       const newValue = wasSelected ? "clear" : b.dataset.value;
@@ -758,19 +761,133 @@ function addFeedback(messageId, current) {
           body: JSON.stringify({ value: newValue }),
         });
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        fb.querySelectorAll("button").forEach(x => x.classList.remove("selected"));
+        fb.querySelectorAll("button.up, button.down").forEach(x => x.classList.remove("selected"));
         if (newValue !== "clear") b.classList.add("selected");
       } catch (e) {
         console.warn("feedback failed:", e);
       }
     });
   });
+  fb.appendChild(upBtn);
+  fb.appendChild(downBtn);
+
+  // 📌 pin — only when we know the user prompt that generated this response
+  if (userText) {
+    const pinBtn = document.createElement("button");
+    pinBtn.textContent = "📌";
+    pinBtn.title = "Save to template";
+    pinBtn.style.cssText = "margin-left:4px;";
+    pinBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openPinPopover(userText, pinBtn);
+    });
+    fb.appendChild(pinBtn);
+  }
 
   const row = document.createElement("div");
   row.className = "msg bot feedback-row";
   row.appendChild(fb);
   chat.appendChild(row);
   window.scrollTo(0, document.body.scrollHeight);
+}
+
+let _pinPopover = null;
+
+function openPinPopover(userText, anchor) {
+  // Close any existing popover first
+  if (_pinPopover) { _pinPopover.remove(); _pinPopover = null; }
+
+  const pop = document.createElement("div");
+  pop.className = "pin-popover";
+  _pinPopover = pop;
+
+  const hasExisting = templates.length > 0;
+  pop.innerHTML = `
+    <label>New template name</label>
+    <input type="text" id="pin-name" placeholder="e.g. BTC Morning Vol" maxlength="120">
+    <div class="pin-popover-row">
+      <button class="pin-btn-cancel" id="pin-cancel">Cancel</button>
+      <button class="pin-btn-save"   id="pin-new">Save new</button>
+    </div>
+    ${hasExisting ? `
+      <div class="pin-divider">or add to existing</div>
+      <label>Template</label>
+      <select id="pin-existing">
+        ${templates.map(t => `<option value="${t.id}">${escHtml(t.name)}</option>`).join("")}
+      </select>
+      <div class="pin-popover-row">
+        <button class="pin-btn-save" id="pin-add" style="flex:none;width:100%;">Add to template</button>
+      </div>` : ""}
+  `;
+
+  // Position near anchor
+  document.body.appendChild(pop);
+  const rect = anchor.getBoundingClientRect();
+  pop.style.top  = `${rect.bottom + window.scrollY + 6}px`;
+  pop.style.left = `${Math.min(rect.left + window.scrollX, window.innerWidth - 276)}px`;
+
+  pop.querySelector("#pin-cancel").onclick = () => { pop.remove(); _pinPopover = null; };
+  pop.querySelector("#pin-new").onclick    = () => saveNewTemplate(userText, pop);
+  if (hasExisting) {
+    pop.querySelector("#pin-add").onclick  = () => addToTemplate(userText, pop);
+  }
+
+  // Close on outside click
+  setTimeout(() => {
+    document.addEventListener("click", function outsideClick(e) {
+      if (!pop.contains(e.target) && e.target !== anchor) {
+        pop.remove(); _pinPopover = null;
+        document.removeEventListener("click", outsideClick);
+      }
+    });
+  }, 0);
+
+  pop.querySelector("#pin-name").focus();
+}
+
+async function saveNewTemplate(userText, pop) {
+  const name = pop.querySelector("#pin-name").value.trim();
+  if (!name) { pop.querySelector("#pin-name").focus(); return; }
+  const btn = pop.querySelector("#pin-new");
+  btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    const token = await window.Clerk.session.getToken();
+    const r = await fetch(API_BASE + "/v1/chat/templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      body: JSON.stringify({ name, prompts: [userText] }),
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const saved = await r.json();
+    templates.push(saved);
+    renderTemplatesTray();
+    pop.remove(); _pinPopover = null;
+  } catch (e) {
+    alert("Could not save: " + e.message);
+    btn.disabled = false; btn.textContent = "Save new";
+  }
+}
+
+async function addToTemplate(userText, pop) {
+  const id = parseInt(pop.querySelector("#pin-existing").value);
+  const btn = pop.querySelector("#pin-add");
+  btn.disabled = true; btn.textContent = "Adding…";
+  try {
+    const token = await window.Clerk.session.getToken();
+    const r = await fetch(`${API_BASE}/v1/chat/templates/${id}/prompts`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      body: JSON.stringify({ prompt: userText }),
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+    const t = templates.find(x => x.id === id);
+    if (t) t.prompts = data.prompts;
+    pop.remove(); _pinPopover = null;
+  } catch (e) {
+    alert("Could not add: " + e.message);
+    btn.disabled = false; btn.textContent = "Add to template";
+  }
 }
 
 // ── Boot: wait for Clerk, gate on signed-in, then render UI ───────────────
@@ -805,8 +922,7 @@ window.addEventListener("load", async () => {
 
   document.getElementById("app").innerHTML = `
     <div class="toolbar">
-      <button class="link" onclick="openSaveModal()">+ Save template</button>
-      <button class="link" onclick="clearHistory()" style="margin-left:8px;">Clear history</button>
+      <button class="link" onclick="clearHistory()">Clear history</button>
     </div>
     <div id="templates-tray" class="templates-tray" style="display:none;"></div>
     <div id="chat" class="chat"></div>
@@ -1506,73 +1622,6 @@ async function runTemplate(t) {
   btn.disabled = false;
 }
 
-function openSaveModal() {
-  // Collect the last 10 unique user prompts from current session as candidates.
-  const candidates = [];
-  const seen = new Set();
-  for (let i = messages.length - 1; i >= 0 && candidates.length < 10; i--) {
-    const m = messages[i];
-    if (m.role === "user" && !seen.has(m.text)) {
-      candidates.push(m.text);
-      seen.add(m.text);
-    }
-  }
-
-  const backdrop = document.createElement("div");
-  backdrop.className = "tpl-modal-backdrop";
-  backdrop.innerHTML = `
-    <div class="tpl-modal" onclick="event.stopPropagation()">
-      <h3>Save as template</h3>
-      <label>Template name</label>
-      <input type="text" id="tpl-name-input" placeholder="e.g. BTC Morning Dashboard" maxlength="120">
-      <label>Select prompts to include</label>
-      <div class="tpl-prompt-list" id="tpl-prompt-list">
-        ${candidates.length
-          ? candidates.map((p, i) => `
-            <label class="tpl-prompt-item">
-              <input type="checkbox" value="${escHtml(p)}" ${i === 0 ? "checked" : ""}>
-              <span>${escHtml(p)}</span>
-            </label>`).join("")
-          : '<p style="font-size:12px;color:var(--text2);">Send some messages first, then save them as a template.</p>'
-        }
-      </div>
-      <div class="tpl-modal-actions">
-        <button class="tpl-btn-cancel" onclick="this.closest('.tpl-modal-backdrop').remove()">Cancel</button>
-        <button class="tpl-btn-save" onclick="submitSaveModal(this)">Save</button>
-      </div>
-    </div>`;
-  backdrop.addEventListener("click", () => backdrop.remove());
-  document.body.appendChild(backdrop);
-  document.getElementById("tpl-name-input").focus();
-}
-
-async function submitSaveModal(btn) {
-  const backdrop = btn.closest(".tpl-modal-backdrop");
-  const name = document.getElementById("tpl-name-input").value.trim();
-  if (!name) { alert("Please enter a template name."); return; }
-
-  const checked = [...backdrop.querySelectorAll(".tpl-prompt-list input[type=checkbox]:checked")];
-  if (!checked.length) { alert("Select at least one prompt."); return; }
-  const prompts = checked.map(c => c.value);
-
-  btn.disabled = true; btn.textContent = "Saving…";
-  try {
-    const token = await window.Clerk.session.getToken();
-    const r = await fetch(API_BASE + "/v1/chat/templates", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-      body: JSON.stringify({ name, prompts }),
-    });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const saved = await r.json();
-    templates.push(saved);
-    renderTemplatesTray();
-    backdrop.remove();
-  } catch (e) {
-    alert("Could not save template: " + e.message);
-    btn.disabled = false; btn.textContent = "Save";
-  }
-}
 
 function escHtml(s) {
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -1649,7 +1698,7 @@ async function sendPrompt(msg) {
     if (data.chart_spec) addChart(data.chart_spec);
     if (data.table)      addTable(data.table);
     if (data.api_calls)  addApiCalls(data.api_calls);
-    if (data.assistant_message_id) addFeedback(data.assistant_message_id, null);
+    if (data.assistant_message_id) addFeedback(data.assistant_message_id, null, msg);
 
     // Server is the authority for conversation_id — it may have generated a
     // fresh one if we passed null on the first turn. Persist either way.
