@@ -1728,6 +1728,15 @@ async function send() {
   const msg = input.value.trim();
   if (!msg) return;
 
+  // If the message matches a template name, run the template instead.
+  const matched = templates.find(t => t.name.toLowerCase() === msg.toLowerCase());
+  if (matched) {
+    input.value = "";
+    await runTemplate(matched);
+    input.focus();
+    return;
+  }
+
   input.value = "";
   btn.disabled = true;
   try {
