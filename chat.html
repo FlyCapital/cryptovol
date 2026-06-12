@@ -1699,6 +1699,7 @@ async function sendPrompt(msg, hideUser = false) {
     if (data.table)      addTable(data.table);
     if (data.api_calls)  addApiCalls(data.api_calls);
     if (data.assistant_message_id) addFeedback(data.assistant_message_id, null, msg);
+    if (data.refresh_templates) loadTemplates().then(renderTemplatesTray);
 
     // Server is the authority for conversation_id — it may have generated a
     // fresh one if we passed null on the first turn. Persist either way.
