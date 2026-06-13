@@ -152,8 +152,12 @@ tr:hover td{background:var(--bg2)}
       <div class="chart-wrap"><canvas id="chart-signups"></canvas></div>
     </div>
     <div class="chart-card">
-      <div class="chart-title">Daily Usage (API + Chat)</div>
+      <div class="chart-title">Daily Usage — Authenticated (API + Chat)</div>
       <div class="chart-wrap"><canvas id="chart-usage"></canvas></div>
+    </div>
+    <div class="chart-card full">
+      <div class="chart-title">Daily Traffic — Dashboard vs Playground</div>
+      <div class="chart-wrap"><canvas id="chart-traffic"></canvas></div>
     </div>
     <div class="chart-card full">
       <div class="chart-title">Endpoint Hits by Source</div>
@@ -204,8 +208,8 @@ const TOKEN = localStorage.getItem("cv_growth_token");
 const HDR   = { "X-Chat-Admin-Token": TOKEN };
 
 let _days = 30;
-let _users = [], _usage = [], _endpoints = [];
-let _signupsChart, _usageChart, _endpointsChart;
+let _users = [], _usage = [], _endpoints = [], _dailyHits = [];
+let _signupsChart, _usageChart, _trafficChart, _endpointsChart;
 let _userSort = { col: "created_at", dir: -1 };
 let _epSort   = { col: "total",      dir: -1 };
 
@@ -227,14 +231,16 @@ function showError(msg) {
 async function load() {
   document.getElementById("error-msg").style.display = "none";
   try {
-    const [usersRes, usageRes, epRes] = await Promise.all([
+    const [usersRes, usageRes, epRes, hitsRes] = await Promise.all([
       get("/v1/admin/users"),
       get("/v1/admin/usage", { days: _days }),
       get("/v1/admin/endpoint-stats", { days: _days }),
+      get("/v1/admin/daily-hits", { days: _days }),
     ]);
-    _users     = usersRes.users     || [];
-    _usage     = usageRes.usage     || [];
-    _endpoints = epRes.endpoints    || [];
+    _users      = usersRes.users     || [];
+    _usage      = usageRes.usage     || [];
+    _endpoints  = epRes.endpoints    || [];
+    _dailyHits  = hitsRes.data       || [];
     render();
   } catch (e) {
     showError("Failed to load: " + e.message);
@@ -325,6 +331,37 @@ function render() {
       ]
     },
     options: { ...chartOpts(), plugins: { ...chartOpts().plugins, legend: { display: true, labels: { font: { size: 11 }, boxWidth: 10 } } }, scales: { x: chartOpts().scales.x, y: { ...chartOpts().scales.y, stacked: false } } },
+  });
+
+  // ── Dashboard vs Playground traffic chart ────────────────────────────────
+  const hitsByDate = {};
+  _dailyHits.forEach(r => { hitsByDate[r.date] = r; });
+  const authHits  = dates.map(d => hitsByDate[d]?.authenticated  || 0);
+  const chatHits  = dates.map(d => hitsByDate[d]?.chat_internal  || 0);
+  const playHits  = dates.map(d => hitsByDate[d]?.playground     || 0);
+
+  if (_trafficChart) _trafficChart.destroy();
+  _trafficChart = new Chart(document.getElementById("chart-traffic"), {
+    type: "bar",
+    data: {
+      labels: dates,
+      datasets: [
+        { label: "Dashboard (auth)",  data: authHits, backgroundColor: "rgba(31,111,191,.75)",  borderRadius: 2 },
+        { label: "Chat (internal)",   data: chatHits, backgroundColor: "rgba(127,119,221,.75)", borderRadius: 2 },
+        { label: "Playground (unauth)", data: playHits, backgroundColor: "rgba(232,132,90,.75)",  borderRadius: 2 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { font: { size: 11 }, boxWidth: 10 } },
+        tooltip: { mode: "index", intersect: false },
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10, family: "'IBM Plex Mono'" }, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } },
+        y: { stacked: true, grid: { color: "rgba(0,0,0,.05)" }, ticks: { font: { size: 11, family: "'IBM Plex Mono'" } } },
+      },
+    }
   });
 
   // ── Endpoints bar chart (top 10) ─────────────────────────────────────────
