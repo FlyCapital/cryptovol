@@ -845,17 +845,9 @@ function openPinPopover(toolCall, anchor) {
   pop.querySelector("#pin-name").focus();
 }
 
-// Date fields that should be stored as relative offsets (@N days from today).
-// Scalar string fields and array-of-string fields are both handled.
-const _DATE_FIELDS = new Set([
-  "dates",                          // plot_smile, plot_term_structure (array)
-  "start_date", "end_date",         // plot_time_series, summarize_levels, analyze_option_flow
-  "from_date",  "to_date",          // compare_option_flow
-  "expiry_min", "expiry_max",       // compare_option_flow, analyze_option_flow expiry range
-]);
+const _ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function _isoToOffset(iso) {
-  // "2026-06-12" → integer day offset from today (e.g. 0, -1, -30)
   const today = new Date(); today.setHours(0,0,0,0);
   const d     = new Date(iso + "T00:00:00");
   return Math.round((d - today) / 86400000);
@@ -867,33 +859,41 @@ function _offsetToIso(n) {
   return d.toISOString().slice(0, 10);
 }
 
-const _ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
+function _relativizeValue(v) {
+  if (typeof v === "string" && _ISO_RE.test(v)) return "@" + _isoToOffset(v);
+  if (Array.isArray(v)) return v.map(_relativizeValue);
+  if (v && typeof v === "object") return _relativizeArgs(v);
+  return v;
+}
+
+function _relativizeArgs(args) {
+  const out = {};
+  for (const [k, v] of Object.entries(args)) out[k] = _relativizeValue(v);
+  return out;
+}
 
 function _relativizeDates(toolCall) {
-  // Deep-clone so we don't mutate the live message object.
   const tc = JSON.parse(JSON.stringify(toolCall));
-  for (const [k, v] of Object.entries(tc.args || {})) {
-    if (!_DATE_FIELDS.has(k)) continue;
-    if (typeof v === "string" && _ISO_RE.test(v)) {
-      tc.args[k] = "@" + _isoToOffset(v);
-    } else if (Array.isArray(v)) {
-      tc.args[k] = v.map(x => (typeof x === "string" && _ISO_RE.test(x)) ? "@" + _isoToOffset(x) : x);
-    }
-  }
+  tc.args = _relativizeArgs(tc.args || {});
   return tc;
 }
 
+function _resolveValue(v) {
+  if (typeof v === "string" && v.startsWith("@") && !isNaN(v.slice(1))) return _offsetToIso(parseInt(v.slice(1), 10));
+  if (Array.isArray(v)) return v.map(_resolveValue);
+  if (v && typeof v === "object") return _resolveArgs(v);
+  return v;
+}
+
+function _resolveArgs(args) {
+  const out = {};
+  for (const [k, v] of Object.entries(args)) out[k] = _resolveValue(v);
+  return out;
+}
+
 function _resolveDates(step) {
-  // Deep-clone so the stored step keeps its @N sentinels for future replays.
   const s = JSON.parse(JSON.stringify(step));
-  for (const [k, v] of Object.entries(s.args || {})) {
-    if (!_DATE_FIELDS.has(k)) continue;
-    if (typeof v === "string" && v.startsWith("@")) {
-      s.args[k] = _offsetToIso(parseInt(v.slice(1), 10));
-    } else if (Array.isArray(v)) {
-      s.args[k] = v.map(x => (typeof x === "string" && x.startsWith("@")) ? _offsetToIso(parseInt(x.slice(1), 10)) : x);
-    }
-  }
+  s.args = _resolveArgs(s.args || {});
   return s;
 }
 
