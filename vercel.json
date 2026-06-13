@@ -28,6 +28,10 @@
       "destination": "/blog/btc-risk-reversal-skew.html"
     },
     {
+      "source": "/growth",
+      "destination": "/growth.html"
+    },
+    {
       "source": "/openapi.json",
       "destination": "https://api.cryptovol.io/openapi.json"
     },
