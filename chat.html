@@ -1615,11 +1615,9 @@ async function executeToolStep(step) {
       return;
     }
     const data = await r.json();
-    const botText = data.text || "(no output)";
-    addMsg("bot", botText, `tool: ${step.tool}`);
     if (data.chart_spec) addChart(data.chart_spec);
-    if (data.table)      addTable(data.table);
-    if (data.api_calls)  addApiCalls(data.api_calls);
+    else if (data.table) addTable(data.table);
+    else addMsg("bot", data.text || "(no output)");
   } catch (e) {
     thinking.remove();
     addMsg("bot", `Error: ${e.message}`);
