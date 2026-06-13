@@ -142,13 +142,20 @@
       border: none !important;
     }
 
-    /* Catch-all override - see login.html for rationale */
+    /* Catch-all override: every Clerk-rendered Button-like element AND its
+       descendants (hashed cl-internal-* classes included) get the same 14px
+       radius on all four corners, with all visual chrome stripped. This is
+       the heavy hammer when nothing else worked. */
     [class*="cl-"][class*="Button"],
     [class*="cl-"][class*="Button"] *,
     [class*="cl-"][class*="button"],
     [class*="cl-"][class*="button"] *,
     button[class*="cl-"],
-    button[class*="cl-"] * {
+    button[class*="cl-"] *,
+    .cl-internal-1bn6c4u,
+    .cl-internal-1bn6c4u *,
+    [class*="cl-"][class*="Button"]::after,
+    [class*="cl-"][class*="Button"]::before {
       border-radius: 14px !important;
       border-top-left-radius: 14px !important;
       border-top-right-radius: 14px !important;
@@ -370,7 +377,7 @@
       // genuine new account: an already-signed-in visitor is redirected below
       // before the listener is added, and sign-in happens on /login — so this
       // never counts sign-ins, /account revisits, or plain page views.
-      const ADS_SIGNUP_CONVERSION = null;  // e.g. 'AW-18214921102/abcdEFgh12'
+      const ADS_SIGNUP_CONVERSION = 'AW-18214921102/r6_aCM3u0rwcEI7Hxu1D';
       let signupConversionFired = false;
 
       if (window.Clerk.user) { window.location.replace('/account'); return; }

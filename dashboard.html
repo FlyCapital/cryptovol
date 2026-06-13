@@ -418,6 +418,12 @@ footer {
   gtag('config', 'G-3W1WWECEBL');
   gtag('config', 'AW-18214921102');  // Google Ads
 </script>
+<script>
+(function(){
+  const _f=window.fetch,T="site_e74c735eb932b384163c6414229b297a382edcf997c3e416";
+  window.fetch=function(u,o={}){if(typeof u==="string"&&u.includes("api.cryptovol.io")){const h=o.headers instanceof Headers?Object.fromEntries(o.headers):{...o.headers};h["X-CryptoVol-Site-Token"]=T;o={...o,headers:h};}return _f.call(this,u,o);};
+})();
+</script>
 </head>
 <body>
 
@@ -486,7 +492,7 @@ footer {
       <summary><span class="label">View API call</span><span class="endpoint">GET /v1/vol-index</span></summary>
 <pre><span class="c-cm"># Daily 30-day implied vol index, one row per (asset, date)</span>
 curl -H <span class="c-str">"X-CryptoVol-Key: cvk_live_..."</span> \
-  <span class="c-str">"https://cryptovol-api-nbakzshi6q-uc.a.run.app/v1/vol-index?ccy=BTC&tenor=30D&start_date=2025-12-01"</span>
+  <span class="c-str">"https://api.cryptovol.io/v1/vol-index?ccy=BTC&tenor=30D&start_date=2025-12-01"</span>
 
 <span class="c-cm"># Python SDK — pip install cryptovol</span>
 <span class="c-kw">from</span> cryptovol <span class="c-kw">import</span> CryptoVol
@@ -554,7 +560,7 @@ fit  = cv.vol_surface_bulk(ccy=<span class="c-str">"BTC"</span>, session=<span c
         <summary><span class="label">View API call</span><span class="endpoint">GET /v1/vol-surface/raw</span></summary>
 <pre><span class="c-cm"># Raw quotes per session; ATM market vol = quote nearest the ATM strike</span>
 curl -H <span class="c-str">"X-CryptoVol-Key: cvk_live_..."</span> \
-  <span class="c-str">"https://cryptovol-api-nbakzshi6q-uc.a.run.app/v1/vol-surface/raw?ccy=BTC&session=us"</span>
+  <span class="c-str">"https://api.cryptovol.io/v1/vol-surface/raw?ccy=BTC&session=us"</span>
 
 <span class="c-cm"># Python SDK — one call per session, read ATM market vol at each expiry</span>
 <span class="c-kw">for</span> sess <span class="c-kw">in</span> [<span class="c-str">"asia"</span>, <span class="c-str">"london"</span>, <span class="c-str">"us"</span>]:
@@ -648,7 +654,7 @@ curl -H <span class="c-str">"X-CryptoVol-Key: cvk_live_..."</span> \
 </footer>
 
 <script>
-const API = 'https://cryptovol-api-nbakzshi6q-uc.a.run.app';
+const API = 'https://api.cryptovol.io';
 const SCOL  = {'7D':'#E8845A','14D':'#1F6FBF','30D':'#1D9E75','60D':'#7F77DD','90D':'#888780'};
 const DLBL  = ['10Δp','15Δp','25Δp','35Δp','ATM','35Δc','25Δc','15Δc','10Δc'];
 const TENORS= ['7D','14D','21D','30D','60D','90D'];

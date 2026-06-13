@@ -286,56 +286,33 @@ footer {
 
 <div id="docs-loading">LOADING API REFERENCE...</div>
 
-<redoc
-  spec-url="/openapi.json"
-  hide-download-button="true"
-  expand-responses="200"
-  scroll-y-offset="72"
-  theme='{
-    "colors": {
-      "primary": { "main": "#1F6FBF" },
-      "text": { "primary": "#0f172a", "secondary": "#475569" },
-      "border": { "dark": "rgba(15,23,42,0.14)", "light": "rgba(15,23,42,0.08)" },
-      "http": {
-        "get": "#1F6FBF",
-        "post": "#22c55e",
-        "put": "#f59e0b",
-        "delete": "#ef4444"
-      }
-    },
-    "typography": {
-      "fontFamily": "Inter, sans-serif",
-      "fontSize": "15px",
-      "lineHeight": "1.6",
-      "headings": { "fontFamily": "Source Serif 4, Georgia, serif", "fontWeight": "500" },
-      "code": { "fontFamily": "IBM Plex Mono, monospace", "fontSize": "13px" }
-    },
-    "sidebar": {
-      "backgroundColor": "#faf9f5",
-      "textColor": "#0f172a",
-      "width": "260px"
-    },
-    "rightPanel": {
-      "backgroundColor": "#0f172a",
-      "textColor": "#e2e8f0"
-    }
-  }'>
-</redoc>
-
-<script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
+<script
+  id="api-reference"
+  data-url="/openapi.json"
+  data-configuration='{
+    "theme": "default",
+    "layout": "sidebar",
+    "defaultHttpClient": { "targetKey": "shell", "clientKey": "curl" },
+    "hideDownloadButton": true,
+    "defaultOpenAllTags": true
+  }'
+></script>
+<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+<style>
+/* Hide Scalar's own top navbar — we have ours */
+.scalar-app-header,
+header.scalar-header { display: none !important; }
+.scalar-app { padding-top: 0 !important; }
+</style>
 <script>
-  // Hide loading message once Redoc renders
-  document.addEventListener('DOMContentLoaded', () => {
-    const checkRendered = setInterval(() => {
-      const redocEl = document.querySelector('redoc');
-      if (redocEl && redocEl.querySelector('.menu-content')) {
-        document.getElementById('docs-loading').classList.add('hidden');
-        clearInterval(checkRendered);
-      }
-    }, 200);
-    // Failsafe: hide after 10s regardless
-    setTimeout(() => document.getElementById('docs-loading').classList.add('hidden'), 10000);
-  });
+  // Hide loading message once Scalar mounts
+  const _checkScalar = setInterval(() => {
+    if (document.querySelector('.scalar-app, [data-v-app]')) {
+      document.getElementById('docs-loading').classList.add('hidden');
+      clearInterval(_checkScalar);
+    }
+  }, 300);
+  setTimeout(() => document.getElementById('docs-loading').classList.add('hidden'), 8000);
 </script>
 
 <!-- ─── Footer ───────────────────────────────────────────────────────── -->

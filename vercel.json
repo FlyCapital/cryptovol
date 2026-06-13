@@ -29,7 +29,7 @@
     },
     {
       "source": "/openapi.json",
-      "destination": "https://cryptovol-api-nbakzshi6q-uc.a.run.app/openapi.json"
+      "destination": "https://api.cryptovol.io/openapi.json"
     },
     {
       "source": "/chat",
