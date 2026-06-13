@@ -1600,14 +1600,19 @@ async function deleteTemplate(id) {
   }
 }
 
-async function executeToolStep(step) {
+async function executeToolStep(step, templateName) {
   const thinking = addMsg("bot", "thinking…");
   try {
     const token = await window.Clerk.session.getToken();
     const r = await fetch(API_BASE + "/v1/chat/execute-tool", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-      body: JSON.stringify({ tool: step.tool, args: step.args }),
+      body: JSON.stringify({
+        tool: step.tool,
+        args: step.args,
+        conversation_id: conversationId || null,
+        template_name: templateName || null,
+      }),
     });
     thinking.remove();
     if (!r.ok) {
@@ -1615,9 +1620,26 @@ async function executeToolStep(step) {
       return;
     }
     const data = await r.json();
+
+    // Keep conversationId in sync (server may have generated a new one)
+    if (data.conversation_id) {
+      conversationId = data.conversation_id;
+      localStorage.setItem(conversationKey, conversationId);
+    }
+
+    const toolCall = { tool: step.tool, args: step.args };
     if (data.chart_spec) addChart(data.chart_spec);
     else if (data.table) addTable(data.table);
     else addMsg("bot", data.text || "(no output)");
+
+    // Persist in messages so it survives a page reload via replayMessages()
+    messages.push({ role: "bot", text: data.text || "",
+                    id: data.assistant_message_id || null,
+                    chart_spec: data.chart_spec || null,
+                    table:      data.table      || null,
+                    api_calls:  data.api_calls  || null,
+                    tool_call:  toolCall });
+    persist();
   } catch (e) {
     thinking.remove();
     addMsg("bot", `Error: ${e.message}`);
@@ -1640,7 +1662,7 @@ async function runTemplate(t) {
   history = [];
   for (const step of t.prompts) {
     if (step && typeof step === "object" && step.tool) {
-      await executeToolStep(step);
+      await executeToolStep(step, t.name);
     } else {
       await sendPrompt(step, true);
     }
