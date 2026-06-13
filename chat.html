@@ -851,6 +851,7 @@ const _DATE_FIELDS = new Set([
   "dates",                          // plot_smile, plot_term_structure (array)
   "start_date", "end_date",         // plot_time_series, summarize_levels, analyze_option_flow
   "from_date",  "to_date",          // compare_option_flow
+  "expiry_min", "expiry_max",       // compare_option_flow, analyze_option_flow expiry range
 ]);
 
 function _isoToOffset(iso) {
