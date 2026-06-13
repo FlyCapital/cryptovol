@@ -845,6 +845,57 @@ function openPinPopover(toolCall, anchor) {
   pop.querySelector("#pin-name").focus();
 }
 
+// Date fields that should be stored as relative offsets (@N days from today).
+// Scalar string fields and array-of-string fields are both handled.
+const _DATE_FIELDS = new Set([
+  "dates",                          // plot_smile, plot_term_structure (array)
+  "start_date", "end_date",         // plot_time_series, summarize_levels, analyze_option_flow
+  "from_date",  "to_date",          // compare_option_flow
+]);
+
+function _isoToOffset(iso) {
+  // "2026-06-12" → integer day offset from today (e.g. 0, -1, -30)
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d     = new Date(iso + "T00:00:00");
+  return Math.round((d - today) / 86400000);
+}
+
+function _offsetToIso(n) {
+  const d = new Date(); d.setHours(0,0,0,0);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+const _ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function _relativizeDates(toolCall) {
+  // Deep-clone so we don't mutate the live message object.
+  const tc = JSON.parse(JSON.stringify(toolCall));
+  for (const [k, v] of Object.entries(tc.args || {})) {
+    if (!_DATE_FIELDS.has(k)) continue;
+    if (typeof v === "string" && _ISO_RE.test(v)) {
+      tc.args[k] = "@" + _isoToOffset(v);
+    } else if (Array.isArray(v)) {
+      tc.args[k] = v.map(x => (typeof x === "string" && _ISO_RE.test(x)) ? "@" + _isoToOffset(x) : x);
+    }
+  }
+  return tc;
+}
+
+function _resolveDates(step) {
+  // Deep-clone so the stored step keeps its @N sentinels for future replays.
+  const s = JSON.parse(JSON.stringify(step));
+  for (const [k, v] of Object.entries(s.args || {})) {
+    if (!_DATE_FIELDS.has(k)) continue;
+    if (typeof v === "string" && v.startsWith("@")) {
+      s.args[k] = _offsetToIso(parseInt(v.slice(1), 10));
+    } else if (Array.isArray(v)) {
+      s.args[k] = v.map(x => (typeof x === "string" && x.startsWith("@")) ? _offsetToIso(parseInt(x.slice(1), 10)) : x);
+    }
+  }
+  return s;
+}
+
 async function saveNewTemplate(toolCall, pop) {
   const name = pop.querySelector("#pin-name").value.trim();
   if (!name) { pop.querySelector("#pin-name").focus(); return; }
@@ -855,7 +906,7 @@ async function saveNewTemplate(toolCall, pop) {
     const r = await fetch(API_BASE + "/v1/chat/templates", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-      body: JSON.stringify({ name, prompts: [toolCall] }),
+      body: JSON.stringify({ name, prompts: [_relativizeDates(toolCall)] }),
     });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const saved = await r.json();
@@ -877,7 +928,7 @@ async function addToTemplate(toolCall, pop) {
     const r = await fetch(`${API_BASE}/v1/chat/templates/${id}/prompts`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-      body: JSON.stringify({ prompt: toolCall }),
+      body: JSON.stringify({ prompt: _relativizeDates(toolCall) }),
     });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const data = await r.json();
@@ -1601,6 +1652,7 @@ async function deleteTemplate(id) {
 }
 
 async function executeToolStep(step, templateName) {
+  const resolved = _resolveDates(step);
   const thinking = addMsg("bot", "thinking…");
   try {
     const token = await window.Clerk.session.getToken();
@@ -1608,8 +1660,8 @@ async function executeToolStep(step, templateName) {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
       body: JSON.stringify({
-        tool: step.tool,
-        args: step.args,
+        tool: resolved.tool,
+        args: resolved.args,
         conversation_id: conversationId || null,
         template_name: templateName || null,
       }),
@@ -1627,7 +1679,7 @@ async function executeToolStep(step, templateName) {
       localStorage.setItem(conversationKey, conversationId);
     }
 
-    const toolCall = { tool: step.tool, args: step.args };
+    const toolCall = { tool: step.tool, args: step.args };  // keep @N offsets intact
     if (data.chart_spec) addChart(data.chart_spec);
     else if (data.table) addTable(data.table);
     else addMsg("bot", data.text || "(no output)");
