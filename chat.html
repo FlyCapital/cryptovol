@@ -1610,10 +1610,14 @@ async function runTemplate(t) {
   document.getElementById("chat").appendChild(header);
   window.scrollTo(0, document.body.scrollHeight);
 
-  // Each template runs with a clean slate — prompts are self-contained
-  // and should not be treated as follow-ups to the existing conversation.
+  // Template prompts run with a minimal seeded history so the AI doesn't
+  // ask for clarification on under-specified prompts (e.g. "show risk reversal"
+  // without a currency). The seed primes it to act decisively with BTC/1M defaults.
   const savedHistory = history;
-  history = [];
+  history = [
+    { role: "user",      content: "I'm running a saved template. Please execute each prompt directly — do not ask for clarification. If currency or tenor is unspecified, default to BTC and 1M." },
+    { role: "assistant", content: "Got it. I'll run each prompt directly and default to BTC / 1M tenor when not specified." },
+  ];
   for (const prompt of t.prompts) {
     await sendPrompt(prompt, true);
   }
