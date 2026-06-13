@@ -726,14 +726,14 @@ function replayMessages() {
     if (m.table)      addTable(m.table);
     if (m.api_calls)  addApiCalls(m.api_calls);
     if (m.role === "bot" && m.id) {
-      const prevUser = i > 0 && messages[i-1].role === "user" ? messages[i-1].text : null;
-      addFeedback(m.id, m.feedback || null, prevUser);
+      addFeedback(m.id, m.feedback || null, m.tool_call || null);
     }
   }
 }
 
 // Append 👍 / 👎 / 📌 buttons for an assistant message in their own subtle row.
-function addFeedback(messageId, current, userText) {
+// toolCall = { tool: string, args: object } | null
+function addFeedback(messageId, current, toolCall) {
   const chat = document.getElementById("chat");
 
   const fb = document.createElement("div");
@@ -771,15 +771,15 @@ function addFeedback(messageId, current, userText) {
   fb.appendChild(upBtn);
   fb.appendChild(downBtn);
 
-  // 📌 pin — only when we know the user prompt that generated this response
-  if (userText) {
+  // 📌 pin — only when there's a recorded tool call to save
+  if (toolCall) {
     const pinBtn = document.createElement("button");
     pinBtn.textContent = "📌";
     pinBtn.title = "Save to template";
     pinBtn.style.cssText = "margin-left:4px;";
     pinBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      openPinPopover(userText, pinBtn);
+      openPinPopover(toolCall, pinBtn);
     });
     fb.appendChild(pinBtn);
   }
@@ -793,7 +793,7 @@ function addFeedback(messageId, current, userText) {
 
 let _pinPopover = null;
 
-function openPinPopover(userText, anchor) {
+function openPinPopover(toolCall, anchor) {
   // Close any existing popover first
   if (_pinPopover) { _pinPopover.remove(); _pinPopover = null; }
 
@@ -827,9 +827,9 @@ function openPinPopover(userText, anchor) {
   pop.style.left = `${Math.min(rect.left + window.scrollX, window.innerWidth - 276)}px`;
 
   pop.querySelector("#pin-cancel").onclick = () => { pop.remove(); _pinPopover = null; };
-  pop.querySelector("#pin-new").onclick    = () => saveNewTemplate(userText, pop);
+  pop.querySelector("#pin-new").onclick    = () => saveNewTemplate(toolCall, pop);
   if (hasExisting) {
-    pop.querySelector("#pin-add").onclick  = () => addToTemplate(userText, pop);
+    pop.querySelector("#pin-add").onclick  = () => addToTemplate(toolCall, pop);
   }
 
   // Close on outside click
@@ -845,7 +845,7 @@ function openPinPopover(userText, anchor) {
   pop.querySelector("#pin-name").focus();
 }
 
-async function saveNewTemplate(userText, pop) {
+async function saveNewTemplate(toolCall, pop) {
   const name = pop.querySelector("#pin-name").value.trim();
   if (!name) { pop.querySelector("#pin-name").focus(); return; }
   const btn = pop.querySelector("#pin-new");
@@ -855,7 +855,7 @@ async function saveNewTemplate(userText, pop) {
     const r = await fetch(API_BASE + "/v1/chat/templates", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-      body: JSON.stringify({ name, prompts: [userText] }),
+      body: JSON.stringify({ name, prompts: [toolCall] }),
     });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const saved = await r.json();
@@ -868,7 +868,7 @@ async function saveNewTemplate(userText, pop) {
   }
 }
 
-async function addToTemplate(userText, pop) {
+async function addToTemplate(toolCall, pop) {
   const id = parseInt(pop.querySelector("#pin-existing").value);
   const btn = pop.querySelector("#pin-add");
   btn.disabled = true; btn.textContent = "Adding…";
@@ -877,7 +877,7 @@ async function addToTemplate(userText, pop) {
     const r = await fetch(`${API_BASE}/v1/chat/templates/${id}/prompts`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-      body: JSON.stringify({ prompt: userText }),
+      body: JSON.stringify({ prompt: toolCall }),
     });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const data = await r.json();
@@ -1600,6 +1600,32 @@ async function deleteTemplate(id) {
   }
 }
 
+async function executeToolStep(step) {
+  const thinking = addMsg("bot", "thinking…");
+  try {
+    const token = await window.Clerk.session.getToken();
+    const r = await fetch(API_BASE + "/v1/chat/execute-tool", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      body: JSON.stringify({ tool: step.tool, args: step.args }),
+    });
+    thinking.remove();
+    if (!r.ok) {
+      addMsg("bot", `Error: HTTP ${r.status}`);
+      return;
+    }
+    const data = await r.json();
+    const botText = data.text || "(no output)";
+    addMsg("bot", botText, `tool: ${step.tool}`);
+    if (data.chart_spec) addChart(data.chart_spec);
+    if (data.table)      addTable(data.table);
+    if (data.api_calls)  addApiCalls(data.api_calls);
+  } catch (e) {
+    thinking.remove();
+    addMsg("bot", `Error: ${e.message}`);
+  }
+}
+
 async function runTemplate(t) {
   const btn = document.getElementById("send");
   btn.disabled = true;
@@ -1610,16 +1636,16 @@ async function runTemplate(t) {
   document.getElementById("chat").appendChild(header);
   window.scrollTo(0, document.body.scrollHeight);
 
-  // Template prompts run with a minimal seeded history so the AI doesn't
-  // ask for clarification on under-specified prompts (e.g. "show risk reversal"
-  // without a currency). The seed primes it to act decisively with BTC/1M defaults.
+  // Prompts are now {tool, args} objects (exact recorded API calls).
+  // Legacy string prompts fall back to the AI chat path.
   const savedHistory = history;
-  history = [
-    { role: "user",      content: "I'm running a saved template. Please execute each prompt directly — do not ask for clarification. If currency or tenor is unspecified, default to BTC and 1M." },
-    { role: "assistant", content: "Got it. I'll run each prompt directly and default to BTC / 1M tenor when not specified." },
-  ];
-  for (const prompt of t.prompts) {
-    await sendPrompt(prompt, true);
+  history = [];
+  for (const step of t.prompts) {
+    if (step && typeof step === "object" && step.tool) {
+      await executeToolStep(step);
+    } else {
+      await sendPrompt(step, true);
+    }
   }
   history = savedHistory;
 
@@ -1702,7 +1728,9 @@ async function sendPrompt(msg, hideUser = false) {
     if (data.chart_spec) addChart(data.chart_spec);
     if (data.table)      addTable(data.table);
     if (data.api_calls)  addApiCalls(data.api_calls);
-    if (data.assistant_message_id) addFeedback(data.assistant_message_id, null, msg);
+    const toolCall = (data.tool_used && data.tool_input)
+      ? { tool: data.tool_used, args: data.tool_input } : null;
+    if (data.assistant_message_id) addFeedback(data.assistant_message_id, null, toolCall);
     if (data.refresh_templates) loadTemplates().then(renderTemplatesTray);
     if (data.template_to_run)   runTemplate(data.template_to_run);
 
@@ -1720,7 +1748,8 @@ async function sendPrompt(msg, hideUser = false) {
                     id:         data.assistant_message_id || null,
                     chart_spec: data.chart_spec || null,
                     table:      data.table      || null,
-                    api_calls:  data.api_calls  || null });
+                    api_calls:  data.api_calls  || null,
+                    tool_call:  toolCall });
     persist();
   } catch (e) {
     thinking.remove();
