@@ -344,18 +344,22 @@ function render() {
   if (_days === 0) {
     // 24H mode: use hourly buckets
     const now = new Date();
+    const etFmt = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "2-digit", minute: "2-digit", hour12: false });
     const hourKeys = Array.from({ length: 24 }, (_, i) => {
       const d = new Date(now); d.setMinutes(0,0,0);
       d.setHours(d.getHours() - (23 - i));
-      // Match DB format: "2026-06-14 12:00:00" (space, not T)
-      return d.toISOString().slice(0, 13).replace("T", " ") + ":00:00";
+      return d.toISOString().slice(0, 13).replace("T", " ") + ":00:00";  // UTC key for DB
     });
     const byHour = {};
     _hourlyHits.forEach(r => { byHour[r.hour] = r; });
     authHits = hourKeys.map(h => byHour[h]?.authenticated || 0);
     chatHits = hourKeys.map(h => byHour[h]?.chat_internal || 0);
     playHits = hourKeys.map(h => byHour[h]?.playground    || 0);
-    trafficLabels = hourKeys.map(h => h.slice(11, 16));  // show HH:MM
+    // Display labels in ET
+    trafficLabels = hourKeys.map(h => {
+      const d = new Date(h.replace(" ", "T") + "Z");
+      return etFmt.format(d);
+    });
   } else {
     const hitsByDate = {};
     _dailyHits.forEach(r => { hitsByDate[r.date] = r; });
