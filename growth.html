@@ -109,6 +109,7 @@ tr:hover td{background:var(--bg2)}
 
   <div class="period-bar">
     <label>Period</label>
+    <button class="pill" data-days="2">24H</button>
     <button class="pill" data-days="7">7D</button>
     <button class="pill active" data-days="30">30D</button>
     <button class="pill" data-days="90">90D</button>
@@ -287,13 +288,14 @@ function render() {
 
   document.getElementById("kpi-total").textContent  = _users.length;
   document.getElementById("kpi-new").textContent    = newUsers.length;
-  document.getElementById("kpi-new-sub").textContent = `last ${_days}d`;
+  document.getElementById("kpi-new-sub").textContent = _days === 2 ? "last 24h" : `last ${_days}d`;
   document.getElementById("kpi-api").textContent    = totalApi.toLocaleString();
   document.getElementById("kpi-chat").textContent   = totalChat.toLocaleString();
   document.getElementById("kpi-play").textContent   = totalPlay.toLocaleString();
 
+  const windowLabel = _days === 2 ? "24h window" : `${_days}-day window`;
   document.getElementById("period-label").textContent =
-    `${cut} → ${new Date().toISOString().slice(0,10)}  ·  ${_days}-day window`;
+    `${cut} → ${new Date().toISOString().slice(0,10)}  ·  ${windowLabel}`;
   document.getElementById("last-updated").textContent =
     "Updated " + new Date().toLocaleTimeString();
 
