@@ -157,7 +157,7 @@ tr:hover td{background:var(--bg2)}
       <div class="chart-wrap"><canvas id="chart-usage"></canvas></div>
     </div>
     <div class="chart-card full">
-      <div class="chart-title">Daily Traffic — Dashboard vs Playground</div>
+      <div class="chart-title" id="traffic-title">Traffic by Source</div>
       <div class="chart-wrap"><canvas id="chart-traffic"></canvas></div>
     </div>
     <div class="chart-card full">
@@ -342,6 +342,8 @@ function render() {
   });
 
   // ── Traffic chart (API / Chat user / Chat internal / Dashboard / Playground) ─
+  document.getElementById("traffic-title").textContent =
+    (_days === 0 ? "Hourly" : "Daily") + " Traffic by Source";
   let trafficLabels, authHits, chatUserHits, chatHits, dashHits, playHits;
   if (_days === 0) {
     // 24H mode: use hourly buckets
