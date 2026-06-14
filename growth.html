@@ -109,9 +109,9 @@ tr:hover td{background:var(--bg2)}
 
   <div class="period-bar">
     <label>Period</label>
-    <button class="pill" data-days="2">24H</button>
+    <button class="pill active" data-days="0">24H</button>
     <button class="pill" data-days="7">7D</button>
-    <button class="pill active" data-days="30">30D</button>
+    <button class="pill" data-days="30">30D</button>
     <button class="pill" data-days="90">90D</button>
     <button class="pill" data-days="180">6M</button>
     <button class="refresh-btn" id="refresh-btn">↺ Refresh</button>
@@ -208,8 +208,8 @@ const API   = "https://api.cryptovol.io";
 const TOKEN = localStorage.getItem("cv_growth_token");
 const HDR   = { "X-Chat-Admin-Token": TOKEN };
 
-let _days = 30;
-let _users = [], _usage = [], _endpoints = [], _dailyHits = [];
+let _days = 0;   // 0 = 24H mode (uses hourly endpoint)
+let _users = [], _usage = [], _endpoints = [], _dailyHits = [], _hourlyHits = [];
 let _signupsChart, _usageChart, _trafficChart, _endpointsChart;
 let _userSort = { col: "created_at", dir: -1 };
 let _epSort   = { col: "total",      dir: -1 };
@@ -232,16 +232,19 @@ function showError(msg) {
 async function load() {
   document.getElementById("error-msg").style.display = "none";
   try {
-    const [usersRes, usageRes, epRes, hitsRes] = await Promise.all([
+    const effectiveDays = _days === 0 ? 1 : _days;
+    const [usersRes, usageRes, epRes, hitsRes, hourlyRes] = await Promise.all([
       get("/v1/admin/users"),
-      get("/v1/admin/usage", { days: _days }),
-      get("/v1/admin/endpoint-stats", { days: _days }),
-      get("/v1/admin/daily-hits", { days: _days }),
+      get("/v1/admin/usage",          { days: effectiveDays }),
+      get("/v1/admin/endpoint-stats", { days: effectiveDays }),
+      get("/v1/admin/daily-hits",     { days: effectiveDays }),
+      _days === 0 ? get("/v1/admin/hourly-hits", { hours: 24 }) : Promise.resolve({ data: [] }),
     ]);
     _users      = usersRes.users     || [];
     _usage      = usageRes.usage     || [];
     _endpoints  = epRes.endpoints    || [];
     _dailyHits  = hitsRes.data       || [];
+    _hourlyHits = hourlyRes.data     || [];
     render();
   } catch (e) {
     showError("Failed to load: " + e.message);
@@ -267,8 +270,9 @@ function daysRange(days) {
 
 // ── Render ────────────────────────────────────────────────────────────────────
 function render() {
-  const cut = cutoff(_days);
-  const dates = daysRange(_days);
+  const effectiveDays = _days === 0 ? 1 : _days;
+  const cut = cutoff(effectiveDays);
+  const dates = daysRange(effectiveDays);
 
   // New signups in period
   const newUsers = _users.filter(u => u.created_at.slice(0,10) >= cut);
@@ -288,12 +292,12 @@ function render() {
 
   document.getElementById("kpi-total").textContent  = _users.length;
   document.getElementById("kpi-new").textContent    = newUsers.length;
-  document.getElementById("kpi-new-sub").textContent = _days === 2 ? "last 24h" : `last ${_days}d`;
+  document.getElementById("kpi-new-sub").textContent = _days === 0 ? "last 24h" : `last ${_days}d`;
   document.getElementById("kpi-api").textContent    = totalApi.toLocaleString();
   document.getElementById("kpi-chat").textContent   = totalChat.toLocaleString();
   document.getElementById("kpi-play").textContent   = totalPlay.toLocaleString();
 
-  const windowLabel = _days === 2 ? "24h window" : `${_days}-day window`;
+  const windowLabel = _days === 0 ? "24h window" : `${_days}-day window`;
   document.getElementById("period-label").textContent =
     `${cut} → ${new Date().toISOString().slice(0,10)}  ·  ${windowLabel}`;
   document.getElementById("last-updated").textContent =
@@ -336,20 +340,38 @@ function render() {
   });
 
   // ── Dashboard vs Playground traffic chart ────────────────────────────────
-  const hitsByDate = {};
-  _dailyHits.forEach(r => { hitsByDate[r.date] = r; });
-  const authHits  = dates.map(d => hitsByDate[d]?.authenticated  || 0);
-  const chatHits  = dates.map(d => hitsByDate[d]?.chat_internal  || 0);
-  const playHits  = dates.map(d => hitsByDate[d]?.playground     || 0);
+  let trafficLabels, authHits, chatHits, playHits;
+  if (_days === 0) {
+    // 24H mode: use hourly buckets
+    const now = new Date();
+    trafficLabels = Array.from({ length: 24 }, (_, i) => {
+      const d = new Date(now); d.setMinutes(0,0,0);
+      d.setHours(d.getHours() - (23 - i));
+      return d.toISOString().slice(0, 13) + ":00:00";
+    });
+    const byHour = {};
+    _hourlyHits.forEach(r => { byHour[r.hour] = r; });
+    authHits = trafficLabels.map(h => byHour[h]?.authenticated || 0);
+    chatHits = trafficLabels.map(h => byHour[h]?.chat_internal || 0);
+    playHits = trafficLabels.map(h => byHour[h]?.playground    || 0);
+    trafficLabels = trafficLabels.map(h => h.slice(11, 16));  // show HH:MM
+  } else {
+    const hitsByDate = {};
+    _dailyHits.forEach(r => { hitsByDate[r.date] = r; });
+    trafficLabels = dates;
+    authHits = dates.map(d => hitsByDate[d]?.authenticated || 0);
+    chatHits = dates.map(d => hitsByDate[d]?.chat_internal || 0);
+    playHits = dates.map(d => hitsByDate[d]?.playground    || 0);
+  }
 
   if (_trafficChart) _trafficChart.destroy();
   _trafficChart = new Chart(document.getElementById("chart-traffic"), {
     type: "bar",
     data: {
-      labels: dates,
+      labels: trafficLabels,
       datasets: [
-        { label: "Dashboard (auth)",  data: authHits, backgroundColor: "rgba(31,111,191,.75)",  borderRadius: 2 },
-        { label: "Chat (internal)",   data: chatHits, backgroundColor: "rgba(127,119,221,.75)", borderRadius: 2 },
+        { label: "Dashboard (auth)",    data: authHits, backgroundColor: "rgba(31,111,191,.75)",  borderRadius: 2 },
+        { label: "Chat (internal)",     data: chatHits, backgroundColor: "rgba(127,119,221,.75)", borderRadius: 2 },
         { label: "Playground (unauth)", data: playHits, backgroundColor: "rgba(232,132,90,.75)",  borderRadius: 2 },
       ]
     },
@@ -360,7 +382,7 @@ function render() {
         tooltip: { mode: "index", intersect: false },
       },
       scales: {
-        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10, family: "'IBM Plex Mono'" }, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } },
+        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10, family: "'IBM Plex Mono'" }, maxRotation: 45, autoSkip: true, maxTicksLimit: _days === 0 ? 12 : 10 } },
         y: { stacked: true, grid: { color: "rgba(0,0,0,.05)" }, ticks: { font: { size: 11, family: "'IBM Plex Mono'" } } },
       },
     }
