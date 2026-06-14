@@ -194,12 +194,13 @@ tr:hover td{background:var(--bg2)}
       <thead><tr>
         <th data-col="endpoint">Endpoint</th>
         <th data-col="authenticated" class="num">API (direct)</th>
+        <th data-col="dashboard" class="num">Dashboard</th>
         <th data-col="chat_user" class="num">Chat (user)</th>
         <th data-col="chat_internal" class="num">Chat (int.)</th>
         <th data-col="playground" class="num">Playground</th>
         <th data-col="total" class="num sorted">Total ↓</th>
       </tr></thead>
-      <tbody id="tbl-endpoints-body"><tr><td colspan="6" class="loading">Loading…</td></tr></tbody>
+      <tbody id="tbl-endpoints-body"><tr><td colspan="7" class="loading">Loading…</td></tr></tbody>
     </table>
   </div>
 </main>
@@ -340,8 +341,8 @@ function render() {
     options: { ...chartOpts(), plugins: { ...chartOpts().plugins, legend: { display: true, labels: { font: { size: 11 }, boxWidth: 10 } } }, scales: { x: chartOpts().scales.x, y: { ...chartOpts().scales.y, stacked: false } } },
   });
 
-  // ── Traffic chart (API direct / Chat user / Chat internal / Playground) ────
-  let trafficLabels, authHits, chatUserHits, chatHits, playHits;
+  // ── Traffic chart (API / Chat user / Chat internal / Dashboard / Playground) ─
+  let trafficLabels, authHits, chatUserHits, chatHits, dashHits, playHits;
   if (_days === 0) {
     // 24H mode: use hourly buckets
     const now = new Date();
@@ -356,6 +357,7 @@ function render() {
     authHits     = hourKeys.map(h => byHour[h]?.authenticated || 0);
     chatUserHits = hourKeys.map(h => byHour[h]?.chat_user     || 0);
     chatHits     = hourKeys.map(h => byHour[h]?.chat_internal || 0);
+    dashHits     = hourKeys.map(h => byHour[h]?.dashboard     || 0);
     playHits     = hourKeys.map(h => byHour[h]?.playground    || 0);
     // Display labels in ET
     trafficLabels = hourKeys.map(h => {
@@ -369,6 +371,7 @@ function render() {
     authHits     = dates.map(d => hitsByDate[d]?.authenticated || 0);
     chatUserHits = dates.map(d => hitsByDate[d]?.chat_user     || 0);
     chatHits     = dates.map(d => hitsByDate[d]?.chat_internal || 0);
+    dashHits     = dates.map(d => hitsByDate[d]?.dashboard     || 0);
     playHits     = dates.map(d => hitsByDate[d]?.playground    || 0);
   }
 
@@ -379,6 +382,7 @@ function render() {
       labels: trafficLabels,
       datasets: [
         { label: "API (direct auth)",   data: authHits,     backgroundColor: "rgba(31,111,191,.75)",  borderRadius: 2 },
+        { label: "Dashboard (demo)",    data: dashHits,     backgroundColor: "rgba(20,184,166,.75)",  borderRadius: 2 },
         { label: "Chat (user)",         data: chatUserHits, backgroundColor: "rgba(29,158,117,.75)",  borderRadius: 2 },
         { label: "Chat (internal)",     data: chatHits,     backgroundColor: "rgba(127,119,221,.75)", borderRadius: 2 },
         { label: "Playground (unauth)", data: playHits,     backgroundColor: "rgba(232,132,90,.75)",  borderRadius: 2 },
@@ -406,6 +410,7 @@ function render() {
       labels: top10.map(e => e.endpoint),
       datasets: [
         { label: "API (direct)", data: top10.map(e => e.authenticated||0),  backgroundColor: "rgba(31,111,191,.75)"  },
+        { label: "Dashboard",    data: top10.map(e => e.dashboard||0),      backgroundColor: "rgba(20,184,166,.75)"  },
         { label: "Chat (user)",  data: top10.map(e => e.chat_user||0),      backgroundColor: "rgba(29,158,117,.75)"  },
         { label: "Chat (int.)",  data: top10.map(e => e.chat_internal||0),  backgroundColor: "rgba(127,119,221,.75)" },
         { label: "Playground",   data: top10.map(e => e.playground||0),     backgroundColor: "rgba(232,132,90,.75)"  },
@@ -485,11 +490,12 @@ function renderEndpointsTable(data) {
   rows.sort((a,b) => ((a[col]||0) < (b[col]||0) ? -1 : (a[col]||0) > (b[col]||0) ? 1 : 0) * dir);
 
   const tbody = document.getElementById("tbl-endpoints-body");
-  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="6" class="loading muted">No results</td></tr>`; return; }
+  if (!rows.length) { tbody.innerHTML = `<tr><td colspan="7" class="loading muted">No results</td></tr>`; return; }
   tbody.innerHTML = rows.map(e => `
     <tr>
       <td>${e.endpoint}</td>
       <td class="num">${(e.authenticated||0).toLocaleString()}</td>
+      <td class="num">${(e.dashboard||0).toLocaleString()}</td>
       <td class="num">${(e.chat_user||0).toLocaleString()}</td>
       <td class="num">${(e.chat_internal||0).toLocaleString()}</td>
       <td class="num">${(e.playground||0).toLocaleString()}</td>
