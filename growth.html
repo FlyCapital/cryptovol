@@ -211,6 +211,9 @@ const TOKEN = localStorage.getItem("cv_growth_token");
 const HDR   = { "X-Chat-Admin-Token": TOKEN };
 
 let _days = 0;   // 0 = 24H mode (uses hourly endpoint)
+// Operator/test accounts hidden from all dashboard panels. Mirrors the backend
+// _TRACK_EXCLUDE_EMAILS used for endpoint_stats.
+const EXCLUDE_EMAILS = ["mfzhang32@gmail.com", "mfzhang21@gmail.com"];
 let _users = [], _usage = [], _endpoints = [], _dailyHits = [], _hourlyHits = [];
 let _signupsChart, _usageChart, _trafficChart, _endpointsChart;
 let _userSort = { col: "created_at", dir: -1 };
@@ -242,8 +245,12 @@ async function load() {
       get("/v1/admin/daily-hits",     { days: effectiveDays }),
       _days === 0 ? get("/v1/admin/hourly-hits", { hours: 24 }) : Promise.resolve({ data: [] }),
     ]);
-    _users      = usersRes.users     || [];
-    _usage      = usageRes.usage     || [];
+    // Exclude operator/test accounts from all user- and usage-based panels
+    // (KPIs, Recent Signups table, Signups chart). The source-breakdown charts
+    // read endpoint_stats, which is filtered server-side via _TRACK_EXCLUDE_EMAILS.
+    const ex = e => !EXCLUDE_EMAILS.includes((e || "").toLowerCase());
+    _users      = (usersRes.users || []).filter(u => ex(u.email));
+    _usage      = (usageRes.usage || []).filter(r => ex(r.email));
     _endpoints  = epRes.endpoints    || [];
     _dailyHits  = hitsRes.data       || [];
     _hourlyHits = hourlyRes.data     || [];
